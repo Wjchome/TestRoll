@@ -29,7 +29,7 @@ public class FrameSyncNetwork : MonoBehaviour
     private bool isRunning = false;
 
     // 消息队列（线程安全）
-    private Queue<ServerFrame> serverFrameQueue = new Queue<ServerFrame>();
+    private Queue< (MessageType, IMessage)> serverFrameQueue = new Queue<(MessageType, IMessage)>();
     private object queueLock = new object();
 
     // 当前帧号
@@ -139,7 +139,7 @@ public class FrameSyncNetwork : MonoBehaviour
     /// <summary>
     /// 发送帧数据（上下左右）
     /// </summary>
-    public void SendFrameData(InputDirection direction, bool isPressed)
+    public void SendFrameData(InputDirection direction,bool isInputPressed)
     {
         if (!isConnected)
             return;
@@ -148,7 +148,7 @@ public class FrameSyncNetwork : MonoBehaviour
         {
             PlayerId = myPlayerID,
             Direction = direction,
-            IsPressed = isPressed,
+            IsPressed = isInputPressed,
             FrameNumber = currentFrameNumber
         };
 
@@ -278,10 +278,7 @@ public class FrameSyncNetwork : MonoBehaviour
         {
             isRunning = false;
             isConnected = false;
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
-            {
-                OnDisconnected?.Invoke();
-            });
+          
         }
     }
 
@@ -296,13 +293,11 @@ public class FrameSyncNetwork : MonoBehaviour
             {
                 case MessageType.MessageConnect:
                     {
-                        var connectMsg = ConnectMessage.Parser.ParseFrom(data);
-                        myPlayerID = connectMsg.PlayerId;
-                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                        var serverFrame = ConnectMessage.Parser.ParseFrom(data);
+                        lock (queueLock)
                         {
-                            OnConnected?.Invoke(myPlayerID);
-                            Debug.Log($"Connected! Player ID: {myPlayerID}");
-                        });
+                            serverFrameQueue.Enqueue((MessageType.MessageConnect,serverFrame));
+                        }
                     }
                     break;
 
@@ -311,17 +306,18 @@ public class FrameSyncNetwork : MonoBehaviour
                         var serverFrame = ServerFrame.Parser.ParseFrom(data);
                         lock (queueLock)
                         {
-                            serverFrameQueue.Enqueue(serverFrame);
+                            serverFrameQueue.Enqueue((MessageType.MessageServerFrame,serverFrame));
                         }
                     }
                     break;
 
                 case MessageType.MessageDisconnect:
                     {
-                        UnityMainThreadDispatcher.Instance().Enqueue(() =>
+                        var serverFrame = DisconnectMessage.Parser.ParseFrom(data);
+                        lock (queueLock)
                         {
-                            Disconnect();
-                        });
+                            serverFrameQueue.Enqueue((MessageType.MessageDisconnect,serverFrame));
+                        }
                     }
                     break;
 
@@ -347,8 +343,27 @@ public class FrameSyncNetwork : MonoBehaviour
             while (serverFrameQueue.Count > 0)
             {
                 var serverFrame = serverFrameQueue.Dequeue();
-                currentFrameNumber = serverFrame.FrameNumber;
-                OnServerFrameReceived?.Invoke(serverFrame);
+                switch (serverFrame.Item1)
+                {
+                    case MessageType.MessageConnect:
+                        
+                        if (serverFrame.Item2 is ConnectMessage connectMessage)
+                        {
+                            OnConnected.Invoke(connectMessage.PlayerId);
+                            
+                        }
+                        break;
+                    case MessageType.MessageServerFrame:
+                        if (serverFrame.Item2 is ServerFrame serverFrame2)
+                        {
+                            currentFrameNumber = serverFrame2.FrameNumber;
+                            OnServerFrameReceived?.Invoke(serverFrame2);
+                        }
+                        break;
+                    case MessageType.MessageDisconnect:
+                        break;
+                }
+                
             }
         }
     }
@@ -367,45 +382,5 @@ public class FrameSyncNetwork : MonoBehaviour
             SendMessage(MessageType.MessageDisconnect, disconnectMsg);
         }
         Disconnect();
-    }
-}
-
-/// <summary>
-/// Unity 主线程调度器（用于从后台线程调用 Unity API）
-/// </summary>
-public class UnityMainThreadDispatcher : MonoBehaviour
-{
-    private static UnityMainThreadDispatcher _instance;
-    private Queue<System.Action> actionQueue = new Queue<System.Action>();
-    private object queueLock = new object();
-
-    public static UnityMainThreadDispatcher Instance()
-    {
-        if (_instance == null)
-        {
-            GameObject go = new GameObject("UnityMainThreadDispatcher");
-            _instance = go.AddComponent<UnityMainThreadDispatcher>();
-            DontDestroyOnLoad(go);
-        }
-        return _instance;
-    }
-
-    void Update()
-    {
-        lock (queueLock)
-        {
-            while (actionQueue.Count > 0)
-            {
-                actionQueue.Dequeue()?.Invoke();
-            }
-        }
-    }
-
-    public void Enqueue(System.Action action)
-    {
-        lock (queueLock)
-        {
-            actionQueue.Enqueue(action);
-        }
     }
 }

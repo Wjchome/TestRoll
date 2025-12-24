@@ -62,17 +62,16 @@ public class FrameSyncExample : MonoBehaviour
             newPressed = true;
         }
 
-        // 如果输入状态改变，发送帧数据
-        if (newDirection != currentDirection || newPressed != isInputPressed)
-        {
-            currentDirection = newDirection;
-            isInputPressed = newPressed;
 
-            if (networkManager != null && networkManager.isConnected)
-            {
-                networkManager.SendFrameData(currentDirection, isInputPressed);
-            }
+        currentDirection = newDirection;
+        isInputPressed = newPressed;
+
+        if (networkManager != null && networkManager.isConnected)
+        {
+            networkManager.SendFrameData(currentDirection, isInputPressed);
+            
         }
+
 
         // 检测释放按键
         if (Input.GetKeyUp(KeyCode.W) || Input.GetKeyUp(KeyCode.UpArrow) ||
@@ -140,7 +139,7 @@ public class FrameSyncExample : MonoBehaviour
     {
         // 根据 frameData 更新对应玩家的位置、状态等
         // 这里只是示例，实际实现需要根据游戏逻辑来写
-        
+
         if (frameData.IsPressed)
         {
             switch (frameData.Direction)

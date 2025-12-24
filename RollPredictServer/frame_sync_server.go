@@ -178,6 +178,7 @@ func (s *Server) handleConnect(client *Client, data []byte) {
 // 处理帧数据
 func (s *Server) handleFrameData(client *Client, data []byte) {
 	if client.RoomID == "" {
+		fmt.Printf("Client %s no room  %s\n", client.ID, client.Name)
 		return
 	}
 
@@ -186,6 +187,7 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 	s.Mutex.Unlock()
 
 	if !exists {
+		log.Printf("Client %s: Unmarshal frame data error: %v\n", client.ID, exists)
 		return
 	}
 
