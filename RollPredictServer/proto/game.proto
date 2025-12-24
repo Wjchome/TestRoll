@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/WjcHome/gohello/proto";
+
+// 消息类型枚举
+enum MessageType {
+  MESSAGE_UNKNOWN = 0;
+  MESSAGE_CONNECT = 1;        // 客户端连接
+  MESSAGE_FRAME_DATA = 2;     // 帧数据（上下左右）
+  MESSAGE_SERVER_FRAME = 3;   // 服务器帧同步数据
+  MESSAGE_DISCONNECT = 4;     // 断开连接
+}
+
+// 输入方向
+enum InputDirection {
+  DIRECTION_NONE = 0;
+  DIRECTION_UP = 1;
+  DIRECTION_DOWN = 2;
+  DIRECTION_LEFT = 3;
+  DIRECTION_RIGHT = 4;
+}
+
+// 客户端帧数据（只包含上下左右）
+message FrameData {
+  string player_id = 1;              // 玩家ID
+  InputDirection direction = 2;     // 方向
+  bool is_pressed = 3;               // 是否按下（true=按下，false=释放）
+  int64 frame_number = 4;            // 帧号
+}
+
+// 服务器帧同步数据
+message ServerFrame {
+  int64 frame_number = 1;            // 帧号
+  int64 timestamp = 2;                // 时间戳
+  repeated FrameData frame_datas = 3; // 所有玩家的帧数据
+}
+
+// 连接消息
+message ConnectMessage {
+  string player_id = 1;
+  string player_name = 2;
+}
+
+// 断开连接消息
+message DisconnectMessage {
+  string player_id = 1;
+}
+
+// 客户端消息（使用 oneof 来支持不同消息类型）
+message ClientMessage {
+  oneof data {
+    ConnectMessage connect = 1;
+    FrameData frame_data = 2;
+    DisconnectMessage disconnect = 3;
+  }
+}
+
+// 服务器消息
+message ServerMessage {
+  oneof data {
+    ConnectMessage connect_success = 1;
+    ServerFrame server_frame = 2;
+    DisconnectMessage disconnect_notify = 3;
+  }
+}
+

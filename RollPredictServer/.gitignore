@@ -1,0 +1,17 @@
+# 二进制文件
+/bin/
+/exe/
+
+# 依赖模块
+/vendor/
+/go.sum
+
+# 开发环境文件
+.env
+.DS_Store
+.idea/
+*.swp
+
+# 测试和日志
+*.log
+/tmp/
