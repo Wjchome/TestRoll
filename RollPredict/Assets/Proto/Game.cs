@@ -25,14 +25,14 @@ namespace Proto {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "ChBwcm90by9nYW1lLnByb3RvEgVwcm90byJeCglGcmFtZURhdGESEQoJcGxh",
-            "eWVyX2lkGAEgASgJEigKCWRpcmVjdGlvbhgCIAEoDjIVLnByb3RvLklucHV0",
+            "eWVyX2lkGAEgASgFEigKCWRpcmVjdGlvbhgCIAEoDjIVLnByb3RvLklucHV0",
             "RGlyZWN0aW9uEhQKDGZyYW1lX251bWJlchgDIAEoAyJdCgtTZXJ2ZXJGcmFt",
             "ZRIUCgxmcmFtZV9udW1iZXIYASABKAMSEQoJdGltZXN0YW1wGAIgASgDEiUK",
             "C2ZyYW1lX2RhdGFzGAMgAygLMhAucHJvdG8uRnJhbWVEYXRhIjgKDkNvbm5l",
-            "Y3RNZXNzYWdlEhEKCXBsYXllcl9pZBgBIAEoCRITCgtwbGF5ZXJfbmFtZRgC",
-            "IAEoCSImChFEaXNjb25uZWN0TWVzc2FnZRIRCglwbGF5ZXJfaWQYASABKAki",
+            "Y3RNZXNzYWdlEhEKCXBsYXllcl9pZBgBIAEoBRITCgtwbGF5ZXJfbmFtZRgC",
+            "IAEoCSImChFEaXNjb25uZWN0TWVzc2FnZRIRCglwbGF5ZXJfaWQYASABKAUi",
             "RQoJR2FtZVN0YXJ0Eg8KB3Jvb21faWQYASABKAkSEwoLcmFuZG9tX3NlZWQY",
-            "AiABKAMSEgoKcGxheWVyX2lkcxgDIAMoCSqZAQoLTWVzc2FnZVR5cGUSEwoP",
+            "AiABKAMSEgoKcGxheWVyX2lkcxgDIAMoBSqZAQoLTWVzc2FnZVR5cGUSEwoP",
             "TUVTU0FHRV9VTktOT1dOEAASEwoPTUVTU0FHRV9DT05ORUNUEAESFgoSTUVT",
             "U0FHRV9GUkFNRV9EQVRBEAISGAoUTUVTU0FHRV9TRVJWRVJfRlJBTUUQAxIW",
             "ChJNRVNTQUdFX0RJU0NPTk5FQ1QQBBIWChJNRVNTQUdFX0dBTUVfU1RBUlQQ",
@@ -147,16 +147,16 @@ namespace Proto {
 
     /// <summary>Field number for the "player_id" field.</summary>
     public const int PlayerIdFieldNumber = 1;
-    private string playerId_ = "";
+    private int playerId_;
     /// <summary>
     /// 玩家ID
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string PlayerId {
+    public int PlayerId {
       get { return playerId_; }
       set {
-        playerId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        playerId_ = value;
       }
     }
 
@@ -215,7 +215,7 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (PlayerId.Length != 0) hash ^= PlayerId.GetHashCode();
+      if (PlayerId != 0) hash ^= PlayerId.GetHashCode();
       if (Direction != global::Proto.InputDirection.DirectionNone) hash ^= Direction.GetHashCode();
       if (FrameNumber != 0L) hash ^= FrameNumber.GetHashCode();
       if (_unknownFields != null) {
@@ -236,9 +236,9 @@ namespace Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (PlayerId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(PlayerId);
+      if (PlayerId != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(PlayerId);
       }
       if (Direction != global::Proto.InputDirection.DirectionNone) {
         output.WriteRawTag(16);
@@ -258,9 +258,9 @@ namespace Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (PlayerId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(PlayerId);
+      if (PlayerId != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(PlayerId);
       }
       if (Direction != global::Proto.InputDirection.DirectionNone) {
         output.WriteRawTag(16);
@@ -280,8 +280,8 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (PlayerId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(PlayerId);
+      if (PlayerId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(PlayerId);
       }
       if (Direction != global::Proto.InputDirection.DirectionNone) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Direction);
@@ -301,7 +301,7 @@ namespace Proto {
       if (other == null) {
         return;
       }
-      if (other.PlayerId.Length != 0) {
+      if (other.PlayerId != 0) {
         PlayerId = other.PlayerId;
       }
       if (other.Direction != global::Proto.InputDirection.DirectionNone) {
@@ -329,8 +329,8 @@ namespace Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
-            PlayerId = input.ReadString();
+          case 8: {
+            PlayerId = input.ReadInt32();
             break;
           }
           case 16: {
@@ -360,8 +360,8 @@ namespace Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
-            PlayerId = input.ReadString();
+          case 8: {
+            PlayerId = input.ReadInt32();
             break;
           }
           case 16: {
@@ -703,13 +703,13 @@ namespace Proto {
 
     /// <summary>Field number for the "player_id" field.</summary>
     public const int PlayerIdFieldNumber = 1;
-    private string playerId_ = "";
+    private int playerId_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string PlayerId {
+    public int PlayerId {
       get { return playerId_; }
       set {
-        playerId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        playerId_ = value;
       }
     }
 
@@ -749,7 +749,7 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (PlayerId.Length != 0) hash ^= PlayerId.GetHashCode();
+      if (PlayerId != 0) hash ^= PlayerId.GetHashCode();
       if (PlayerName.Length != 0) hash ^= PlayerName.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -769,9 +769,9 @@ namespace Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (PlayerId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(PlayerId);
+      if (PlayerId != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(PlayerId);
       }
       if (PlayerName.Length != 0) {
         output.WriteRawTag(18);
@@ -787,9 +787,9 @@ namespace Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (PlayerId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(PlayerId);
+      if (PlayerId != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(PlayerId);
       }
       if (PlayerName.Length != 0) {
         output.WriteRawTag(18);
@@ -805,8 +805,8 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (PlayerId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(PlayerId);
+      if (PlayerId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(PlayerId);
       }
       if (PlayerName.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(PlayerName);
@@ -823,7 +823,7 @@ namespace Proto {
       if (other == null) {
         return;
       }
-      if (other.PlayerId.Length != 0) {
+      if (other.PlayerId != 0) {
         PlayerId = other.PlayerId;
       }
       if (other.PlayerName.Length != 0) {
@@ -848,8 +848,8 @@ namespace Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
-            PlayerId = input.ReadString();
+          case 8: {
+            PlayerId = input.ReadInt32();
             break;
           }
           case 18: {
@@ -875,8 +875,8 @@ namespace Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
-            PlayerId = input.ReadString();
+          case 8: {
+            PlayerId = input.ReadInt32();
             break;
           }
           case 18: {
@@ -940,13 +940,13 @@ namespace Proto {
 
     /// <summary>Field number for the "player_id" field.</summary>
     public const int PlayerIdFieldNumber = 1;
-    private string playerId_ = "";
+    private int playerId_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string PlayerId {
+    public int PlayerId {
       get { return playerId_; }
       set {
-        playerId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        playerId_ = value;
       }
     }
 
@@ -973,7 +973,7 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (PlayerId.Length != 0) hash ^= PlayerId.GetHashCode();
+      if (PlayerId != 0) hash ^= PlayerId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -992,9 +992,9 @@ namespace Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (PlayerId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(PlayerId);
+      if (PlayerId != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(PlayerId);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -1006,9 +1006,9 @@ namespace Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (PlayerId.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(PlayerId);
+      if (PlayerId != 0) {
+        output.WriteRawTag(8);
+        output.WriteInt32(PlayerId);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -1020,8 +1020,8 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (PlayerId.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(PlayerId);
+      if (PlayerId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(PlayerId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1035,7 +1035,7 @@ namespace Proto {
       if (other == null) {
         return;
       }
-      if (other.PlayerId.Length != 0) {
+      if (other.PlayerId != 0) {
         PlayerId = other.PlayerId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -1057,8 +1057,8 @@ namespace Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
-          case 10: {
-            PlayerId = input.ReadString();
+          case 8: {
+            PlayerId = input.ReadInt32();
             break;
           }
         }
@@ -1080,8 +1080,8 @@ namespace Proto {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
-          case 10: {
-            PlayerId = input.ReadString();
+          case 8: {
+            PlayerId = input.ReadInt32();
             break;
           }
         }
@@ -1173,15 +1173,15 @@ namespace Proto {
 
     /// <summary>Field number for the "player_ids" field.</summary>
     public const int PlayerIdsFieldNumber = 3;
-    private static readonly pb::FieldCodec<string> _repeated_playerIds_codec
-        = pb::FieldCodec.ForString(26);
-    private readonly pbc::RepeatedField<string> playerIds_ = new pbc::RepeatedField<string>();
+    private static readonly pb::FieldCodec<int> _repeated_playerIds_codec
+        = pb::FieldCodec.ForInt32(26);
+    private readonly pbc::RepeatedField<int> playerIds_ = new pbc::RepeatedField<int>();
     /// <summary>
     /// 玩家ID列表
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pbc::RepeatedField<string> PlayerIds {
+    public pbc::RepeatedField<int> PlayerIds {
       get { return playerIds_; }
     }
 
@@ -1322,7 +1322,8 @@ namespace Proto {
             RandomSeed = input.ReadInt64();
             break;
           }
-          case 26: {
+          case 26:
+          case 24: {
             playerIds_.AddEntriesFrom(input, _repeated_playerIds_codec);
             break;
           }
@@ -1353,7 +1354,8 @@ namespace Proto {
             RandomSeed = input.ReadInt64();
             break;
           }
-          case 26: {
+          case 26:
+          case 24: {
             playerIds_.AddEntriesFrom(ref input, _repeated_playerIds_codec);
             break;
           }

@@ -25,7 +25,7 @@ enum InputDirection {
 
 // 客户端帧数据（只包含上下左右）
 message FrameData {
-  string player_id = 1;              // 玩家ID
+  int32 player_id = 1;              // 玩家ID
   InputDirection direction = 2;     // 方向
   int64 frame_number = 3;            // 帧号
 }
@@ -39,20 +39,22 @@ message ServerFrame {
 
 // 连接消息
 message ConnectMessage {
-  string player_id = 1;
+  int32 player_id = 1;
   string player_name = 2;
 }
 
+
+
 // 断开连接消息
 message DisconnectMessage {
-  string player_id = 1;
+  int32 player_id = 1;
 }
 
 // 游戏开始消息
 message GameStart {
   string room_id = 1;              // 房间ID
   int64 random_seed = 2;           // 随机种子
-  repeated string player_ids = 3;  // 玩家ID列表
+  repeated int32 player_ids = 3;  // 玩家ID列表
 }
 
 

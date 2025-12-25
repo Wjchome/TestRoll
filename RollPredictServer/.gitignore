@@ -15,3 +15,5 @@
 # 测试和日志
 *.log
 /tmp/
+
+/RollPredict_clone_0/

@@ -139,7 +139,7 @@ func (InputDirection) EnumDescriptor() ([]byte, []int) {
 // 客户端帧数据（只包含上下左右）
 type FrameData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`              // 玩家ID
+	PlayerId      int32                  `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`             // 玩家ID
 	Direction     InputDirection         `protobuf:"varint,2,opt,name=direction,proto3,enum=proto.InputDirection" json:"direction,omitempty"` // 方向
 	FrameNumber   int64                  `protobuf:"varint,3,opt,name=frame_number,json=frameNumber,proto3" json:"frame_number,omitempty"`    // 帧号
 	unknownFields protoimpl.UnknownFields
@@ -176,11 +176,11 @@ func (*FrameData) Descriptor() ([]byte, []int) {
 	return file_proto_game_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *FrameData) GetPlayerId() string {
+func (x *FrameData) GetPlayerId() int32 {
 	if x != nil {
 		return x.PlayerId
 	}
-	return ""
+	return 0
 }
 
 func (x *FrameData) GetDirection() InputDirection {
@@ -261,7 +261,7 @@ func (x *ServerFrame) GetFrameDatas() []*FrameData {
 // 连接消息
 type ConnectMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	PlayerId      int32                  `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	PlayerName    string                 `protobuf:"bytes,2,opt,name=player_name,json=playerName,proto3" json:"player_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -297,11 +297,11 @@ func (*ConnectMessage) Descriptor() ([]byte, []int) {
 	return file_proto_game_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *ConnectMessage) GetPlayerId() string {
+func (x *ConnectMessage) GetPlayerId() int32 {
 	if x != nil {
 		return x.PlayerId
 	}
-	return ""
+	return 0
 }
 
 func (x *ConnectMessage) GetPlayerName() string {
@@ -314,7 +314,7 @@ func (x *ConnectMessage) GetPlayerName() string {
 // 断开连接消息
 type DisconnectMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	PlayerId      int32                  `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -349,19 +349,19 @@ func (*DisconnectMessage) Descriptor() ([]byte, []int) {
 	return file_proto_game_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *DisconnectMessage) GetPlayerId() string {
+func (x *DisconnectMessage) GetPlayerId() int32 {
 	if x != nil {
 		return x.PlayerId
 	}
-	return ""
+	return 0
 }
 
 // 游戏开始消息
 type GameStart struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`              // 房间ID
-	RandomSeed    int64                  `protobuf:"varint,2,opt,name=random_seed,json=randomSeed,proto3" json:"random_seed,omitempty"` // 随机种子
-	PlayerIds     []string               `protobuf:"bytes,3,rep,name=player_ids,json=playerIds,proto3" json:"player_ids,omitempty"`     // 玩家ID列表
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`                  // 房间ID
+	RandomSeed    int64                  `protobuf:"varint,2,opt,name=random_seed,json=randomSeed,proto3" json:"random_seed,omitempty"`     // 随机种子
+	PlayerIds     []int32                `protobuf:"varint,3,rep,packed,name=player_ids,json=playerIds,proto3" json:"player_ids,omitempty"` // 玩家ID列表
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -410,7 +410,7 @@ func (x *GameStart) GetRandomSeed() int64 {
 	return 0
 }
 
-func (x *GameStart) GetPlayerIds() []string {
+func (x *GameStart) GetPlayerIds() []int32 {
 	if x != nil {
 		return x.PlayerIds
 	}
@@ -423,7 +423,7 @@ const file_proto_game_proto_rawDesc = "" +
 	"\n" +
 	"\x10proto/game.proto\x12\x05proto\"\x80\x01\n" +
 	"\tFrameData\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x123\n" +
+	"\tplayer_id\x18\x01 \x01(\x05R\bplayerId\x123\n" +
 	"\tdirection\x18\x02 \x01(\x0e2\x15.proto.InputDirectionR\tdirection\x12!\n" +
 	"\fframe_number\x18\x03 \x01(\x03R\vframeNumber\"\x81\x01\n" +
 	"\vServerFrame\x12!\n" +
@@ -432,17 +432,17 @@ const file_proto_game_proto_rawDesc = "" +
 	"\vframe_datas\x18\x03 \x03(\v2\x10.proto.FrameDataR\n" +
 	"frameDatas\"N\n" +
 	"\x0eConnectMessage\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x12\x1f\n" +
+	"\tplayer_id\x18\x01 \x01(\x05R\bplayerId\x12\x1f\n" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\"0\n" +
 	"\x11DisconnectMessage\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"d\n" +
+	"\tplayer_id\x18\x01 \x01(\x05R\bplayerId\"d\n" +
 	"\tGameStart\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1f\n" +
 	"\vrandom_seed\x18\x02 \x01(\x03R\n" +
 	"randomSeed\x12\x1d\n" +
 	"\n" +
-	"player_ids\x18\x03 \x03(\tR\tplayerIds*\x99\x01\n" +
+	"player_ids\x18\x03 \x03(\x05R\tplayerIds*\x99\x01\n" +
 	"\vMessageType\x12\x13\n" +
 	"\x0fMESSAGE_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fMESSAGE_CONNECT\x10\x01\x12\x16\n" +

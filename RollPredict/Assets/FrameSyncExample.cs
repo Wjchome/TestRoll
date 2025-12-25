@@ -13,6 +13,7 @@ public class FrameSyncExample : MonoBehaviour
     public GameObject playerPrefab;
 
     public GameObject myPlayer;
+    public GameObject otherPlayer;
 
     void Start()
     {
@@ -73,7 +74,7 @@ public class FrameSyncExample : MonoBehaviour
     /// <summary>
     /// 连接成功回调
     /// </summary>
-    private void OnConnected(string playerID)
+    private void OnConnected(long playerID)
     {
         Debug.Log($"Connected to server! Player ID: {playerID}");
     }
@@ -94,6 +95,7 @@ public class FrameSyncExample : MonoBehaviour
         Debug.Log($"Game started! Room: {gameStart.RoomId}, Random Seed: {gameStart.RandomSeed}");
         Debug.Log($"Players in game: {string.Join(", ", gameStart.PlayerIds)}");
         myPlayer = Instantiate(playerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+        otherPlayer = Instantiate(playerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
     }
 
     /// <summary>
@@ -115,7 +117,11 @@ public class FrameSyncExample : MonoBehaviour
         {
             if (frameData.PlayerId == networkManager.myPlayerID)
             {
-                UpdatePlayerState(frameData);
+                UpdatePlayerState(myPlayer,frameData);
+            }
+            else
+            {
+                UpdatePlayerState(otherPlayer,frameData);
             }
         }
     }
@@ -125,7 +131,7 @@ public class FrameSyncExample : MonoBehaviour
     /// <summary>
     /// 根据帧数据更新玩家状态
     /// </summary>
-    private void UpdatePlayerState(FrameData frameData)
+    private void UpdatePlayerState(GameObject player, FrameData frameData)
     {
         // 根据 frameData 更新对应玩家的位置、状态等
         // 这里只是示例，实际实现需要根据游戏逻辑来写
@@ -134,19 +140,19 @@ public class FrameSyncExample : MonoBehaviour
         switch (frameData.Direction)
         {
             case InputDirection.DirectionUp:
-                myPlayer.transform.position += Vector3.up * speed;
+                player.transform.position += Vector3.up * speed;
                 // 向上移动
                 break;
             case InputDirection.DirectionDown:
-                myPlayer.transform.position += Vector3.down * speed;
+                player.transform.position += Vector3.down * speed;
                 // 向下移动
                 break;
             case InputDirection.DirectionLeft:
-                myPlayer.transform.position += Vector3.left * speed;
+                player.transform.position += Vector3.left * speed;
                 // 向左移动
                 break;
             case InputDirection.DirectionRight:
-                myPlayer.transform.position += Vector3.right * speed;
+                player.transform.position += Vector3.right * speed;
                 // 向右移动
                 break;
         }

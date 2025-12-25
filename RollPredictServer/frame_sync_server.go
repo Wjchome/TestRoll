@@ -17,7 +17,7 @@ import (
 const (
 	FRAME_INTERVAL = 50 * time.Millisecond // 20帧每秒
 	PORT           = ":8088"
-	MAX_PLAYERS    = 1 // 每个房间最大玩家数
+	MAX_PLAYERS    = 2 // 每个房间最大玩家数
 )
 
 // 全局客户端计数器
@@ -25,7 +25,7 @@ var clientCounter int64 = 0
 
 // 客户端结构
 type Client struct {
-	ID       string
+	ID       int32
 	Conn     net.Conn
 	RoomID   string
 	Name     string
@@ -37,8 +37,8 @@ type Client struct {
 type Room struct {
 	ID              string
 	Name            string
-	HostID          string
-	Clients         map[string]*Client
+	HostID          int32
+	Clients         map[int32]*Client
 	FrameDataBuffer []*myproto.FrameData // 帧数据缓冲区
 	FrameNumber     int64
 	Status          string // "waiting", "playing"
@@ -91,7 +91,7 @@ func (s *Server) handleClient(conn net.Conn) {
 		tcpConn.SetNoDelay(true)
 	}
 
-	clientID := strconv.FormatInt(clientCounter, 10)
+	clientID := int32(clientCounter)
 	clientCounter++
 	client := &Client{
 		ID:       clientID,
@@ -99,7 +99,7 @@ func (s *Server) handleClient(conn net.Conn) {
 		LastSeen: time.Now(),
 	}
 
-	fmt.Printf("Client %s connected\n", client.ID)
+	fmt.Printf("Client %d connected\n", client.ID)
 
 	// 发送连接成功消息
 	connectMsg := &myproto.ConnectMessage{
@@ -108,13 +108,15 @@ func (s *Server) handleClient(conn net.Conn) {
 	}
 	s.sendMessage(conn, myproto.MessageType_MESSAGE_CONNECT, connectMsg)
 
+	s.autoAssignRoom(client)
+
 	reader := bufio.NewReader(conn)
 	for {
 		// 读取消息长度 (4 bytes)
 		lengthBytes := make([]byte, 4)
 		_, err := reader.Read(lengthBytes)
 		if err != nil {
-			log.Printf("Client %s: Read length error: %v\n", client.ID, err)
+			log.Printf("Client %d: Read length error: %v\n", client.ID, err)
 			break
 		}
 		length := binary.BigEndian.Uint32(lengthBytes)
@@ -123,7 +125,7 @@ func (s *Server) handleClient(conn net.Conn) {
 		messageTypeBytes := make([]byte, 1)
 		_, err = reader.Read(messageTypeBytes)
 		if err != nil {
-			log.Printf("Client %s: Read message type error: %v\n", client.ID, err)
+			log.Printf("Client %d: Read message type error: %v\n", client.ID, err)
 			break
 		}
 		messageType := myproto.MessageType(messageTypeBytes[0])
@@ -131,13 +133,13 @@ func (s *Server) handleClient(conn net.Conn) {
 		// 读取数据部分 (length - 1 byte for messageType)
 		dataLength := int(length) - 1
 		if dataLength < 0 {
-			log.Printf("Client %s: Invalid message length\n", client.ID)
+			log.Printf("Client %d: Invalid message length\n", client.ID)
 			break
 		}
 		data := make([]byte, dataLength)
 		_, err = reader.Read(data)
 		if err != nil {
-			log.Printf("Client %s: Read data error: %v\n", client.ID, err)
+			log.Printf("Client %d: Read data error: %v\n", client.ID, err)
 			break
 		}
 
@@ -146,14 +148,12 @@ func (s *Server) handleClient(conn net.Conn) {
 
 		// 根据消息类型处理
 		switch messageType {
-		case myproto.MessageType_MESSAGE_CONNECT:
-			s.handleConnect(client, data)
 		case myproto.MessageType_MESSAGE_FRAME_DATA:
 			s.handleFrameData(client, data)
 		case myproto.MessageType_MESSAGE_DISCONNECT:
 			s.handleDisconnect(client, data)
 		default:
-			log.Printf("Client %s: Unknown message type: %d\n", client.ID, messageType)
+			log.Printf("Client %d: Unknown message type: %d\n", client.ID, messageType)
 		}
 	}
 
@@ -161,28 +161,10 @@ func (s *Server) handleClient(conn net.Conn) {
 	s.handleClientDisconnect(client)
 }
 
-// 处理连接消息
-func (s *Server) handleConnect(client *Client, data []byte) {
-	var connectMsg myproto.ConnectMessage
-	if err := proto.Unmarshal(data, &connectMsg); err != nil {
-		log.Printf("Client %s: Unmarshal connect message error: %v\n", client.ID, err)
-		return
-	}
-
-	client.Name = connectMsg.PlayerName
-	if connectMsg.PlayerId != "" {
-		client.ID = connectMsg.PlayerId
-	}
-	fmt.Printf("Client %s connected with name: %s\n", client.ID, client.Name)
-
-	// 自动分配房间：查找等待中的房间或创建新房间
-	s.autoAssignRoom(client)
-}
-
 // 处理帧数据
 func (s *Server) handleFrameData(client *Client, data []byte) {
 	if client.RoomID == "" {
-		fmt.Printf("Client %s no room  %s\n", client.ID, client.Name)
+		fmt.Printf("Client %d no room  %s\n", client.ID, client.Name)
 		return
 	}
 
@@ -191,7 +173,7 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 	s.Mutex.Unlock()
 
 	if !exists {
-		log.Printf("Client %s: Room not found: %s\n", client.ID, client.RoomID)
+		log.Printf("Client %d: Room not found: %s\n", client.ID, client.RoomID)
 		return
 	}
 
@@ -199,25 +181,25 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 	// 只有游戏开始后才能接收帧数据
 	if room.Status != "playing" {
 		room.Mutex.Unlock()
-		fmt.Printf("Client %s: Game not started yet, ignoring frame data\n", client.ID)
+		fmt.Printf("Client %d: Game not started yet, ignoring frame data\n", client.ID)
 		return
 	}
 	room.Mutex.Unlock()
 
 	var frameData myproto.FrameData
 	if err := proto.Unmarshal(data, &frameData); err != nil {
-		log.Printf("Client %s: Unmarshal frame data error: %v\n", client.ID, err)
+		log.Printf("Client %d: Unmarshal frame data error: %v\n", client.ID, err)
 		return
 	}
 
 	// 确保player_id正确
-	if frameData.PlayerId == "" {
+	if frameData.PlayerId == 0 {
 		frameData.PlayerId = client.ID
 	}
 
 	room.Mutex.Lock()
 	// 将客户端的帧数据添加到房间的缓冲区
-	log.Printf("Client %s: frame data\n", client.ID)
+	log.Printf("Client %d: frame data\n", client.ID)
 
 	room.FrameDataBuffer = append(room.FrameDataBuffer, &frameData)
 	room.Mutex.Unlock()
@@ -225,13 +207,13 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 
 // 处理断开连接消息
 func (s *Server) handleDisconnect(client *Client, data []byte) {
-	fmt.Printf("Client %s requested disconnect\n", client.ID)
+	fmt.Printf("Client %d requested disconnect\n", client.ID)
 	s.handleClientDisconnect(client)
 }
 
 // 处理客户端断开
 func (s *Server) handleClientDisconnect(client *Client) {
-	fmt.Printf("Client %s disconnected\n", client.ID)
+	fmt.Printf("Client %d disconnected\n", client.ID)
 
 	if client.RoomID == "" {
 		return
@@ -254,7 +236,7 @@ func (s *Server) handleClientDisconnect(client *Client) {
 		for _, c := range room.Clients {
 			c.IsHost = true
 			room.HostID = c.ID
-			fmt.Printf("New host selected: %s in room %s\n", c.ID, room.ID)
+			fmt.Printf("New host selected: %d in room %s\n", c.ID, room.ID)
 			break
 		}
 	}
@@ -270,7 +252,7 @@ func (s *Server) handleClientDisconnect(client *Client) {
 	}
 
 	room.Mutex.Unlock()
-	fmt.Printf("Client %s disconnected from room %s, %d players remaining\n", client.ID, room.ID, len(room.Clients))
+	fmt.Printf("Client %d disconnected from room %s, %d players remaining\n", client.ID, room.ID, len(room.Clients))
 }
 
 // 创建房间
@@ -284,7 +266,7 @@ func (s *Server) CreateRoom(client *Client, roomName string, maxPlayers int32) s
 		ID:              roomID,
 		Name:            roomName,
 		HostID:          client.ID,
-		Clients:         make(map[string]*Client),
+		Clients:         make(map[int32]*Client),
 		FrameDataBuffer: make([]*myproto.FrameData, 0),
 		Status:          "waiting",
 		MaxPlayers:      maxPlayers,
@@ -299,7 +281,7 @@ func (s *Server) CreateRoom(client *Client, roomName string, maxPlayers int32) s
 	client.IsHost = true
 	room.Clients[client.ID] = client
 
-	fmt.Printf("Client %s created room %s (%s)\n", client.ID, roomID, roomName)
+	fmt.Printf("Client %d created room %s (%s)\n", client.ID, roomID, roomName)
 	return roomID
 }
 
@@ -328,7 +310,7 @@ func (s *Server) JoinRoom(client *Client, roomID string) bool {
 	client.RoomID = roomID
 	room.Clients[client.ID] = client
 
-	fmt.Printf("Client %s joined room %s (%d/%d players)\n", client.ID, roomID, len(room.Clients), room.MaxPlayers)
+	fmt.Printf("Client %d joined room %s (%d/%d players)\n", client.ID, roomID, len(room.Clients), room.MaxPlayers)
 
 	// 检查是否达到人数上限，如果达到则开始游戏
 	if int32(len(room.Clients)) >= room.MaxPlayers {
@@ -344,24 +326,30 @@ func (s *Server) JoinRoom(client *Client, roomID string) bool {
 
 // 自动分配房间：查找等待中的房间或创建新房间
 func (s *Server) autoAssignRoom(client *Client) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
+	var targetRoomID string
 
-	// 查找等待中的房间
+	// 第一步：查找等待中的房间（需要先获取锁）
+	s.Mutex.Lock()
 	for _, room := range s.Rooms {
 		room.Mutex.Lock()
 		if room.Status == "waiting" && int32(len(room.Clients)) < room.MaxPlayers {
+			targetRoomID = room.ID
 			room.Mutex.Unlock()
-			// 找到可用房间，加入
-			if s.JoinRoom(client, room.ID) {
-				return
-			}
-		} else {
-			room.Mutex.Unlock()
+			break
+		}
+		room.Mutex.Unlock()
+	}
+	s.Mutex.Unlock()
+
+	// 如果找到可用房间，尝试加入（此时已经释放了s.Mutex，可以安全调用JoinRoom）
+	if targetRoomID != "" {
+		if s.JoinRoom(client, targetRoomID) {
+			return
 		}
 	}
 
-	// 没有找到可用房间，创建新房间
+	// 第二步：没有找到可用房间，创建新房间
+	s.Mutex.Lock()
 	roomID := strconv.FormatInt(int64(len(s.Rooms)+1), 10)
 	roomName := fmt.Sprintf("Room %s", roomID)
 
@@ -369,24 +357,31 @@ func (s *Server) autoAssignRoom(client *Client) {
 		ID:              roomID,
 		Name:            roomName,
 		HostID:          client.ID,
-		Clients:         make(map[string]*Client),
+		Clients:         make(map[int32]*Client),
 		FrameDataBuffer: make([]*myproto.FrameData, 0),
 		Status:          "waiting",
 		MaxPlayers:      MAX_PLAYERS,
 	}
 
 	s.Rooms[roomID] = room
+	s.Mutex.Unlock()
 
 	// 将客户端加入房间
+	room.Mutex.Lock()
 	client.RoomID = roomID
 	client.IsHost = true
 	room.Clients[client.ID] = client
+	room.Mutex.Unlock()
 
-	fmt.Printf("Client %s created room %s (%s) (%d/%d players)\n", client.ID, roomID, roomName, len(room.Clients), room.MaxPlayers)
+	fmt.Printf("Client %d created room %s (%s) (%d/%d players)\n", client.ID, roomID, roomName, 1, room.MaxPlayers)
 
 	// 如果房间人数达到上限（包括测试情况：1人时也开始游戏），自动开始游戏
-	if int32(len(room.Clients)) >= room.MaxPlayers {
-		fmt.Printf("Room %s reached max players (%d/%d), starting game...\n", roomID, len(room.Clients), room.MaxPlayers)
+	room.Mutex.Lock()
+	shouldStart := int32(len(room.Clients)) >= room.MaxPlayers
+	room.Mutex.Unlock()
+
+	if shouldStart {
+		fmt.Printf("Room %s reached max players (%d/%d), starting game...\n", roomID, MAX_PLAYERS, room.MaxPlayers)
 		go func() {
 			time.Sleep(100 * time.Millisecond) // 稍微延迟，确保客户端收到加入消息
 			s.startGame(roomID)
@@ -413,7 +408,7 @@ func (s *Server) startGame(roomID string) {
 	room.Status = "playing"
 
 	// 收集玩家ID列表
-	playerIDs := make([]string, 0, len(room.Clients))
+	playerIDs := make([]int32, 0, len(room.Clients))
 	for _, c := range room.Clients {
 		playerIDs = append(playerIDs, c.ID)
 	}

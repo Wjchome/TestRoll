@@ -22,7 +22,7 @@ public class FrameSyncNetwork : MonoBehaviour
     [Header("状态")]
     public bool isConnected = false;
     public bool isGameStarted = false;
-    public string myPlayerID = "";
+    public int myPlayerID ;
 
     private TcpClient tcpClient;
     private NetworkStream stream;
@@ -38,7 +38,7 @@ public class FrameSyncNetwork : MonoBehaviour
 
     // 事件回调
     public System.Action<ServerFrame> OnServerFrameReceived;
-    public System.Action<string> OnConnected;
+    public System.Action<long> OnConnected;
     public System.Action<GameStart> OnGameStarted;
     public System.Action OnDisconnected;
 
@@ -86,8 +86,6 @@ public class FrameSyncNetwork : MonoBehaviour
 
             Debug.Log($"Connected to server {serverIP}:{serverPort}");
 
-            // 发送连接消息
-            SendConnectMessage();
         }
         catch (Exception e)
         {
@@ -127,19 +125,6 @@ public class FrameSyncNetwork : MonoBehaviour
         OnDisconnected?.Invoke();
     }
 
-    /// <summary>
-    /// 发送连接消息
-    /// </summary>
-    private void SendConnectMessage()
-    {
-        var connectMsg = new ConnectMessage
-        {
-            PlayerId = myPlayerID,
-            PlayerName = playerName
-        };
-
-        SendMessage(MessageType.MessageConnect, connectMsg);
-    }
 
     /// <summary>
     /// 发送帧数据（上下左右）
@@ -365,6 +350,7 @@ public class FrameSyncNetwork : MonoBehaviour
                         
                         if (serverFrame.Item2 is ConnectMessage connectMessage)
                         {
+                            myPlayerID = connectMessage.PlayerId;	
                             OnConnected.Invoke(connectMessage.PlayerId);
                             
                         }
