@@ -17,6 +17,7 @@ import (
 const (
 	FRAME_INTERVAL = 50 * time.Millisecond // 20帧每秒
 	PORT           = ":8088"
+	MAX_PLAYERS    = 1 // 每个房间最大玩家数
 )
 
 // 全局客户端计数器
@@ -173,6 +174,9 @@ func (s *Server) handleConnect(client *Client, data []byte) {
 		client.ID = connectMsg.PlayerId
 	}
 	fmt.Printf("Client %s connected with name: %s\n", client.ID, client.Name)
+
+	// 自动分配房间：查找等待中的房间或创建新房间
+	s.autoAssignRoom(client)
 }
 
 // 处理帧数据
@@ -187,9 +191,18 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 	s.Mutex.Unlock()
 
 	if !exists {
-		log.Printf("Client %s: Unmarshal frame data error: %v\n", client.ID, exists)
+		log.Printf("Client %s: Room not found: %s\n", client.ID, client.RoomID)
 		return
 	}
+
+	room.Mutex.Lock()
+	// 只有游戏开始后才能接收帧数据
+	if room.Status != "playing" {
+		room.Mutex.Unlock()
+		fmt.Printf("Client %s: Game not started yet, ignoring frame data\n", client.ID)
+		return
+	}
+	room.Mutex.Unlock()
 
 	var frameData myproto.FrameData
 	if err := proto.Unmarshal(data, &frameData); err != nil {
@@ -204,6 +217,8 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 
 	room.Mutex.Lock()
 	// 将客户端的帧数据添加到房间的缓冲区
+	log.Printf("Client %s: frame data\n", client.ID)
+
 	room.FrameDataBuffer = append(room.FrameDataBuffer, &frameData)
 	room.Mutex.Unlock()
 }
@@ -313,12 +328,74 @@ func (s *Server) JoinRoom(client *Client, roomID string) bool {
 	client.RoomID = roomID
 	room.Clients[client.ID] = client
 
-	fmt.Printf("Client %s joined room %s\n", client.ID, roomID)
+	fmt.Printf("Client %s joined room %s (%d/%d players)\n", client.ID, roomID, len(room.Clients), room.MaxPlayers)
+
+	// 检查是否达到人数上限，如果达到则开始游戏
+	if int32(len(room.Clients)) >= room.MaxPlayers {
+		fmt.Printf("Room %s is full, starting game...\n", roomID)
+		go func() {
+			time.Sleep(100 * time.Millisecond) // 稍微延迟，确保所有客户端都收到加入消息
+			s.startGame(roomID)
+		}()
+	}
+
 	return true
 }
 
+// 自动分配房间：查找等待中的房间或创建新房间
+func (s *Server) autoAssignRoom(client *Client) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+
+	// 查找等待中的房间
+	for _, room := range s.Rooms {
+		room.Mutex.Lock()
+		if room.Status == "waiting" && int32(len(room.Clients)) < room.MaxPlayers {
+			room.Mutex.Unlock()
+			// 找到可用房间，加入
+			if s.JoinRoom(client, room.ID) {
+				return
+			}
+		} else {
+			room.Mutex.Unlock()
+		}
+	}
+
+	// 没有找到可用房间，创建新房间
+	roomID := strconv.FormatInt(int64(len(s.Rooms)+1), 10)
+	roomName := fmt.Sprintf("Room %s", roomID)
+
+	room := &Room{
+		ID:              roomID,
+		Name:            roomName,
+		HostID:          client.ID,
+		Clients:         make(map[string]*Client),
+		FrameDataBuffer: make([]*myproto.FrameData, 0),
+		Status:          "waiting",
+		MaxPlayers:      MAX_PLAYERS,
+	}
+
+	s.Rooms[roomID] = room
+
+	// 将客户端加入房间
+	client.RoomID = roomID
+	client.IsHost = true
+	room.Clients[client.ID] = client
+
+	fmt.Printf("Client %s created room %s (%s) (%d/%d players)\n", client.ID, roomID, roomName, len(room.Clients), room.MaxPlayers)
+
+	// 如果房间人数达到上限（包括测试情况：1人时也开始游戏），自动开始游戏
+	if int32(len(room.Clients)) >= room.MaxPlayers {
+		fmt.Printf("Room %s reached max players (%d/%d), starting game...\n", roomID, len(room.Clients), room.MaxPlayers)
+		go func() {
+			time.Sleep(100 * time.Millisecond) // 稍微延迟，确保客户端收到加入消息
+			s.startGame(roomID)
+		}()
+	}
+}
+
 // 开始游戏
-func (s *Server) StartGame(roomID string) {
+func (s *Server) startGame(roomID string) {
 	s.Mutex.Lock()
 	room, exists := s.Rooms[roomID]
 	s.Mutex.Unlock()
@@ -328,16 +405,43 @@ func (s *Server) StartGame(roomID string) {
 	}
 
 	room.Mutex.Lock()
+	if room.Status != "waiting" {
+		room.Mutex.Unlock()
+		return
+	}
+
 	room.Status = "playing"
+
+	// 收集玩家ID列表
+	playerIDs := make([]string, 0, len(room.Clients))
+	for _, c := range room.Clients {
+		playerIDs = append(playerIDs, c.ID)
+	}
+
+	// 生成随机种子
+	randomSeed := time.Now().UnixNano()
+
+	// 构建游戏开始消息
+	gameStart := &myproto.GameStart{
+		RoomId:     roomID,
+		RandomSeed: randomSeed,
+		PlayerIds:  playerIDs,
+	}
+
 	room.Mutex.Unlock()
+
+	// 发送游戏开始消息给所有客户端
+	for _, client := range room.Clients {
+		s.sendMessage(client.Conn, myproto.MessageType_MESSAGE_GAME_START, gameStart)
+	}
+
+	fmt.Printf("Game started in room %s with %d players (seed: %d)\n", roomID, len(playerIDs), randomSeed)
 
 	// 延迟启动房间帧循环
 	go func() {
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond) // 等待客户端收到游戏开始消息
 		room.frameLoop(s)
 	}()
-
-	fmt.Printf("Game started in room %s with %d players\n", roomID, len(room.Clients))
 }
 
 // 发送消息（格式：len + messageType + byte[]）

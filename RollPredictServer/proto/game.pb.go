@@ -30,6 +30,7 @@ const (
 	MessageType_MESSAGE_FRAME_DATA   MessageType = 2 // 帧数据（上下左右）
 	MessageType_MESSAGE_SERVER_FRAME MessageType = 3 // 服务器帧同步数据
 	MessageType_MESSAGE_DISCONNECT   MessageType = 4 // 断开连接
+	MessageType_MESSAGE_GAME_START   MessageType = 5 // 游戏开始
 )
 
 // Enum value maps for MessageType.
@@ -40,6 +41,7 @@ var (
 		2: "MESSAGE_FRAME_DATA",
 		3: "MESSAGE_SERVER_FRAME",
 		4: "MESSAGE_DISCONNECT",
+		5: "MESSAGE_GAME_START",
 	}
 	MessageType_value = map[string]int32{
 		"MESSAGE_UNKNOWN":      0,
@@ -47,6 +49,7 @@ var (
 		"MESSAGE_FRAME_DATA":   2,
 		"MESSAGE_SERVER_FRAME": 3,
 		"MESSAGE_DISCONNECT":   4,
+		"MESSAGE_GAME_START":   5,
 	}
 )
 
@@ -138,8 +141,7 @@ type FrameData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      string                 `protobuf:"bytes,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`              // 玩家ID
 	Direction     InputDirection         `protobuf:"varint,2,opt,name=direction,proto3,enum=proto.InputDirection" json:"direction,omitempty"` // 方向
-	IsPressed     bool                   `protobuf:"varint,3,opt,name=is_pressed,json=isPressed,proto3" json:"is_pressed,omitempty"`          // 是否按下（true=按下，false=释放）
-	FrameNumber   int64                  `protobuf:"varint,4,opt,name=frame_number,json=frameNumber,proto3" json:"frame_number,omitempty"`    // 帧号
+	FrameNumber   int64                  `protobuf:"varint,3,opt,name=frame_number,json=frameNumber,proto3" json:"frame_number,omitempty"`    // 帧号
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -186,13 +188,6 @@ func (x *FrameData) GetDirection() InputDirection {
 		return x.Direction
 	}
 	return InputDirection_DIRECTION_NONE
-}
-
-func (x *FrameData) GetIsPressed() bool {
-	if x != nil {
-		return x.IsPressed
-	}
-	return false
 }
 
 func (x *FrameData) GetFrameNumber() int64 {
@@ -361,33 +356,30 @@ func (x *DisconnectMessage) GetPlayerId() string {
 	return ""
 }
 
-// 客户端消息（使用 oneof 来支持不同消息类型）
-type ClientMessage struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Data:
-	//
-	//	*ClientMessage_Connect
-	//	*ClientMessage_FrameData
-	//	*ClientMessage_Disconnect
-	Data          isClientMessage_Data `protobuf_oneof:"data"`
+// 游戏开始消息
+type GameStart struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`              // 房间ID
+	RandomSeed    int64                  `protobuf:"varint,2,opt,name=random_seed,json=randomSeed,proto3" json:"random_seed,omitempty"` // 随机种子
+	PlayerIds     []string               `protobuf:"bytes,3,rep,name=player_ids,json=playerIds,proto3" json:"player_ids,omitempty"`     // 玩家ID列表
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ClientMessage) Reset() {
-	*x = ClientMessage{}
+func (x *GameStart) Reset() {
+	*x = GameStart{}
 	mi := &file_proto_game_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ClientMessage) String() string {
+func (x *GameStart) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ClientMessage) ProtoMessage() {}
+func (*GameStart) ProtoMessage() {}
 
-func (x *ClientMessage) ProtoReflect() protoreflect.Message {
+func (x *GameStart) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_game_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -399,177 +391,41 @@ func (x *ClientMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ClientMessage.ProtoReflect.Descriptor instead.
-func (*ClientMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use GameStart.ProtoReflect.Descriptor instead.
+func (*GameStart) Descriptor() ([]byte, []int) {
 	return file_proto_game_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *ClientMessage) GetData() isClientMessage_Data {
+func (x *GameStart) GetRoomId() string {
 	if x != nil {
-		return x.Data
+		return x.RoomId
+	}
+	return ""
+}
+
+func (x *GameStart) GetRandomSeed() int64 {
+	if x != nil {
+		return x.RandomSeed
+	}
+	return 0
+}
+
+func (x *GameStart) GetPlayerIds() []string {
+	if x != nil {
+		return x.PlayerIds
 	}
 	return nil
 }
-
-func (x *ClientMessage) GetConnect() *ConnectMessage {
-	if x != nil {
-		if x, ok := x.Data.(*ClientMessage_Connect); ok {
-			return x.Connect
-		}
-	}
-	return nil
-}
-
-func (x *ClientMessage) GetFrameData() *FrameData {
-	if x != nil {
-		if x, ok := x.Data.(*ClientMessage_FrameData); ok {
-			return x.FrameData
-		}
-	}
-	return nil
-}
-
-func (x *ClientMessage) GetDisconnect() *DisconnectMessage {
-	if x != nil {
-		if x, ok := x.Data.(*ClientMessage_Disconnect); ok {
-			return x.Disconnect
-		}
-	}
-	return nil
-}
-
-type isClientMessage_Data interface {
-	isClientMessage_Data()
-}
-
-type ClientMessage_Connect struct {
-	Connect *ConnectMessage `protobuf:"bytes,1,opt,name=connect,proto3,oneof"`
-}
-
-type ClientMessage_FrameData struct {
-	FrameData *FrameData `protobuf:"bytes,2,opt,name=frame_data,json=frameData,proto3,oneof"`
-}
-
-type ClientMessage_Disconnect struct {
-	Disconnect *DisconnectMessage `protobuf:"bytes,3,opt,name=disconnect,proto3,oneof"`
-}
-
-func (*ClientMessage_Connect) isClientMessage_Data() {}
-
-func (*ClientMessage_FrameData) isClientMessage_Data() {}
-
-func (*ClientMessage_Disconnect) isClientMessage_Data() {}
-
-// 服务器消息
-type ServerMessage struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Data:
-	//
-	//	*ServerMessage_ConnectSuccess
-	//	*ServerMessage_ServerFrame
-	//	*ServerMessage_DisconnectNotify
-	Data          isServerMessage_Data `protobuf_oneof:"data"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ServerMessage) Reset() {
-	*x = ServerMessage{}
-	mi := &file_proto_game_proto_msgTypes[5]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ServerMessage) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ServerMessage) ProtoMessage() {}
-
-func (x *ServerMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[5]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ServerMessage.ProtoReflect.Descriptor instead.
-func (*ServerMessage) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *ServerMessage) GetData() isServerMessage_Data {
-	if x != nil {
-		return x.Data
-	}
-	return nil
-}
-
-func (x *ServerMessage) GetConnectSuccess() *ConnectMessage {
-	if x != nil {
-		if x, ok := x.Data.(*ServerMessage_ConnectSuccess); ok {
-			return x.ConnectSuccess
-		}
-	}
-	return nil
-}
-
-func (x *ServerMessage) GetServerFrame() *ServerFrame {
-	if x != nil {
-		if x, ok := x.Data.(*ServerMessage_ServerFrame); ok {
-			return x.ServerFrame
-		}
-	}
-	return nil
-}
-
-func (x *ServerMessage) GetDisconnectNotify() *DisconnectMessage {
-	if x != nil {
-		if x, ok := x.Data.(*ServerMessage_DisconnectNotify); ok {
-			return x.DisconnectNotify
-		}
-	}
-	return nil
-}
-
-type isServerMessage_Data interface {
-	isServerMessage_Data()
-}
-
-type ServerMessage_ConnectSuccess struct {
-	ConnectSuccess *ConnectMessage `protobuf:"bytes,1,opt,name=connect_success,json=connectSuccess,proto3,oneof"`
-}
-
-type ServerMessage_ServerFrame struct {
-	ServerFrame *ServerFrame `protobuf:"bytes,2,opt,name=server_frame,json=serverFrame,proto3,oneof"`
-}
-
-type ServerMessage_DisconnectNotify struct {
-	DisconnectNotify *DisconnectMessage `protobuf:"bytes,3,opt,name=disconnect_notify,json=disconnectNotify,proto3,oneof"`
-}
-
-func (*ServerMessage_ConnectSuccess) isServerMessage_Data() {}
-
-func (*ServerMessage_ServerFrame) isServerMessage_Data() {}
-
-func (*ServerMessage_DisconnectNotify) isServerMessage_Data() {}
 
 var File_proto_game_proto protoreflect.FileDescriptor
 
 const file_proto_game_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/game.proto\x12\x05proto\"\x9f\x01\n" +
+	"\x10proto/game.proto\x12\x05proto\"\x80\x01\n" +
 	"\tFrameData\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\x123\n" +
-	"\tdirection\x18\x02 \x01(\x0e2\x15.proto.InputDirectionR\tdirection\x12\x1d\n" +
-	"\n" +
-	"is_pressed\x18\x03 \x01(\bR\tisPressed\x12!\n" +
-	"\fframe_number\x18\x04 \x01(\x03R\vframeNumber\"\x81\x01\n" +
+	"\tdirection\x18\x02 \x01(\x0e2\x15.proto.InputDirectionR\tdirection\x12!\n" +
+	"\fframe_number\x18\x03 \x01(\x03R\vframeNumber\"\x81\x01\n" +
 	"\vServerFrame\x12!\n" +
 	"\fframe_number\x18\x01 \x01(\x03R\vframeNumber\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x121\n" +
@@ -580,26 +436,20 @@ const file_proto_game_proto_rawDesc = "" +
 	"\vplayer_name\x18\x02 \x01(\tR\n" +
 	"playerName\"0\n" +
 	"\x11DisconnectMessage\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"\xb9\x01\n" +
-	"\rClientMessage\x121\n" +
-	"\aconnect\x18\x01 \x01(\v2\x15.proto.ConnectMessageH\x00R\aconnect\x121\n" +
+	"\tplayer_id\x18\x01 \x01(\tR\bplayerId\"d\n" +
+	"\tGameStart\x12\x17\n" +
+	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x1f\n" +
+	"\vrandom_seed\x18\x02 \x01(\x03R\n" +
+	"randomSeed\x12\x1d\n" +
 	"\n" +
-	"frame_data\x18\x02 \x01(\v2\x10.proto.FrameDataH\x00R\tframeData\x12:\n" +
-	"\n" +
-	"disconnect\x18\x03 \x01(\v2\x18.proto.DisconnectMessageH\x00R\n" +
-	"disconnectB\x06\n" +
-	"\x04data\"\xdb\x01\n" +
-	"\rServerMessage\x12@\n" +
-	"\x0fconnect_success\x18\x01 \x01(\v2\x15.proto.ConnectMessageH\x00R\x0econnectSuccess\x127\n" +
-	"\fserver_frame\x18\x02 \x01(\v2\x12.proto.ServerFrameH\x00R\vserverFrame\x12G\n" +
-	"\x11disconnect_notify\x18\x03 \x01(\v2\x18.proto.DisconnectMessageH\x00R\x10disconnectNotifyB\x06\n" +
-	"\x04data*\x81\x01\n" +
+	"player_ids\x18\x03 \x03(\tR\tplayerIds*\x99\x01\n" +
 	"\vMessageType\x12\x13\n" +
 	"\x0fMESSAGE_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fMESSAGE_CONNECT\x10\x01\x12\x16\n" +
 	"\x12MESSAGE_FRAME_DATA\x10\x02\x12\x18\n" +
 	"\x14MESSAGE_SERVER_FRAME\x10\x03\x12\x16\n" +
-	"\x12MESSAGE_DISCONNECT\x10\x04*s\n" +
+	"\x12MESSAGE_DISCONNECT\x10\x04\x12\x16\n" +
+	"\x12MESSAGE_GAME_START\x10\x05*s\n" +
 	"\x0eInputDirection\x12\x12\n" +
 	"\x0eDIRECTION_NONE\x10\x00\x12\x10\n" +
 	"\fDIRECTION_UP\x10\x01\x12\x12\n" +
@@ -620,7 +470,7 @@ func file_proto_game_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_game_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_game_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_game_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_game_proto_goTypes = []any{
 	(MessageType)(0),          // 0: proto.MessageType
 	(InputDirection)(0),       // 1: proto.InputDirection
@@ -628,23 +478,16 @@ var file_proto_game_proto_goTypes = []any{
 	(*ServerFrame)(nil),       // 3: proto.ServerFrame
 	(*ConnectMessage)(nil),    // 4: proto.ConnectMessage
 	(*DisconnectMessage)(nil), // 5: proto.DisconnectMessage
-	(*ClientMessage)(nil),     // 6: proto.ClientMessage
-	(*ServerMessage)(nil),     // 7: proto.ServerMessage
+	(*GameStart)(nil),         // 6: proto.GameStart
 }
 var file_proto_game_proto_depIdxs = []int32{
 	1, // 0: proto.FrameData.direction:type_name -> proto.InputDirection
 	2, // 1: proto.ServerFrame.frame_datas:type_name -> proto.FrameData
-	4, // 2: proto.ClientMessage.connect:type_name -> proto.ConnectMessage
-	2, // 3: proto.ClientMessage.frame_data:type_name -> proto.FrameData
-	5, // 4: proto.ClientMessage.disconnect:type_name -> proto.DisconnectMessage
-	4, // 5: proto.ServerMessage.connect_success:type_name -> proto.ConnectMessage
-	3, // 6: proto.ServerMessage.server_frame:type_name -> proto.ServerFrame
-	5, // 7: proto.ServerMessage.disconnect_notify:type_name -> proto.DisconnectMessage
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_proto_game_proto_init() }
@@ -652,23 +495,13 @@ func file_proto_game_proto_init() {
 	if File_proto_game_proto != nil {
 		return
 	}
-	file_proto_game_proto_msgTypes[4].OneofWrappers = []any{
-		(*ClientMessage_Connect)(nil),
-		(*ClientMessage_FrameData)(nil),
-		(*ClientMessage_Disconnect)(nil),
-	}
-	file_proto_game_proto_msgTypes[5].OneofWrappers = []any{
-		(*ServerMessage_ConnectSuccess)(nil),
-		(*ServerMessage_ServerFrame)(nil),
-		(*ServerMessage_DisconnectNotify)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_game_proto_rawDesc), len(file_proto_game_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   6,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

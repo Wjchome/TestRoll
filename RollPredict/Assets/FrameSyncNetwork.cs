@@ -21,6 +21,7 @@ public class FrameSyncNetwork : MonoBehaviour
 
     [Header("状态")]
     public bool isConnected = false;
+    public bool isGameStarted = false;
     public string myPlayerID = "";
 
     private TcpClient tcpClient;
@@ -29,7 +30,7 @@ public class FrameSyncNetwork : MonoBehaviour
     private bool isRunning = false;
 
     // 消息队列（线程安全）
-    private Queue< (MessageType, IMessage)> serverFrameQueue = new Queue<(MessageType, IMessage)>();
+    private Queue<(MessageType, IMessage)> serverFrameQueue = new Queue<(MessageType, IMessage)>();
     private object queueLock = new object();
 
     // 当前帧号
@@ -38,6 +39,7 @@ public class FrameSyncNetwork : MonoBehaviour
     // 事件回调
     public System.Action<ServerFrame> OnServerFrameReceived;
     public System.Action<string> OnConnected;
+    public System.Action<GameStart> OnGameStarted;
     public System.Action OnDisconnected;
 
     void Start()
@@ -75,6 +77,7 @@ public class FrameSyncNetwork : MonoBehaviour
             stream = tcpClient.GetStream();
             isRunning = true;
             isConnected = true;
+            isGameStarted = false; // 重置游戏状态
 
             // 启动接收线程
             receiveThread = new Thread(ReceiveMessages);
@@ -90,6 +93,7 @@ public class FrameSyncNetwork : MonoBehaviour
         {
             Debug.LogError($"Failed to connect to server: {e.Message}");
             isConnected = false;
+            isGameStarted = false;
         }
     }
 
@@ -100,6 +104,7 @@ public class FrameSyncNetwork : MonoBehaviour
     {
         isRunning = false;
         isConnected = false;
+        isGameStarted = false;
 
         if (receiveThread != null && receiveThread.IsAlive)
         {
@@ -139,19 +144,20 @@ public class FrameSyncNetwork : MonoBehaviour
     /// <summary>
     /// 发送帧数据（上下左右）
     /// </summary>
-    public void SendFrameData(InputDirection direction,bool isInputPressed)
+    public void SendFrameData(InputDirection direction)
     {
-        if (!isConnected)
+        if (!isConnected || !isGameStarted)
+        {
+            // 游戏未开始，不发送帧数据
             return;
+        }
 
         var frameData = new FrameData
         {
             PlayerId = myPlayerID,
             Direction = direction,
-            IsPressed = isInputPressed,
             FrameNumber = currentFrameNumber
         };
-
         SendMessage(MessageType.MessageFrameData, frameData);
     }
 
@@ -313,10 +319,20 @@ public class FrameSyncNetwork : MonoBehaviour
 
                 case MessageType.MessageDisconnect:
                     {
-                        var serverFrame = DisconnectMessage.Parser.ParseFrom(data);
+                        var disconnectMsg = DisconnectMessage.Parser.ParseFrom(data);
                         lock (queueLock)
                         {
-                            serverFrameQueue.Enqueue((MessageType.MessageDisconnect,serverFrame));
+                            serverFrameQueue.Enqueue((MessageType.MessageDisconnect, disconnectMsg));
+                        }
+                    }
+                    break;
+
+                case MessageType.MessageGameStart:
+                    {
+                        var gameStart = GameStart.Parser.ParseFrom(data);
+                        lock (queueLock)
+                        {
+                            serverFrameQueue.Enqueue((MessageType.MessageGameStart, gameStart));
                         }
                     }
                     break;
@@ -361,9 +377,23 @@ public class FrameSyncNetwork : MonoBehaviour
                         }
                         break;
                     case MessageType.MessageDisconnect:
+                        {
+                            isGameStarted = false;
+                            OnDisconnected?.Invoke();
+                        }
+                        break;
+
+                    case MessageType.MessageGameStart:
+                        {
+                            if (serverFrame.Item2 is GameStart gameStart)
+                            {
+                                isGameStarted = true;
+                                OnGameStarted?.Invoke(gameStart);
+                                Debug.Log($"Game started! Room: {gameStart.RoomId}, Seed: {gameStart.RandomSeed}, Players: {gameStart.PlayerIds.Count}");
+                            }
+                        }
                         break;
                 }
-                
             }
         }
     }

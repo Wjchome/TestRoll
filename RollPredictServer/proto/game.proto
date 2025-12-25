@@ -11,6 +11,7 @@ enum MessageType {
   MESSAGE_FRAME_DATA = 2;     // 帧数据（上下左右）
   MESSAGE_SERVER_FRAME = 3;   // 服务器帧同步数据
   MESSAGE_DISCONNECT = 4;     // 断开连接
+  MESSAGE_GAME_START = 5;     // 游戏开始
 }
 
 // 输入方向
@@ -26,8 +27,7 @@ enum InputDirection {
 message FrameData {
   string player_id = 1;              // 玩家ID
   InputDirection direction = 2;     // 方向
-  bool is_pressed = 3;               // 是否按下（true=按下，false=释放）
-  int64 frame_number = 4;            // 帧号
+  int64 frame_number = 3;            // 帧号
 }
 
 // 服务器帧同步数据
@@ -48,21 +48,12 @@ message DisconnectMessage {
   string player_id = 1;
 }
 
-// 客户端消息（使用 oneof 来支持不同消息类型）
-message ClientMessage {
-  oneof data {
-    ConnectMessage connect = 1;
-    FrameData frame_data = 2;
-    DisconnectMessage disconnect = 3;
-  }
+// 游戏开始消息
+message GameStart {
+  string room_id = 1;              // 房间ID
+  int64 random_seed = 2;           // 随机种子
+  repeated string player_ids = 3;  // 玩家ID列表
 }
 
-// 服务器消息
-message ServerMessage {
-  oneof data {
-    ConnectMessage connect_success = 1;
-    ServerFrame server_frame = 2;
-    DisconnectMessage disconnect_notify = 3;
-  }
-}
+
 

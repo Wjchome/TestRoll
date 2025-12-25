@@ -24,37 +24,30 @@ namespace Proto {
     static GameReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "ChBwcm90by9nYW1lLnByb3RvEgVwcm90byJyCglGcmFtZURhdGESEQoJcGxh",
+            "ChBwcm90by9nYW1lLnByb3RvEgVwcm90byJeCglGcmFtZURhdGESEQoJcGxh",
             "eWVyX2lkGAEgASgJEigKCWRpcmVjdGlvbhgCIAEoDjIVLnByb3RvLklucHV0",
-            "RGlyZWN0aW9uEhIKCmlzX3ByZXNzZWQYAyABKAgSFAoMZnJhbWVfbnVtYmVy",
-            "GAQgASgDIl0KC1NlcnZlckZyYW1lEhQKDGZyYW1lX251bWJlchgBIAEoAxIR",
-            "Cgl0aW1lc3RhbXAYAiABKAMSJQoLZnJhbWVfZGF0YXMYAyADKAsyEC5wcm90",
-            "by5GcmFtZURhdGEiOAoOQ29ubmVjdE1lc3NhZ2USEQoJcGxheWVyX2lkGAEg",
-            "ASgJEhMKC3BsYXllcl9uYW1lGAIgASgJIiYKEURpc2Nvbm5lY3RNZXNzYWdl",
-            "EhEKCXBsYXllcl9pZBgBIAEoCSKZAQoNQ2xpZW50TWVzc2FnZRIoCgdjb25u",
-            "ZWN0GAEgASgLMhUucHJvdG8uQ29ubmVjdE1lc3NhZ2VIABImCgpmcmFtZV9k",
-            "YXRhGAIgASgLMhAucHJvdG8uRnJhbWVEYXRhSAASLgoKZGlzY29ubmVjdBgD",
-            "IAEoCzIYLnByb3RvLkRpc2Nvbm5lY3RNZXNzYWdlSABCBgoEZGF0YSKsAQoN",
-            "U2VydmVyTWVzc2FnZRIwCg9jb25uZWN0X3N1Y2Nlc3MYASABKAsyFS5wcm90",
-            "by5Db25uZWN0TWVzc2FnZUgAEioKDHNlcnZlcl9mcmFtZRgCIAEoCzISLnBy",
-            "b3RvLlNlcnZlckZyYW1lSAASNQoRZGlzY29ubmVjdF9ub3RpZnkYAyABKAsy",
-            "GC5wcm90by5EaXNjb25uZWN0TWVzc2FnZUgAQgYKBGRhdGEqgQEKC01lc3Nh",
-            "Z2VUeXBlEhMKD01FU1NBR0VfVU5LTk9XThAAEhMKD01FU1NBR0VfQ09OTkVD",
-            "VBABEhYKEk1FU1NBR0VfRlJBTUVfREFUQRACEhgKFE1FU1NBR0VfU0VSVkVS",
-            "X0ZSQU1FEAMSFgoSTUVTU0FHRV9ESVNDT05ORUNUEAQqcwoOSW5wdXREaXJl",
-            "Y3Rpb24SEgoORElSRUNUSU9OX05PTkUQABIQCgxESVJFQ1RJT05fVVAQARIS",
-            "Cg5ESVJFQ1RJT05fRE9XThACEhIKDkRJUkVDVElPTl9MRUZUEAMSEwoPRElS",
-            "RUNUSU9OX1JJR0hUEARCIlogZ2l0aHViLmNvbS9XamNIb21lL2dvaGVsbG8v",
-            "cHJvdG9iBnByb3RvMw=="));
+            "RGlyZWN0aW9uEhQKDGZyYW1lX251bWJlchgDIAEoAyJdCgtTZXJ2ZXJGcmFt",
+            "ZRIUCgxmcmFtZV9udW1iZXIYASABKAMSEQoJdGltZXN0YW1wGAIgASgDEiUK",
+            "C2ZyYW1lX2RhdGFzGAMgAygLMhAucHJvdG8uRnJhbWVEYXRhIjgKDkNvbm5l",
+            "Y3RNZXNzYWdlEhEKCXBsYXllcl9pZBgBIAEoCRITCgtwbGF5ZXJfbmFtZRgC",
+            "IAEoCSImChFEaXNjb25uZWN0TWVzc2FnZRIRCglwbGF5ZXJfaWQYASABKAki",
+            "RQoJR2FtZVN0YXJ0Eg8KB3Jvb21faWQYASABKAkSEwoLcmFuZG9tX3NlZWQY",
+            "AiABKAMSEgoKcGxheWVyX2lkcxgDIAMoCSqZAQoLTWVzc2FnZVR5cGUSEwoP",
+            "TUVTU0FHRV9VTktOT1dOEAASEwoPTUVTU0FHRV9DT05ORUNUEAESFgoSTUVT",
+            "U0FHRV9GUkFNRV9EQVRBEAISGAoUTUVTU0FHRV9TRVJWRVJfRlJBTUUQAxIW",
+            "ChJNRVNTQUdFX0RJU0NPTk5FQ1QQBBIWChJNRVNTQUdFX0dBTUVfU1RBUlQQ",
+            "BSpzCg5JbnB1dERpcmVjdGlvbhISCg5ESVJFQ1RJT05fTk9ORRAAEhAKDERJ",
+            "UkVDVElPTl9VUBABEhIKDkRJUkVDVElPTl9ET1dOEAISEgoORElSRUNUSU9O",
+            "X0xFRlQQAxITCg9ESVJFQ1RJT05fUklHSFQQBEIiWiBnaXRodWIuY29tL1dq",
+            "Y0hvbWUvZ29oZWxsby9wcm90b2IGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proto.MessageType), typeof(global::Proto.InputDirection), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.FrameData), global::Proto.FrameData.Parser, new[]{ "PlayerId", "Direction", "IsPressed", "FrameNumber" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.FrameData), global::Proto.FrameData.Parser, new[]{ "PlayerId", "Direction", "FrameNumber" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proto.ServerFrame), global::Proto.ServerFrame.Parser, new[]{ "FrameNumber", "Timestamp", "FrameDatas" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proto.ConnectMessage), global::Proto.ConnectMessage.Parser, new[]{ "PlayerId", "PlayerName" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proto.DisconnectMessage), global::Proto.DisconnectMessage.Parser, new[]{ "PlayerId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.ClientMessage), global::Proto.ClientMessage.Parser, new[]{ "Connect", "FrameData", "Disconnect" }, new[]{ "Data" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.ServerMessage), global::Proto.ServerMessage.Parser, new[]{ "ConnectSuccess", "ServerFrame", "DisconnectNotify" }, new[]{ "Data" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.GameStart), global::Proto.GameStart.Parser, new[]{ "RoomId", "RandomSeed", "PlayerIds" }, null, null, null, null)
           }));
     }
     #endregion
@@ -82,6 +75,10 @@ namespace Proto {
     /// 断开连接
     /// </summary>
     [pbr::OriginalName("MESSAGE_DISCONNECT")] MessageDisconnect = 4,
+    /// <summary>
+    /// 游戏开始
+    /// </summary>
+    [pbr::OriginalName("MESSAGE_GAME_START")] MessageGameStart = 5,
   }
 
   /// <summary>
@@ -138,7 +135,6 @@ namespace Proto {
     public FrameData(FrameData other) : this() {
       playerId_ = other.playerId_;
       direction_ = other.direction_;
-      isPressed_ = other.isPressed_;
       frameNumber_ = other.frameNumber_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -179,23 +175,8 @@ namespace Proto {
       }
     }
 
-    /// <summary>Field number for the "is_pressed" field.</summary>
-    public const int IsPressedFieldNumber = 3;
-    private bool isPressed_;
-    /// <summary>
-    /// 是否按下（true=按下，false=释放）
-    /// </summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool IsPressed {
-      get { return isPressed_; }
-      set {
-        isPressed_ = value;
-      }
-    }
-
     /// <summary>Field number for the "frame_number" field.</summary>
-    public const int FrameNumberFieldNumber = 4;
+    public const int FrameNumberFieldNumber = 3;
     private long frameNumber_;
     /// <summary>
     /// 帧号
@@ -226,7 +207,6 @@ namespace Proto {
       }
       if (PlayerId != other.PlayerId) return false;
       if (Direction != other.Direction) return false;
-      if (IsPressed != other.IsPressed) return false;
       if (FrameNumber != other.FrameNumber) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -237,7 +217,6 @@ namespace Proto {
       int hash = 1;
       if (PlayerId.Length != 0) hash ^= PlayerId.GetHashCode();
       if (Direction != global::Proto.InputDirection.DirectionNone) hash ^= Direction.GetHashCode();
-      if (IsPressed != false) hash ^= IsPressed.GetHashCode();
       if (FrameNumber != 0L) hash ^= FrameNumber.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -265,12 +244,8 @@ namespace Proto {
         output.WriteRawTag(16);
         output.WriteEnum((int) Direction);
       }
-      if (IsPressed != false) {
-        output.WriteRawTag(24);
-        output.WriteBool(IsPressed);
-      }
       if (FrameNumber != 0L) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(24);
         output.WriteInt64(FrameNumber);
       }
       if (_unknownFields != null) {
@@ -291,12 +266,8 @@ namespace Proto {
         output.WriteRawTag(16);
         output.WriteEnum((int) Direction);
       }
-      if (IsPressed != false) {
-        output.WriteRawTag(24);
-        output.WriteBool(IsPressed);
-      }
       if (FrameNumber != 0L) {
-        output.WriteRawTag(32);
+        output.WriteRawTag(24);
         output.WriteInt64(FrameNumber);
       }
       if (_unknownFields != null) {
@@ -314,9 +285,6 @@ namespace Proto {
       }
       if (Direction != global::Proto.InputDirection.DirectionNone) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Direction);
-      }
-      if (IsPressed != false) {
-        size += 1 + 1;
       }
       if (FrameNumber != 0L) {
         size += 1 + pb::CodedOutputStream.ComputeInt64Size(FrameNumber);
@@ -338,9 +306,6 @@ namespace Proto {
       }
       if (other.Direction != global::Proto.InputDirection.DirectionNone) {
         Direction = other.Direction;
-      }
-      if (other.IsPressed != false) {
-        IsPressed = other.IsPressed;
       }
       if (other.FrameNumber != 0L) {
         FrameNumber = other.FrameNumber;
@@ -373,10 +338,6 @@ namespace Proto {
             break;
           }
           case 24: {
-            IsPressed = input.ReadBool();
-            break;
-          }
-          case 32: {
             FrameNumber = input.ReadInt64();
             break;
           }
@@ -408,10 +369,6 @@ namespace Proto {
             break;
           }
           case 24: {
-            IsPressed = input.ReadBool();
-            break;
-          }
-          case 32: {
             FrameNumber = input.ReadInt64();
             break;
           }
@@ -1135,19 +1092,19 @@ namespace Proto {
   }
 
   /// <summary>
-  /// 客户端消息（使用 oneof 来支持不同消息类型）
+  /// 游戏开始消息
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class ClientMessage : pb::IMessage<ClientMessage>
+  public sealed partial class GameStart : pb::IMessage<GameStart>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<ClientMessage> _parser = new pb::MessageParser<ClientMessage>(() => new ClientMessage());
+    private static readonly pb::MessageParser<GameStart> _parser = new pb::MessageParser<GameStart>(() => new GameStart());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<ClientMessage> Parser { get { return _parser; } }
+    public static pb::MessageParser<GameStart> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1163,7 +1120,7 @@ namespace Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ClientMessage() {
+    public GameStart() {
       OnConstruction();
     }
 
@@ -1171,105 +1128,81 @@ namespace Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ClientMessage(ClientMessage other) : this() {
-      switch (other.DataCase) {
-        case DataOneofCase.Connect:
-          Connect = other.Connect.Clone();
-          break;
-        case DataOneofCase.FrameData:
-          FrameData = other.FrameData.Clone();
-          break;
-        case DataOneofCase.Disconnect:
-          Disconnect = other.Disconnect.Clone();
-          break;
-      }
-
+    public GameStart(GameStart other) : this() {
+      roomId_ = other.roomId_;
+      randomSeed_ = other.randomSeed_;
+      playerIds_ = other.playerIds_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ClientMessage Clone() {
-      return new ClientMessage(this);
+    public GameStart Clone() {
+      return new GameStart(this);
     }
 
-    /// <summary>Field number for the "connect" field.</summary>
-    public const int ConnectFieldNumber = 1;
+    /// <summary>Field number for the "room_id" field.</summary>
+    public const int RoomIdFieldNumber = 1;
+    private string roomId_ = "";
+    /// <summary>
+    /// 房间ID
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Proto.ConnectMessage Connect {
-      get { return dataCase_ == DataOneofCase.Connect ? (global::Proto.ConnectMessage) data_ : null; }
+    public string RoomId {
+      get { return roomId_; }
       set {
-        data_ = value;
-        dataCase_ = value == null ? DataOneofCase.None : DataOneofCase.Connect;
+        roomId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
-    /// <summary>Field number for the "frame_data" field.</summary>
-    public const int FrameDataFieldNumber = 2;
+    /// <summary>Field number for the "random_seed" field.</summary>
+    public const int RandomSeedFieldNumber = 2;
+    private long randomSeed_;
+    /// <summary>
+    /// 随机种子
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Proto.FrameData FrameData {
-      get { return dataCase_ == DataOneofCase.FrameData ? (global::Proto.FrameData) data_ : null; }
+    public long RandomSeed {
+      get { return randomSeed_; }
       set {
-        data_ = value;
-        dataCase_ = value == null ? DataOneofCase.None : DataOneofCase.FrameData;
+        randomSeed_ = value;
       }
     }
 
-    /// <summary>Field number for the "disconnect" field.</summary>
-    public const int DisconnectFieldNumber = 3;
+    /// <summary>Field number for the "player_ids" field.</summary>
+    public const int PlayerIdsFieldNumber = 3;
+    private static readonly pb::FieldCodec<string> _repeated_playerIds_codec
+        = pb::FieldCodec.ForString(26);
+    private readonly pbc::RepeatedField<string> playerIds_ = new pbc::RepeatedField<string>();
+    /// <summary>
+    /// 玩家ID列表
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Proto.DisconnectMessage Disconnect {
-      get { return dataCase_ == DataOneofCase.Disconnect ? (global::Proto.DisconnectMessage) data_ : null; }
-      set {
-        data_ = value;
-        dataCase_ = value == null ? DataOneofCase.None : DataOneofCase.Disconnect;
-      }
-    }
-
-    private object data_;
-    /// <summary>Enum of possible cases for the "data" oneof.</summary>
-    public enum DataOneofCase {
-      None = 0,
-      Connect = 1,
-      FrameData = 2,
-      Disconnect = 3,
-    }
-    private DataOneofCase dataCase_ = DataOneofCase.None;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DataOneofCase DataCase {
-      get { return dataCase_; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearData() {
-      dataCase_ = DataOneofCase.None;
-      data_ = null;
+    public pbc::RepeatedField<string> PlayerIds {
+      get { return playerIds_; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as ClientMessage);
+      return Equals(other as GameStart);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(ClientMessage other) {
+    public bool Equals(GameStart other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!object.Equals(Connect, other.Connect)) return false;
-      if (!object.Equals(FrameData, other.FrameData)) return false;
-      if (!object.Equals(Disconnect, other.Disconnect)) return false;
-      if (DataCase != other.DataCase) return false;
+      if (RoomId != other.RoomId) return false;
+      if (RandomSeed != other.RandomSeed) return false;
+      if(!playerIds_.Equals(other.playerIds_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1277,10 +1210,9 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (dataCase_ == DataOneofCase.Connect) hash ^= Connect.GetHashCode();
-      if (dataCase_ == DataOneofCase.FrameData) hash ^= FrameData.GetHashCode();
-      if (dataCase_ == DataOneofCase.Disconnect) hash ^= Disconnect.GetHashCode();
-      hash ^= (int) dataCase_;
+      if (RoomId.Length != 0) hash ^= RoomId.GetHashCode();
+      if (RandomSeed != 0L) hash ^= RandomSeed.GetHashCode();
+      hash ^= playerIds_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1299,18 +1231,15 @@ namespace Proto {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (dataCase_ == DataOneofCase.Connect) {
+      if (RoomId.Length != 0) {
         output.WriteRawTag(10);
-        output.WriteMessage(Connect);
+        output.WriteString(RoomId);
       }
-      if (dataCase_ == DataOneofCase.FrameData) {
-        output.WriteRawTag(18);
-        output.WriteMessage(FrameData);
+      if (RandomSeed != 0L) {
+        output.WriteRawTag(16);
+        output.WriteInt64(RandomSeed);
       }
-      if (dataCase_ == DataOneofCase.Disconnect) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Disconnect);
-      }
+      playerIds_.WriteTo(output, _repeated_playerIds_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1321,18 +1250,15 @@ namespace Proto {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (dataCase_ == DataOneofCase.Connect) {
+      if (RoomId.Length != 0) {
         output.WriteRawTag(10);
-        output.WriteMessage(Connect);
+        output.WriteString(RoomId);
       }
-      if (dataCase_ == DataOneofCase.FrameData) {
-        output.WriteRawTag(18);
-        output.WriteMessage(FrameData);
+      if (RandomSeed != 0L) {
+        output.WriteRawTag(16);
+        output.WriteInt64(RandomSeed);
       }
-      if (dataCase_ == DataOneofCase.Disconnect) {
-        output.WriteRawTag(26);
-        output.WriteMessage(Disconnect);
-      }
+      playerIds_.WriteTo(ref output, _repeated_playerIds_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1343,15 +1269,13 @@ namespace Proto {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (dataCase_ == DataOneofCase.Connect) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Connect);
+      if (RoomId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(RoomId);
       }
-      if (dataCase_ == DataOneofCase.FrameData) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(FrameData);
+      if (RandomSeed != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(RandomSeed);
       }
-      if (dataCase_ == DataOneofCase.Disconnect) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Disconnect);
-      }
+      size += playerIds_.CalculateSize(_repeated_playerIds_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -1360,31 +1284,17 @@ namespace Proto {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(ClientMessage other) {
+    public void MergeFrom(GameStart other) {
       if (other == null) {
         return;
       }
-      switch (other.DataCase) {
-        case DataOneofCase.Connect:
-          if (Connect == null) {
-            Connect = new global::Proto.ConnectMessage();
-          }
-          Connect.MergeFrom(other.Connect);
-          break;
-        case DataOneofCase.FrameData:
-          if (FrameData == null) {
-            FrameData = new global::Proto.FrameData();
-          }
-          FrameData.MergeFrom(other.FrameData);
-          break;
-        case DataOneofCase.Disconnect:
-          if (Disconnect == null) {
-            Disconnect = new global::Proto.DisconnectMessage();
-          }
-          Disconnect.MergeFrom(other.Disconnect);
-          break;
+      if (other.RoomId.Length != 0) {
+        RoomId = other.RoomId;
       }
-
+      if (other.RandomSeed != 0L) {
+        RandomSeed = other.RandomSeed;
+      }
+      playerIds_.Add(other.playerIds_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -1405,30 +1315,15 @@ namespace Proto {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            global::Proto.ConnectMessage subBuilder = new global::Proto.ConnectMessage();
-            if (dataCase_ == DataOneofCase.Connect) {
-              subBuilder.MergeFrom(Connect);
-            }
-            input.ReadMessage(subBuilder);
-            Connect = subBuilder;
+            RoomId = input.ReadString();
             break;
           }
-          case 18: {
-            global::Proto.FrameData subBuilder = new global::Proto.FrameData();
-            if (dataCase_ == DataOneofCase.FrameData) {
-              subBuilder.MergeFrom(FrameData);
-            }
-            input.ReadMessage(subBuilder);
-            FrameData = subBuilder;
+          case 16: {
+            RandomSeed = input.ReadInt64();
             break;
           }
           case 26: {
-            global::Proto.DisconnectMessage subBuilder = new global::Proto.DisconnectMessage();
-            if (dataCase_ == DataOneofCase.Disconnect) {
-              subBuilder.MergeFrom(Disconnect);
-            }
-            input.ReadMessage(subBuilder);
-            Disconnect = subBuilder;
+            playerIds_.AddEntriesFrom(input, _repeated_playerIds_codec);
             break;
           }
         }
@@ -1451,380 +1346,15 @@ namespace Proto {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            global::Proto.ConnectMessage subBuilder = new global::Proto.ConnectMessage();
-            if (dataCase_ == DataOneofCase.Connect) {
-              subBuilder.MergeFrom(Connect);
-            }
-            input.ReadMessage(subBuilder);
-            Connect = subBuilder;
+            RoomId = input.ReadString();
             break;
           }
-          case 18: {
-            global::Proto.FrameData subBuilder = new global::Proto.FrameData();
-            if (dataCase_ == DataOneofCase.FrameData) {
-              subBuilder.MergeFrom(FrameData);
-            }
-            input.ReadMessage(subBuilder);
-            FrameData = subBuilder;
+          case 16: {
+            RandomSeed = input.ReadInt64();
             break;
           }
           case 26: {
-            global::Proto.DisconnectMessage subBuilder = new global::Proto.DisconnectMessage();
-            if (dataCase_ == DataOneofCase.Disconnect) {
-              subBuilder.MergeFrom(Disconnect);
-            }
-            input.ReadMessage(subBuilder);
-            Disconnect = subBuilder;
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  /// <summary>
-  /// 服务器消息
-  /// </summary>
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class ServerMessage : pb::IMessage<ServerMessage>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<ServerMessage> _parser = new pb::MessageParser<ServerMessage>(() => new ServerMessage());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<ServerMessage> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Proto.GameReflection.Descriptor.MessageTypes[5]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ServerMessage() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ServerMessage(ServerMessage other) : this() {
-      switch (other.DataCase) {
-        case DataOneofCase.ConnectSuccess:
-          ConnectSuccess = other.ConnectSuccess.Clone();
-          break;
-        case DataOneofCase.ServerFrame:
-          ServerFrame = other.ServerFrame.Clone();
-          break;
-        case DataOneofCase.DisconnectNotify:
-          DisconnectNotify = other.DisconnectNotify.Clone();
-          break;
-      }
-
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public ServerMessage Clone() {
-      return new ServerMessage(this);
-    }
-
-    /// <summary>Field number for the "connect_success" field.</summary>
-    public const int ConnectSuccessFieldNumber = 1;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Proto.ConnectMessage ConnectSuccess {
-      get { return dataCase_ == DataOneofCase.ConnectSuccess ? (global::Proto.ConnectMessage) data_ : null; }
-      set {
-        data_ = value;
-        dataCase_ = value == null ? DataOneofCase.None : DataOneofCase.ConnectSuccess;
-      }
-    }
-
-    /// <summary>Field number for the "server_frame" field.</summary>
-    public const int ServerFrameFieldNumber = 2;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Proto.ServerFrame ServerFrame {
-      get { return dataCase_ == DataOneofCase.ServerFrame ? (global::Proto.ServerFrame) data_ : null; }
-      set {
-        data_ = value;
-        dataCase_ = value == null ? DataOneofCase.None : DataOneofCase.ServerFrame;
-      }
-    }
-
-    /// <summary>Field number for the "disconnect_notify" field.</summary>
-    public const int DisconnectNotifyFieldNumber = 3;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Proto.DisconnectMessage DisconnectNotify {
-      get { return dataCase_ == DataOneofCase.DisconnectNotify ? (global::Proto.DisconnectMessage) data_ : null; }
-      set {
-        data_ = value;
-        dataCase_ = value == null ? DataOneofCase.None : DataOneofCase.DisconnectNotify;
-      }
-    }
-
-    private object data_;
-    /// <summary>Enum of possible cases for the "data" oneof.</summary>
-    public enum DataOneofCase {
-      None = 0,
-      ConnectSuccess = 1,
-      ServerFrame = 2,
-      DisconnectNotify = 3,
-    }
-    private DataOneofCase dataCase_ = DataOneofCase.None;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public DataOneofCase DataCase {
-      get { return dataCase_; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void ClearData() {
-      dataCase_ = DataOneofCase.None;
-      data_ = null;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as ServerMessage);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(ServerMessage other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (!object.Equals(ConnectSuccess, other.ConnectSuccess)) return false;
-      if (!object.Equals(ServerFrame, other.ServerFrame)) return false;
-      if (!object.Equals(DisconnectNotify, other.DisconnectNotify)) return false;
-      if (DataCase != other.DataCase) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (dataCase_ == DataOneofCase.ConnectSuccess) hash ^= ConnectSuccess.GetHashCode();
-      if (dataCase_ == DataOneofCase.ServerFrame) hash ^= ServerFrame.GetHashCode();
-      if (dataCase_ == DataOneofCase.DisconnectNotify) hash ^= DisconnectNotify.GetHashCode();
-      hash ^= (int) dataCase_;
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (dataCase_ == DataOneofCase.ConnectSuccess) {
-        output.WriteRawTag(10);
-        output.WriteMessage(ConnectSuccess);
-      }
-      if (dataCase_ == DataOneofCase.ServerFrame) {
-        output.WriteRawTag(18);
-        output.WriteMessage(ServerFrame);
-      }
-      if (dataCase_ == DataOneofCase.DisconnectNotify) {
-        output.WriteRawTag(26);
-        output.WriteMessage(DisconnectNotify);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (dataCase_ == DataOneofCase.ConnectSuccess) {
-        output.WriteRawTag(10);
-        output.WriteMessage(ConnectSuccess);
-      }
-      if (dataCase_ == DataOneofCase.ServerFrame) {
-        output.WriteRawTag(18);
-        output.WriteMessage(ServerFrame);
-      }
-      if (dataCase_ == DataOneofCase.DisconnectNotify) {
-        output.WriteRawTag(26);
-        output.WriteMessage(DisconnectNotify);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (dataCase_ == DataOneofCase.ConnectSuccess) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ConnectSuccess);
-      }
-      if (dataCase_ == DataOneofCase.ServerFrame) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ServerFrame);
-      }
-      if (dataCase_ == DataOneofCase.DisconnectNotify) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(DisconnectNotify);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(ServerMessage other) {
-      if (other == null) {
-        return;
-      }
-      switch (other.DataCase) {
-        case DataOneofCase.ConnectSuccess:
-          if (ConnectSuccess == null) {
-            ConnectSuccess = new global::Proto.ConnectMessage();
-          }
-          ConnectSuccess.MergeFrom(other.ConnectSuccess);
-          break;
-        case DataOneofCase.ServerFrame:
-          if (ServerFrame == null) {
-            ServerFrame = new global::Proto.ServerFrame();
-          }
-          ServerFrame.MergeFrom(other.ServerFrame);
-          break;
-        case DataOneofCase.DisconnectNotify:
-          if (DisconnectNotify == null) {
-            DisconnectNotify = new global::Proto.DisconnectMessage();
-          }
-          DisconnectNotify.MergeFrom(other.DisconnectNotify);
-          break;
-      }
-
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            global::Proto.ConnectMessage subBuilder = new global::Proto.ConnectMessage();
-            if (dataCase_ == DataOneofCase.ConnectSuccess) {
-              subBuilder.MergeFrom(ConnectSuccess);
-            }
-            input.ReadMessage(subBuilder);
-            ConnectSuccess = subBuilder;
-            break;
-          }
-          case 18: {
-            global::Proto.ServerFrame subBuilder = new global::Proto.ServerFrame();
-            if (dataCase_ == DataOneofCase.ServerFrame) {
-              subBuilder.MergeFrom(ServerFrame);
-            }
-            input.ReadMessage(subBuilder);
-            ServerFrame = subBuilder;
-            break;
-          }
-          case 26: {
-            global::Proto.DisconnectMessage subBuilder = new global::Proto.DisconnectMessage();
-            if (dataCase_ == DataOneofCase.DisconnectNotify) {
-              subBuilder.MergeFrom(DisconnectNotify);
-            }
-            input.ReadMessage(subBuilder);
-            DisconnectNotify = subBuilder;
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            global::Proto.ConnectMessage subBuilder = new global::Proto.ConnectMessage();
-            if (dataCase_ == DataOneofCase.ConnectSuccess) {
-              subBuilder.MergeFrom(ConnectSuccess);
-            }
-            input.ReadMessage(subBuilder);
-            ConnectSuccess = subBuilder;
-            break;
-          }
-          case 18: {
-            global::Proto.ServerFrame subBuilder = new global::Proto.ServerFrame();
-            if (dataCase_ == DataOneofCase.ServerFrame) {
-              subBuilder.MergeFrom(ServerFrame);
-            }
-            input.ReadMessage(subBuilder);
-            ServerFrame = subBuilder;
-            break;
-          }
-          case 26: {
-            global::Proto.DisconnectMessage subBuilder = new global::Proto.DisconnectMessage();
-            if (dataCase_ == DataOneofCase.DisconnectNotify) {
-              subBuilder.MergeFrom(DisconnectNotify);
-            }
-            input.ReadMessage(subBuilder);
-            DisconnectNotify = subBuilder;
+            playerIds_.AddEntriesFrom(ref input, _repeated_playerIds_codec);
             break;
           }
         }
