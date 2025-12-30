@@ -13,7 +13,7 @@ using Proto;
 /// 帧同步网络管理器
 /// 处理格式：len(4 bytes) + messageType(1 byte) + byte[]
 /// </summary>
-public class FrameSyncNetwork :SingletonMono<PredictionRollbackManager>
+public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
 {
     [Header("服务器设置")]
     public string serverIP = "127.0.0.1";

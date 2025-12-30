@@ -8,41 +8,26 @@ using Proto;
 /// </summary>
 public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 {
-    [Header("网络设置")]
-    private FrameSyncNetwork networkManager;
-    
-    [Header("预测回滚设置")]
-    private PredictionRollbackManager predictionManager;
-    
-    [Header("玩家设置")]
-    public GameObject playerPrefab;
+    private FrameSyncNetwork networkManager => FrameSyncNetwork.Instance;
+
+    private PredictionRollbackManager predictionManager => PredictionRollbackManager.Instance;
+
+    [Header("玩家设置")] public GameObject playerPrefab;
     public float speed = 0.1f;
 
     // 玩家对象映射
     private Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
-    private GameObject myPlayer;
-    
+
     // 输入处理
     private InputDirection currentDirection = InputDirection.DirectionNone;
     private long localFrameNumber = 0;
 
+    public GameObject myPlayer;
+
+    bool canMove = true;
+
     void Start()
     {
-        // 获取或创建网络管理器
-        networkManager = FindObjectOfType<FrameSyncNetwork>();
-        if (networkManager == null)
-        {
-            GameObject networkObj = new GameObject("FrameSyncNetwork");
-            networkManager = networkObj.AddComponent<FrameSyncNetwork>();
-        }
-
-        // 获取或创建预测回滚管理器
-        predictionManager = GetComponent<PredictionRollbackManager>();
-        if (predictionManager == null)
-        {
-            predictionManager = gameObject.AddComponent<PredictionRollbackManager>();
-        }
-
         // 设置服务器信息
         networkManager.serverIP = "127.0.0.1";
         networkManager.serverPort = 8088;
@@ -62,43 +47,45 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     {
         if (!networkManager.isGameStarted)
             return;
+        if (canMove)
+        {
+            // 检测输入
+            InputDirection newDirection = InputDirection.DirectionNone;
 
-        // 检测输入
-        InputDirection newDirection = InputDirection.DirectionNone;
-        
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-        {
-            newDirection = InputDirection.DirectionUp;
-        }
-        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-        {
-            newDirection = InputDirection.DirectionDown;
-        }
-        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-        {
-            newDirection = InputDirection.DirectionLeft;
-        }
-        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-        {
-            newDirection = InputDirection.DirectionRight;
-        }
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+            {
+                newDirection = InputDirection.DirectionUp;
+            }
+            else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+            {
+                newDirection = InputDirection.DirectionDown;
+            }
+            else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+            {
+                newDirection = InputDirection.DirectionLeft;
+            }
+            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+            {
+                newDirection = InputDirection.DirectionRight;
+            }
 
-        // 如果输入改变或需要发送输入，进行客户端预测
-        // 注意：在实际帧同步中，应该在固定时间间隔发送输入，这里简化处理
-        if (newDirection != currentDirection)
-        {
+            // 如果输入改变或需要发送输入，进行客户端预测
+            // 注意：在实际帧同步中，应该在固定时间间隔发送输入，这里简化处理
+
             currentDirection = newDirection;
-            
+
             // 发送输入到服务器
             networkManager.SendFrameData(currentDirection);
-            
+
             // 客户端预测：立即执行输入
             if (predictionManager != null && predictionManager.enablePredictionRollback)
             {
                 localFrameNumber++;
                 predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, localFrameNumber);
             }
+            canMove =  false;
         }
+        
     }
 
     void OnDestroy()
@@ -139,31 +126,31 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     {
         Debug.Log($"Game started! Room: {gameStart.RoomId}, Random Seed: {gameStart.RandomSeed}");
         Debug.Log($"Players in game: {string.Join(", ", gameStart.PlayerIds)}");
-        
+
         // 创建玩家对象
         playerObjects.Clear();
-        
+
         foreach (var playerId in gameStart.PlayerIds)
         {
             Vector3 startPos = new Vector3((playerId - 1) * 2f, 0, 0);
             GameObject player = Instantiate(playerPrefab, startPos, Quaternion.identity);
             playerObjects[playerId] = player;
-            
+
             // 注册到预测管理器
             if (predictionManager != null)
             {
                 predictionManager.RegisterPlayer(playerId, player);
             }
-            
+
             if (playerId == networkManager.myPlayerID)
             {
                 myPlayer = player;
             }
         }
-        
+
         // 初始化随机种子
         Random.InitState((int)gameStart.RandomSeed);
-        
+
         // 保存初始状态快照
         if (predictionManager != null)
         {
@@ -189,6 +176,7 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
             {
                 inputs[frameData.PlayerId] = frameData.Direction;
             }
+
             ExecuteFrame(inputs, serverFrame.FrameNumber);
         }
     }
@@ -202,12 +190,17 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         {
             int playerId = kvp.Key;
             InputDirection direction = kvp.Value;
-            
+
             if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
             {
                 UpdatePlayerState(playerObjects[playerId], direction);
+                UpdateInputState();
             }
         }
+    }
+    void UpdateInputState()
+    {
+        canMove = true;
     }
 
     /// <summary>
