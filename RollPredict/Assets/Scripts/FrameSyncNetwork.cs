@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading;
+using Frame.Core;
 using UnityEngine;
 using Google.Protobuf;
 using Proto;
@@ -12,7 +13,7 @@ using Proto;
 /// 帧同步网络管理器
 /// 处理格式：len(4 bytes) + messageType(1 byte) + byte[]
 /// </summary>
-public class FrameSyncNetwork : MonoBehaviour
+public class FrameSyncNetwork :SingletonMono<PredictionRollbackManager>
 {
     [Header("服务器设置")]
     public string serverIP = "127.0.0.1";

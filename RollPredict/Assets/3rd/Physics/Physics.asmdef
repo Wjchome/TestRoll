@@ -1,0 +1,19 @@
+{
+    "name": "Physics",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.CoreModule",
+        "Fix",
+        "Frame"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
+

@@ -1,0 +1,21 @@
+{
+    "name": "com.yourcompany.frame",
+    "version": "0.0.1",
+    "displayName": "Frame",
+    "description": "Unity 框架插件 - 包含基础工具类、定点数数学库和物理系统",
+    "unity": "2020.3",
+    "keywords": [
+        "framework",
+        "singleton",
+        "object-pool",
+        "fixed-point",
+        "physics",
+        "frame-sync"
+    ],
+    "author": {
+        "name": "wjc",
+        "email": "334434317@qq.com"
+    },
+    "dependencies": {}
+}
+

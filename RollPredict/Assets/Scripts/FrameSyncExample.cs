@@ -1,19 +1,30 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Proto;
 
 /// <summary>
-/// 帧同步网络使用示例
-/// 展示如何连接服务器、发送输入、接收帧数据
+/// 帧同步网络使用示例（支持预测回滚）
+/// 展示如何连接服务器、发送输入、接收帧数据，并实现客户端预测和回滚
 /// </summary>
-public class FrameSyncExample : MonoBehaviour
+public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 {
+    [Header("网络设置")]
     private FrameSyncNetwork networkManager;
-    private InputDirection currentDirection = InputDirection.DirectionNone;
-
+    
+    [Header("预测回滚设置")]
+    private PredictionRollbackManager predictionManager;
+    
+    [Header("玩家设置")]
     public GameObject playerPrefab;
+    public float speed = 0.1f;
 
-    public GameObject myPlayer;
-    public GameObject otherPlayer;
+    // 玩家对象映射
+    private Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
+    private GameObject myPlayer;
+    
+    // 输入处理
+    private InputDirection currentDirection = InputDirection.DirectionNone;
+    private long localFrameNumber = 0;
 
     void Start()
     {
@@ -23,6 +34,13 @@ public class FrameSyncExample : MonoBehaviour
         {
             GameObject networkObj = new GameObject("FrameSyncNetwork");
             networkManager = networkObj.AddComponent<FrameSyncNetwork>();
+        }
+
+        // 获取或创建预测回滚管理器
+        predictionManager = GetComponent<PredictionRollbackManager>();
+        if (predictionManager == null)
+        {
+            predictionManager = gameObject.AddComponent<PredictionRollbackManager>();
         }
 
         // 设置服务器信息
@@ -42,21 +60,44 @@ public class FrameSyncExample : MonoBehaviour
 
     void Update()
     {
+        if (!networkManager.isGameStarted)
+            return;
+
+        // 检测输入
+        InputDirection newDirection = InputDirection.DirectionNone;
+        
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
-            currentDirection = InputDirection.DirectionUp;
+            newDirection = InputDirection.DirectionUp;
         }
         else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
-            currentDirection = InputDirection.DirectionDown;
+            newDirection = InputDirection.DirectionDown;
         }
         else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
         {
-            currentDirection = InputDirection.DirectionLeft;
+            newDirection = InputDirection.DirectionLeft;
         }
         else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
         {
-            currentDirection = InputDirection.DirectionRight;
+            newDirection = InputDirection.DirectionRight;
+        }
+
+        // 如果输入改变或需要发送输入，进行客户端预测
+        // 注意：在实际帧同步中，应该在固定时间间隔发送输入，这里简化处理
+        if (newDirection != currentDirection)
+        {
+            currentDirection = newDirection;
+            
+            // 发送输入到服务器
+            networkManager.SendFrameData(currentDirection);
+            
+            // 客户端预测：立即执行输入
+            if (predictionManager != null && predictionManager.enablePredictionRollback)
+            {
+                localFrameNumber++;
+                predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, localFrameNumber);
+            }
         }
     }
 
@@ -85,6 +126,10 @@ public class FrameSyncExample : MonoBehaviour
     private void OnDisconnected()
     {
         Debug.Log("Disconnected from server");
+        if (predictionManager != null)
+        {
+            predictionManager.ClearHistory();
+        }
     }
 
     /// <summary>
@@ -94,8 +139,36 @@ public class FrameSyncExample : MonoBehaviour
     {
         Debug.Log($"Game started! Room: {gameStart.RoomId}, Random Seed: {gameStart.RandomSeed}");
         Debug.Log($"Players in game: {string.Join(", ", gameStart.PlayerIds)}");
-        myPlayer = Instantiate(playerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
-        otherPlayer = Instantiate(playerPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+        
+        // 创建玩家对象
+        playerObjects.Clear();
+        
+        foreach (var playerId in gameStart.PlayerIds)
+        {
+            Vector3 startPos = new Vector3((playerId - 1) * 2f, 0, 0);
+            GameObject player = Instantiate(playerPrefab, startPos, Quaternion.identity);
+            playerObjects[playerId] = player;
+            
+            // 注册到预测管理器
+            if (predictionManager != null)
+            {
+                predictionManager.RegisterPlayer(playerId, player);
+            }
+            
+            if (playerId == networkManager.myPlayerID)
+            {
+                myPlayer = player;
+            }
+        }
+        
+        // 初始化随机种子
+        Random.InitState((int)gameStart.RandomSeed);
+        
+        // 保存初始状态快照
+        if (predictionManager != null)
+        {
+            predictionManager.SaveSnapshot(0);
+        }
     }
 
     /// <summary>
@@ -103,57 +176,64 @@ public class FrameSyncExample : MonoBehaviour
     /// </summary>
     private void OnServerFrameReceived(ServerFrame serverFrame)
     {
-        if (currentDirection != InputDirection.DirectionNone)
+        // 使用预测回滚管理器处理服务器帧
+        if (predictionManager != null && predictionManager.enablePredictionRollback)
         {
-            networkManager.SendFrameData(currentDirection);
+            predictionManager.ProcessServerFrame(serverFrame);
         }
-
-
-        currentDirection = InputDirection.DirectionNone;
-
-
-        // 处理所有玩家的输入数据
-        foreach (var frameData in serverFrame.FrameDatas)
+        else
         {
-            if (frameData.PlayerId == networkManager.myPlayerID)
+            // 如果不使用预测回滚，直接执行服务器帧
+            var inputs = new Dictionary<int, InputDirection>();
+            foreach (var frameData in serverFrame.FrameDatas)
             {
-                UpdatePlayerState(myPlayer,frameData);
+                inputs[frameData.PlayerId] = frameData.Direction;
             }
-            else
+            ExecuteFrame(inputs, serverFrame.FrameNumber);
+        }
+    }
+
+    /// <summary>
+    /// 实现IGameLogicExecutor接口：执行一帧游戏逻辑
+    /// </summary>
+    public void ExecuteFrame(Dictionary<int, InputDirection> inputs, long frameNumber)
+    {
+        foreach (var kvp in inputs)
+        {
+            int playerId = kvp.Key;
+            InputDirection direction = kvp.Value;
+            
+            if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
             {
-                UpdatePlayerState(otherPlayer,frameData);
+                UpdatePlayerState(playerObjects[playerId], direction);
             }
         }
     }
 
-    public float speed = 0.1f;
-
     /// <summary>
-    /// 根据帧数据更新玩家状态
+    /// 根据输入更新玩家状态
     /// </summary>
-    private void UpdatePlayerState(GameObject player, FrameData frameData)
+    private void UpdatePlayerState(GameObject player, InputDirection direction)
     {
-        // 根据 frameData 更新对应玩家的位置、状态等
-        // 这里只是示例，实际实现需要根据游戏逻辑来写
+        if (player == null)
+            return;
 
-
-        switch (frameData.Direction)
+        switch (direction)
         {
             case InputDirection.DirectionUp:
                 player.transform.position += Vector3.up * speed;
-                // 向上移动
                 break;
             case InputDirection.DirectionDown:
                 player.transform.position += Vector3.down * speed;
-                // 向下移动
                 break;
             case InputDirection.DirectionLeft:
                 player.transform.position += Vector3.left * speed;
-                // 向左移动
                 break;
             case InputDirection.DirectionRight:
                 player.transform.position += Vector3.right * speed;
-                // 向右移动
+                break;
+            case InputDirection.DirectionNone:
+                // 无输入，不移动
                 break;
         }
     }
