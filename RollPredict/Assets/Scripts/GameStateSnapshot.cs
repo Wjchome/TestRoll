@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Frame.FixMath;
 using UnityEngine;
 using Proto;
 
@@ -37,10 +38,10 @@ public class GameStateSnapshot
 public class PlayerState
 {
     public int playerId;
-    public Vector3 position;
+    public FixVector3 position;
     public Quaternion rotation;
 
-    public PlayerState(int playerId, Vector3 position, Quaternion rotation)
+    public PlayerState(int playerId, FixVector3 position, Quaternion rotation)
     {
         this.playerId = playerId;
         this.position = position;

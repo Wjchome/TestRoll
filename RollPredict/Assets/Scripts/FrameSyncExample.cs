@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Frame.FixMath;
 using UnityEngine;
 using Proto;
 
@@ -14,9 +15,9 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 
     [Header("玩家设置")] public GameObject playerPrefab;
     public float speed = 0.1f;
+    public Fix64 speedF => (Fix64)speed;
 
-    // 玩家对象映射
-    private Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
+
 
     // 输入处理
     public InputDirection currentDirection;
@@ -41,12 +42,19 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         // 连接服务器
         networkManager.Connect();
     }
-
+    public float smoothTime = 5;
     void Update()
     {
         if (!networkManager.isGameStarted)
             return;
 
+        foreach (var kvp in predictionManager.playerObjects)
+        {
+            int id = kvp.Key;
+            kvp.Value.transform.position =Vector3.Lerp(kvp.Value.transform.position,  (Vector3)predictionManager.player2Pos[id],Time.deltaTime * smoothTime);
+            //kvp.Value.transform.position = (Vector3)predictionManager.player2Pos[id];
+        }
+        
         // 检测输入
         InputDirection newDirection = InputDirection.DirectionNone;
 
@@ -75,13 +83,13 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         if (canSend)
         {
             UpdateInputStatePredict();
-        
+
             // 然后发送输入到服务器
             networkManager.SendFrameData(currentDirection);
 
             // 重置输入状态，等待下一帧收集新输入
             currentDirection = InputDirection.DirectionNone;
-            
+
             canSend = false;
         }
     }
@@ -125,20 +133,18 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         Debug.Log($"Game started! Room: {gameStart.RoomId}, Random Seed: {gameStart.RandomSeed}");
         Debug.Log($"Players in game: {string.Join(", ", gameStart.PlayerIds)}");
 
-        // 创建玩家对象
-        playerObjects.Clear();
-        int index = 1;
+
+        Fix64 index = Fix64.Zero;
         foreach (var playerId in gameStart.PlayerIds)
         {
-            Vector3 startPos = new Vector3(index++ * 2f, 0, 0);
+            var pos= new FixVector3(index, Fix64.Zero, Fix64.Zero);
+            index += Fix64.One;
+            Vector3 startPos = new Vector3((int)index, 0, 0);
             GameObject player = Instantiate(playerPrefab, startPos, Quaternion.identity);
-            playerObjects[playerId] = player;
 
-            // 注册到预测管理器
-            if (predictionManager != null)
-            {
-                predictionManager.RegisterPlayer(playerId, player);
-            }
+
+            predictionManager.RegisterPlayer(playerId, player, pos);
+
 
             if (playerId == networkManager.myPlayerID)
             {
@@ -183,8 +189,8 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 
             ExecuteFrame(inputs, serverFrame.FrameNumber);
         }
+
         UpdateInputState();
-        
     }
 
     /// <summary>
@@ -197,12 +203,10 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
             int playerId = kvp.Key;
             InputDirection direction = kvp.Value;
 
-            if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
-            {
-                UpdatePlayerState(playerObjects[playerId], direction);
-            }
+            
+                UpdatePlayerState(playerId, direction);
+            
         }
-
     }
 
     void UpdateInputStatePredict()
@@ -218,6 +222,7 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     }
 
     private bool canSend = false;
+
     /// <summary>
     /// 更新输入状态：先预测，再发送输入
     /// 确保一帧只发送一次输入
@@ -226,30 +231,26 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     void UpdateInputState()
     {
         canSend = true;
-       
     }
 
     /// <summary>
     /// 根据输入更新玩家状态
     /// </summary>
-    private void UpdatePlayerState(GameObject player, InputDirection direction)
+    private void UpdatePlayerState(int player, InputDirection direction)
     {
-        if (player == null)
-            return;
-
         switch (direction)
         {
             case InputDirection.DirectionUp:
-                player.transform.position += Vector3.up * speed;
+                predictionManager.player2Pos[player] += FixVector3.Up * speedF;
                 break;
             case InputDirection.DirectionDown:
-                player.transform.position += Vector3.down * speed;
+                predictionManager.player2Pos[player] += FixVector3.Down * speedF;
                 break;
             case InputDirection.DirectionLeft:
-                player.transform.position += Vector3.left * speed;
+                predictionManager.player2Pos[player] += FixVector3.Left * speedF;
                 break;
             case InputDirection.DirectionRight:
-                player.transform.position += Vector3.right * speed;
+                predictionManager.player2Pos[player] += FixVector3.Right * speedF;
                 break;
             case InputDirection.DirectionNone:
                 // 无输入，不移动

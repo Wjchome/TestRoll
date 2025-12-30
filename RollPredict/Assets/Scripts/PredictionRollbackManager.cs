@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Frame.Core;
+using Frame.FixMath;
 using UnityEngine;
 using Proto;
 
@@ -28,7 +29,8 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     private long predictedFrame = 0;
 
     // 玩家对象映射
-    private Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
+    public Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
+    public Dictionary<int, FixVector3> player2Pos= new Dictionary<int, FixVector3>();
 
     // 游戏逻辑执行器
     private IGameLogicExecutor gameLogicExecutor;
@@ -49,9 +51,10 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     /// <summary>
     /// 注册玩家对象
     /// </summary>
-    public void RegisterPlayer(int playerId, GameObject playerObject)
+    public void RegisterPlayer(int playerId, GameObject playerObject,FixVector3 position)
     {
         playerObjects[playerId] = playerObject;
+        player2Pos[playerId] = position;
     }
 
     /// <summary>
@@ -72,7 +75,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             {
                 snapshot.playerStates[playerId] = new PlayerState(
                     playerId,
-                    playerObj.transform.position,
+                    player2Pos[playerId],
                     playerObj.transform.rotation
                 );
             }
@@ -124,7 +127,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
             if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
             {
-                playerObjects[playerId].transform.position = playerState.position;
+                player2Pos[playerId] = playerState.position;
                 playerObjects[playerId].transform.rotation = playerState.rotation;
             }
         }
