@@ -20,7 +20,7 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 
     // 输入处理
     public InputDirection currentDirection;
-    private long localFrameNumber = 0;
+    private long lastConfirmedFrame = -1; // 最后确认的服务器帧号
 
     public GameObject myPlayer;
 
@@ -68,15 +68,21 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         }
 
 
+        // 只收集输入，不立即预测
+        // 预测将在收到服务器帧确认后，在UpdateInputState中执行
         if (newDirection != InputDirection.DirectionNone)
             currentDirection = newDirection;
-
-
-        // 客户端预测：立即执行输入
-        if (predictionManager != null && predictionManager.enablePredictionRollback)
+        if (canSend)
         {
-            localFrameNumber++;
-            predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, localFrameNumber);
+            UpdateInputStatePredict();
+        
+            // 然后发送输入到服务器
+            networkManager.SendFrameData(currentDirection);
+
+            // 重置输入状态，等待下一帧收集新输入
+            currentDirection = InputDirection.DirectionNone;
+            
+            canSend = false;
         }
     }
 
@@ -143,6 +149,9 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         // 初始化随机种子
         Random.InitState((int)gameStart.RandomSeed);
 
+        // 初始化帧号（从0开始，第一帧将是1）
+        lastConfirmedFrame = 0;
+
         // 保存初始状态快照
         if (predictionManager != null)
         {
@@ -155,6 +164,9 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     /// </summary>
     private void OnServerFrameReceived(ServerFrame serverFrame)
     {
+        // 更新最后确认的帧号
+        lastConfirmedFrame = serverFrame.FrameNumber;
+
         // 使用预测回滚管理器处理服务器帧
         if (predictionManager != null && predictionManager.enablePredictionRollback)
         {
@@ -171,6 +183,8 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 
             ExecuteFrame(inputs, serverFrame.FrameNumber);
         }
+        UpdateInputState();
+        
     }
 
     /// <summary>
@@ -189,21 +203,30 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
             }
         }
 
-        UpdateInputState();
     }
 
+    void UpdateInputStatePredict()
+    {
+        // 如果启用预测回滚，先执行客户端预测（在发送前）
+        if (predictionManager != null && predictionManager.enablePredictionRollback)
+        {
+            // 使用下一帧号进行预测（基于最后确认的服务器帧号）
+            long nextFrameNumber = lastConfirmedFrame + 1;
+            // 先预测，让玩家立即看到效果
+            predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, nextFrameNumber);
+        }
+    }
+
+    private bool canSend = false;
+    /// <summary>
+    /// 更新输入状态：先预测，再发送输入
+    /// 确保一帧只发送一次输入
+    /// 预测回滚的核心：在发送前就预测，让玩家感觉操作是即时的
+    /// </summary>
     void UpdateInputState()
     {
-        // if (inputQueue.Count > 0)
-        // {
-        //     networkManager.SendFrameData(inputQueue.Dequeue());
-        //     if (inputQueue.Count > maxInputBuffer)
-        //     {
-        //         in
-        //     }
-        // }
-        networkManager.SendFrameData(currentDirection);
-        currentDirection = InputDirection.DirectionNone;
+        canSend = true;
+       
     }
 
     /// <summary>

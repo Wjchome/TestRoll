@@ -10,18 +10,16 @@ using Proto;
 /// </summary>
 public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager>
 {
-    [Header("配置")]
-    [Tooltip("最大保存的快照数量")]
-    public int maxSnapshots = 100;
-    
-    [Tooltip("是否启用预测回滚")]
-    public bool enablePredictionRollback = true;
+    [Header("配置")] [Tooltip("最大保存的快照数量")] public int maxSnapshots = 100;
+
+    [Tooltip("是否启用预测回滚")] public bool enablePredictionRollback = true;
 
     // 快照历史（按帧号索引）状态
     private Dictionary<long, GameStateSnapshot> snapshotHistory = new Dictionary<long, GameStateSnapshot>();
 
     // 输入历史（按帧号索引）输入
-    private Dictionary<long, Dictionary<int, InputDirection>> inputHistory = new Dictionary<long, Dictionary<int, InputDirection>>();
+    private Dictionary<long, Dictionary<int, InputDirection>> inputHistory =
+        new Dictionary<long, Dictionary<int, InputDirection>>();
 
     // 当前确认的服务器帧号
     private long confirmedServerFrame = -1;
@@ -65,7 +63,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             return;
 
         var snapshot = new GameStateSnapshot(frameNumber);
-        
+
         foreach (var kvp in playerObjects)
         {
             var playerId = kvp.Key;
@@ -88,7 +86,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             var framesToRemove = new List<long>();
             var sortedFrames = new List<long>(snapshotHistory.Keys);
             sortedFrames.Sort();
-            
+
             int removeCount = sortedFrames.Count - maxSnapshots;
             for (int i = 0; i < removeCount; i++)
             {
@@ -118,12 +116,12 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         }
 
         var snapshot = snapshotHistory[frameNumber];
-        
+
         foreach (var kvp in snapshot.playerStates)
         {
             var playerId = kvp.Key;
             var playerState = kvp.Value;
-            
+
             if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
             {
                 playerObjects[playerId].transform.position = playerState.position;
@@ -157,6 +155,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         {
             return new Dictionary<int, InputDirection>(inputHistory[frameNumber]);
         }
+
         return new Dictionary<int, InputDirection>();
     }
 
@@ -174,7 +173,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             SaveSnapshot(frameNumber - 1);
         }
 
-        // 保存输入
+        // 保存输入 这个输入是假的，可能会被覆盖
         SaveInput(frameNumber, playerId, direction);
 
         // 执行预测
@@ -184,7 +183,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             gameLogicExecutor.ExecuteFrame(inputs, frameNumber);
         }
 
-        // 保存预测后的状态快照
+        // 保存预测后的状态快照 这个状态也是假的
         SaveSnapshot(frameNumber);
 
         predictedFrame = Math.Max(predictedFrame, frameNumber);
@@ -198,23 +197,12 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     {
         if (!enablePredictionRollback)
         {
-            // 如果不启用预测回滚，直接执行服务器帧
-            if (gameLogicExecutor != null)
-            {
-                var inputs = new Dictionary<int, InputDirection>();
-                foreach (var frameData in serverFrame.FrameDatas)
-                {
-                    inputs[frameData.PlayerId] = frameData.Direction;
-                }
-                gameLogicExecutor.ExecuteFrame(inputs, serverFrame.FrameNumber);
-            }
-            confirmedServerFrame = serverFrame.FrameNumber;
             return;
         }
 
         long serverFrameNumber = serverFrame.FrameNumber;
 
-        // 如果服务器帧号小于等于已确认的帧号，忽略（可能是重复或延迟的帧）
+        // 比如发消息时帧 1，预测帧 2 ，收到消息帧1 ，重复接受
         if (serverFrameNumber <= confirmedServerFrame)
         {
             return;
@@ -223,14 +211,13 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         // 检查是否需要回滚
         bool needRollback = false;
         long rollbackToFrame = confirmedServerFrame;
-
-        // 如果服务器帧号跳跃了（大于预测帧+1），需要回滚
-        if (serverFrameNumber > predictedFrame + 1)
+        // 比如发消息时帧 1，预测帧 2 ，收到消息帧3 ，这他妈是少接受了一帧，需要请求 2，3，稍后处理
+        if (serverFrameNumber > predictedFrame)
         {
             needRollback = true;
             rollbackToFrame = confirmedServerFrame;
         }
-        // 如果服务器帧号在预测范围内，检查输入是否一致
+        // 比如发消息时帧 1，预测帧 2 ，收到消息帧2 ，需要对比一下帧是否正确
         else if (serverFrameNumber <= predictedFrame)
         {
             // 检查服务器帧中的输入是否与本地预测一致
@@ -239,20 +226,27 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
                 var playerId = serverFrameData.PlayerId;
                 var serverInput = serverFrameData.Direction;
 
-                if (inputHistory.ContainsKey(serverFrameNumber) && 
+                if (inputHistory.ContainsKey(serverFrameNumber) &&
                     inputHistory[serverFrameNumber].ContainsKey(playerId))
                 {
-                    var predictedInput = inputHistory[serverFrameNumber][playerId];
+                    InputDirection predictedInput = inputHistory[serverFrameNumber][playerId];
                     if (predictedInput != serverInput)
                     {
                         needRollback = true;
                         rollbackToFrame = Math.Max(rollbackToFrame, serverFrameNumber - 1);
+                        break;
                     }
+                }
+                else
+                {
+                    needRollback = true;
+                    rollbackToFrame = Math.Max(rollbackToFrame, serverFrameNumber - 1);
+                    break;
                 }
             }
         }
-
-        // 执行回滚
+        // 运行到这里的时候，confirmedServerFrame = 1  rollbackToFrame = 1 predictedFrame = 2  serverFrameNumber = 2 
+        // 执行回滚 复原状态到 rollbackToFrame
         if (needRollback && rollbackToFrame >= 0 && snapshotHistory.ContainsKey(rollbackToFrame))
         {
             RollbackToFrame(rollbackToFrame);
@@ -273,6 +267,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             {
                 gameLogicExecutor.ExecuteFrame(inputs, frame);
             }
+
             SaveSnapshot(frame);
         }
 
@@ -280,8 +275,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         confirmedServerFrame = serverFrameNumber;
         predictedFrame = serverFrameNumber;
 
-        // 预测未来帧（如果有未确认的输入）
-        PredictFutureFrames();
+
     }
 
     /// <summary>
@@ -298,14 +292,6 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         LoadSnapshot(frameNumber);
     }
 
-    /// <summary>
-    /// 预测未来帧（基于本地输入）
-    /// </summary>
-    private void PredictFutureFrames()
-    {
-        // 这里可以添加逻辑来预测未来帧
-        // 例如：如果客户端有未发送的输入，可以提前预测
-    }
 
     /// <summary>
     /// 获取当前确认的服务器帧号
@@ -348,4 +334,3 @@ public interface IGameLogicExecutor
     /// <param name="frameNumber">帧号</param>
     void ExecuteFrame(Dictionary<int, InputDirection> inputs, long frameNumber);
 }
-
