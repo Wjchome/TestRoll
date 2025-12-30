@@ -42,6 +42,9 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     public System.Action<long> OnConnected;
     public System.Action<GameStart> OnGameStarted;
     public System.Action OnDisconnected;
+    
+    
+    public float delayTime = 0.0f;
 
     void Start()
     {
@@ -155,6 +158,15 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
         if (!isConnected || stream == null)
             return;
 
+        StartCoroutine(SendMessagesWithDelay(messageType, msg));
+        
+   
+    }
+
+    
+    IEnumerator SendMessagesWithDelay(MessageType messageType, IMessage msg)
+    {
+        yield return new WaitForSeconds(delayTime);
         try
         {
             // 序列化 protobuf 消息

@@ -19,12 +19,11 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     private Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
 
     // 输入处理
-    private InputDirection currentDirection = InputDirection.DirectionNone;
+    public InputDirection currentDirection;
     private long localFrameNumber = 0;
 
     public GameObject myPlayer;
 
-    bool canMove = true;
 
     void Start()
     {
@@ -47,45 +46,38 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     {
         if (!networkManager.isGameStarted)
             return;
-        if (canMove)
+
+        // 检测输入
+        InputDirection newDirection = InputDirection.DirectionNone;
+
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
-            // 检测输入
-            InputDirection newDirection = InputDirection.DirectionNone;
+            newDirection = InputDirection.DirectionUp;
+        }
+        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        {
+            newDirection = InputDirection.DirectionDown;
+        }
+        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        {
+            newDirection = InputDirection.DirectionLeft;
+        }
+        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        {
+            newDirection = InputDirection.DirectionRight;
+        }
 
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-            {
-                newDirection = InputDirection.DirectionUp;
-            }
-            else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-            {
-                newDirection = InputDirection.DirectionDown;
-            }
-            else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-            {
-                newDirection = InputDirection.DirectionLeft;
-            }
-            else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-            {
-                newDirection = InputDirection.DirectionRight;
-            }
 
-            // 如果输入改变或需要发送输入，进行客户端预测
-            // 注意：在实际帧同步中，应该在固定时间间隔发送输入，这里简化处理
-
+        if (newDirection != InputDirection.DirectionNone)
             currentDirection = newDirection;
 
-            // 发送输入到服务器
-            networkManager.SendFrameData(currentDirection);
 
-            // 客户端预测：立即执行输入
-            if (predictionManager != null && predictionManager.enablePredictionRollback)
-            {
-                localFrameNumber++;
-                predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, localFrameNumber);
-            }
-            canMove =  false;
+        // 客户端预测：立即执行输入
+        if (predictionManager != null && predictionManager.enablePredictionRollback)
+        {
+            localFrameNumber++;
+            predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, localFrameNumber);
         }
-        
     }
 
     void OnDestroy()
@@ -129,10 +121,10 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
 
         // 创建玩家对象
         playerObjects.Clear();
-
+        int index = 1;
         foreach (var playerId in gameStart.PlayerIds)
         {
-            Vector3 startPos = new Vector3((playerId - 1) * 2f, 0, 0);
+            Vector3 startPos = new Vector3(index++ * 2f, 0, 0);
             GameObject player = Instantiate(playerPrefab, startPos, Quaternion.identity);
             playerObjects[playerId] = player;
 
@@ -194,13 +186,24 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
             if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
             {
                 UpdatePlayerState(playerObjects[playerId], direction);
-                UpdateInputState();
             }
         }
+
+        UpdateInputState();
     }
+
     void UpdateInputState()
     {
-        canMove = true;
+        // if (inputQueue.Count > 0)
+        // {
+        //     networkManager.SendFrameData(inputQueue.Dequeue());
+        //     if (inputQueue.Count > maxInputBuffer)
+        //     {
+        //         in
+        //     }
+        // }
+        networkManager.SendFrameData(currentDirection);
+        currentDirection = InputDirection.DirectionNone;
     }
 
     /// <summary>
