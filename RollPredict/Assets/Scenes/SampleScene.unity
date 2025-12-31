@@ -174,7 +174,7 @@ MonoBehaviour:
   isConnected: 0
   isGameStarted: 0
   myPlayerID: 20
-  delayTime: 0.1
+  delayTime: 1
 --- !u!114 &578085305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,8 +192,6 @@ MonoBehaviour:
   smoothTime: 5
   isSmooth: 0
   timer: 0
-  maxPredictions: 3
-  predictIndexFrame: 1
 --- !u!114 &578085306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,8 +206,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxSnapshots: 100
   enablePredictionRollback: 1
+  confirmedServerFrame: -1
+  predictedFrame: 0
   currentGameState:
     frameNumber: 0
+  offset: {x: 0, y: 1, z: 0}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  textSize: 15
   predictedFrameIndex: 1
 --- !u!1 &705507993
 GameObject:

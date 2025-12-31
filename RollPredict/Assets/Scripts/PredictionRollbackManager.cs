@@ -4,6 +4,7 @@ using Frame.Core;
 using Frame.FixMath;
 using UnityEngine;
 using Proto;
+using UnityEditor;
 
 /// <summary>
 /// 预测回滚管理器
@@ -23,10 +24,10 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         new Dictionary<long, Dictionary<int, InputDirection>>();
 
     // 当前确认的服务器帧号
-    private long confirmedServerFrame = -1;
+    public long confirmedServerFrame = 0;
 
     // 当前预测的帧号
-    private long predictedFrame = 0;
+    public long predictedFrame = 0;
 
     // 玩家对象映射（视图层）
     public Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
@@ -44,6 +45,30 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         // 不再需要IGameLogicExecutor，直接使用StateMachine
     }
 
+    public Vector3 offset = new Vector3(0, 2, 0); // 数字相对于物体的偏移（避免重叠）
+    public Color textColor = Color.white; // 文字颜色
+    public float textSize = 15; // 文字大小
+
+    private void OnDrawGizmos()
+    {
+        Vector3 drawPos = transform.position + offset;
+
+        // 3. 保存当前GUI样式，避免影响全局
+        GUI.skin.label.fontSize = (int)textSize;
+        GUIStyle style = new GUIStyle(GUI.skin.label)
+        {
+            normal = { textColor = textColor }, // 设置文字颜色
+            alignment = TextAnchor.MiddleCenter // 文字居中
+        };
+        // 4. 绘制数字（核心：Handles.Label显示文字，Gizmos负责辅助图形）
+        Handles.Label(drawPos,Math.Max(0, predictedFrame - confirmedServerFrame).ToString(), style);
+
+        // 可选：绘制一个小原点，标记数字对应的位置（便于定位）
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(transform.position, 0.1f);
+    }
+
+
     /// <summary>
     /// 注册玩家对象
     /// </summary>
@@ -57,7 +82,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     }
 
     /// <summary>
-    /// 保存当前帧的状态快照
+    /// 保存当前帧的状态快照,将currentGameState存到这个frameNumber里去
     /// </summary>
     public void SaveSnapshot(long frameNumber)
     {
@@ -139,7 +164,9 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
         return new Dictionary<int, InputDirection>();
     }
+
     public long predictedFrameIndex = 1;
+
     /// <summary>
     /// 客户端预测：立即执行输入
     /// 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
@@ -149,11 +176,6 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         if (!enablePredictionRollback)
             return;
         long frameNumber = confirmedServerFrame + predictedFrameIndex++;
-        // 如果还没有保存前一帧的快照，先保存
-        if (frameNumber > 0 && !snapshotHistory.ContainsKey(frameNumber - 1))
-        {
-            SaveSnapshot(frameNumber - 1);
-        }
 
         // 保存输入（这个输入是预测的，可能会被服务器覆盖）
         SaveInput(frameNumber, playerId, direction);
@@ -170,6 +192,16 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         OnPrediction?.Invoke(frameNumber);
     }
 
+    public enum NetState
+    {
+        NoPredictionAndLose, //无预测并且丢包
+        NoPredictionAndSuccess, //无预测并且成功
+        Repeat, //重复包
+        PredictAndLose, //预测并且丢包
+        PredictAndSuccessAndInputOk, //预测并且成功 并且预测成功
+        PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
+    }
+
     /// <summary>
     /// 处理服务器帧：检查是否需要回滚
     /// </summary>
@@ -181,83 +213,123 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         }
 
         long serverFrameNumber = serverFrame.FrameNumber;
+        NetState currentNetState = NetState.NoPredictionAndLose;
 
         // 比如发消息时帧 1，预测帧 2 ，收到消息帧1 ，重复接受
         if (serverFrameNumber <= confirmedServerFrame)
         {
+            currentNetState = NetState.Repeat;
             return;
         }
 
-        // 检查是否需要回滚
-        bool needRollback = false;
-        long rollbackToFrame = confirmedServerFrame;
-        // 比如发消息时帧 1，预测帧 2 ，收到消息帧3 ，这他妈是少接受了一帧，需要请求 2，3，稍后处理
-        if (serverFrameNumber > predictedFrame)
+        if (predictedFrame <= confirmedServerFrame)
         {
-            needRollback = true;
-            rollbackToFrame = confirmedServerFrame;
-        }
-        // 比如发消息时帧 1，预测帧 2 ，收到消息帧2 ，需要对比一下帧是否正确 ，不一样则用服务器的，回滚一帧
-        // 发消息时帧    1，预测帧 3 ，收到消息帧2 ，不一样则用服务器的，然后重新预测帧3
-        else if (serverFrameNumber <= predictedFrame)
-        {
-            // 检查服务器帧中的输入是否与本地预测一致
-            foreach (var serverFrameData in serverFrame.FrameDatas)
+            if (serverFrameNumber > confirmedServerFrame + 1)
             {
-                var playerId = serverFrameData.PlayerId;
-                var serverInput = serverFrameData.Direction;
+                currentNetState = NetState.NoPredictionAndLose;
+            }
+            else
+            {
+                currentNetState = NetState.NoPredictionAndSuccess;
+            }
+        }
+        else
+        {
+            if (serverFrameNumber > confirmedServerFrame + 1)
+            {
+                currentNetState = NetState.PredictAndLose;
+            }
+            else
+            {
+                bool needRollback = false;
 
-                if (inputHistory.ContainsKey(serverFrameNumber) &&
-                    inputHistory[serverFrameNumber].ContainsKey(playerId))
+                // 检查服务器帧中的输入是否与本地预测一致
+                foreach (var serverFrameData in serverFrame.FrameDatas)
                 {
-                    InputDirection predictedInput = inputHistory[serverFrameNumber][playerId];
-                    if (predictedInput != serverInput)
+                    var playerId = serverFrameData.PlayerId;
+                    var serverInput = serverFrameData.Direction;
+
+                    if (inputHistory.ContainsKey(serverFrameNumber) &&
+                        inputHistory[serverFrameNumber].ContainsKey(playerId))
+                    {
+                        InputDirection predictedInput = inputHistory[serverFrameNumber][playerId];
+                        if (predictedInput != serverInput)
+                        {
+                            needRollback = true;
+                            break;
+                        }
+                    }
+                    else
                     {
                         needRollback = true;
-                        rollbackToFrame = Math.Max(rollbackToFrame, serverFrameNumber - 1);
                         break;
                     }
                 }
+
+                if (needRollback)
+                {
+                    currentNetState = NetState.PredictAndSuccessAndInputFail;
+                }
                 else
                 {
-                    needRollback = true;
-                    rollbackToFrame = Math.Max(rollbackToFrame, serverFrameNumber - 1);
-                    break;
+                    currentNetState = NetState.PredictAndSuccessAndInputOk;
                 }
             }
         }
 
-        // 运行到这里的时候，confirmedServerFrame = 1  rollbackToFrame = 1 predictedFrame = 2  serverFrameNumber = 2 
-        // 运行到这里的时候，confirmedServerFrame = 1  rollbackToFrame = 1 predictedFrame = 3  serverFrameNumber = 2 
-        // 执行回滚 复原状态到 rollbackToFrame
-        if (needRollback && rollbackToFrame >= 0 && snapshotHistory.ContainsKey(rollbackToFrame))
+        switch (currentNetState)
         {
-            LoadSnapshot(rollbackToFrame);
-            OnRollback?.Invoke(rollbackToFrame);
-        }
+            // NoPredictionAndLose, //无预测并且丢包
+            // NoPredictionAndSuccess, //无预测并且成功
+            // Repeat, //重复包
+            // PredictAndLose, //预测并且丢包
+            // PredictAndSuccessAndInputOk, //预测并且成功 并且预测成功
+            // PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
+            case NetState.NoPredictionAndLose:
+            case NetState.Repeat:
+            case NetState.PredictAndLose:
+                //暂时这样，丢包需要请求
+                break;
+            case NetState.NoPredictionAndSuccess:
+                LoadSnapshot(confirmedServerFrame);
+                
+                foreach (var frameData in serverFrame.FrameDatas)
+                {
+                    SaveInput(serverFrameNumber, frameData.PlayerId, frameData.Direction);
+                }
 
-        // 保存服务器确认的输入
-        foreach (var frameData in serverFrame.FrameDatas)
-        {
-            SaveInput(serverFrameNumber, frameData.PlayerId, frameData.Direction);
-        }
+                var inputs = GetInputs(serverFrameNumber);
+                currentGameState = StateMachine.Execute(currentGameState, inputs);
+                SaveSnapshot(serverFrameNumber);
+                break;
 
-        // 从回滚点重新执行到当前预测帧
-        // 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
-        for (long frame = rollbackToFrame + 1; frame <= predictedFrame; frame++)
-        {
-            var inputs = GetInputs(frame);
-            // 使用统一的状态机执行
-            currentGameState = StateMachine.Execute(currentGameState, inputs);
-            
-            SaveSnapshot(frame);
+            case NetState.PredictAndSuccessAndInputOk:
+                Debug.Log("PredictAndSuccessAndInputOk");
+                //不管？
+                break;
+
+            case NetState.PredictAndSuccessAndInputFail:
+                Debug.Log("PredictAndSuccessAndInputFail");
+                foreach (var frameData in serverFrame.FrameDatas)
+                {
+                    SaveInput(serverFrameNumber, frameData.PlayerId, frameData.Direction);
+                }
+
+                LoadSnapshot(confirmedServerFrame);
+                for (long frame = confirmedServerFrame + 1; frame <= predictedFrame; frame++)
+                {
+                    var newInputs = GetInputs(frame);
+                    currentGameState = StateMachine.Execute(currentGameState, newInputs);
+                    SaveSnapshot(frame);
+                }
+
+                break;
         }
 
         // 继续预测未来的帧（如果有本地输入）
         confirmedServerFrame = serverFrameNumber;
         //比如只预测1帧，那么这个直接回归到1。如果预测帧3 确定帧 2，那么往后预测则是 预测帧 4
-        predictedFrameIndex = predictedFrame  - confirmedServerFrame + 1;
-        
+        predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
     }
 
 
