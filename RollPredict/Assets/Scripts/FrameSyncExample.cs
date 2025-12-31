@@ -6,8 +6,9 @@ using Proto;
 /// <summary>
 /// 帧同步网络使用示例（支持预测回滚）
 /// 展示如何连接服务器、发送输入、接收帧数据，并实现客户端预测和回滚
+/// 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
 /// </summary>
-public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
+public class FrameSyncExample : MonoBehaviour
 {
     private FrameSyncNetwork networkManager => FrameSyncNetwork.Instance;
 
@@ -47,12 +48,13 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
     {
         if (!networkManager.isGameStarted)
             return;
-
         foreach (var kvp in predictionManager.playerObjects)
         {
             int id = kvp.Key;
-            kvp.Value.transform.position =Vector3.Lerp(kvp.Value.transform.position,  (Vector3)predictionManager.player2Pos[id],Time.deltaTime * smoothTime);
-            //kvp.Value.transform.position = (Vector3)predictionManager.player2Pos[id];
+        
+            
+            //kvp.Value.transform.position =Vector3.Lerp(kvp.Value.transform.position,  (Vector3)predictionManager.currentGameState.players[id].position,Time.deltaTime * smoothTime);
+            kvp.Value.transform.position = (Vector3)predictionManager.currentGameState.players[id].position;
         }
         
         // 检测输入
@@ -181,33 +183,22 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         else
         {
             // 如果不使用预测回滚，直接执行服务器帧
+            // 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
             var inputs = new Dictionary<int, InputDirection>();
             foreach (var frameData in serverFrame.FrameDatas)
             {
                 inputs[frameData.PlayerId] = frameData.Direction;
             }
 
-            ExecuteFrame(inputs, serverFrame.FrameNumber);
+            // 使用统一的状态机执行
+            predictionManager.currentGameState = StateMachine.Execute(
+                predictionManager.currentGameState, inputs);
+            
         }
 
         UpdateInputState();
     }
 
-    /// <summary>
-    /// 实现IGameLogicExecutor接口：执行一帧游戏逻辑
-    /// </summary>
-    public void ExecuteFrame(Dictionary<int, InputDirection> inputs, long frameNumber)
-    {
-        foreach (var kvp in inputs)
-        {
-            int playerId = kvp.Key;
-            InputDirection direction = kvp.Value;
-
-            
-                UpdatePlayerState(playerId, direction);
-            
-        }
-    }
 
     void UpdateInputStatePredict()
     {
@@ -233,28 +224,4 @@ public class FrameSyncExample : MonoBehaviour, IGameLogicExecutor
         canSend = true;
     }
 
-    /// <summary>
-    /// 根据输入更新玩家状态
-    /// </summary>
-    private void UpdatePlayerState(int player, InputDirection direction)
-    {
-        switch (direction)
-        {
-            case InputDirection.DirectionUp:
-                predictionManager.player2Pos[player] += FixVector3.Up * speedF;
-                break;
-            case InputDirection.DirectionDown:
-                predictionManager.player2Pos[player] += FixVector3.Down * speedF;
-                break;
-            case InputDirection.DirectionLeft:
-                predictionManager.player2Pos[player] += FixVector3.Left * speedF;
-                break;
-            case InputDirection.DirectionRight:
-                predictionManager.player2Pos[player] += FixVector3.Right * speedF;
-                break;
-            case InputDirection.DirectionNone:
-                // 无输入，不移动
-                break;
-        }
-    }
 }

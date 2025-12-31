@@ -15,8 +15,8 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
     [Tooltip("是否启用预测回滚")] public bool enablePredictionRollback = true;
 
-    // 快照历史（按帧号索引）状态
-    private Dictionary<long, GameStateSnapshot> snapshotHistory = new Dictionary<long, GameStateSnapshot>();
+    // 快照历史（按帧号索引）状态 - 使用统一的GameState
+    private Dictionary<long, GameState> snapshotHistory = new Dictionary<long, GameState>();
 
     // 输入历史（按帧号索引）输入
     private Dictionary<long, Dictionary<int, InputDirection>> inputHistory =
@@ -28,12 +28,12 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     // 当前预测的帧号
     private long predictedFrame = 0;
 
-    // 玩家对象映射
+    // 玩家对象映射（视图层）
     public Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
-    public Dictionary<int, FixVector3> player2Pos= new Dictionary<int, FixVector3>();
 
-    // 游戏逻辑执行器
-    private IGameLogicExecutor gameLogicExecutor;
+
+    // 当前游戏状态（统一的状态机框架使用）
+    public GameState currentGameState = new GameState(0);
 
     // 事件回调
     public System.Action<long> OnRollback;
@@ -41,20 +41,19 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
     void Start()
     {
-        gameLogicExecutor = GetComponent<IGameLogicExecutor>();
-        if (gameLogicExecutor == null)
-        {
-            Debug.LogError("PredictionRollbackManager requires an IGameLogicExecutor component!");
-        }
+        // 不再需要IGameLogicExecutor，直接使用StateMachine
     }
 
     /// <summary>
     /// 注册玩家对象
     /// </summary>
-    public void RegisterPlayer(int playerId, GameObject playerObject,FixVector3 position)
+    public void RegisterPlayer(int playerId, GameObject playerObject, FixVector3 position)
     {
         playerObjects[playerId] = playerObject;
-        player2Pos[playerId] = position;
+
+        // 同步到GameState
+        var playerState = currentGameState.GetOrCreatePlayer(playerId);
+        playerState.position = position;
     }
 
     /// <summary>
@@ -65,22 +64,9 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         if (!enablePredictionRollback)
             return;
 
-        var snapshot = new GameStateSnapshot(frameNumber);
-
-        foreach (var kvp in playerObjects)
-        {
-            var playerId = kvp.Key;
-            var playerObj = kvp.Value;
-            if (playerObj != null)
-            {
-                snapshot.playerStates[playerId] = new PlayerState(
-                    playerId,
-                    player2Pos[playerId],
-                    playerObj.transform.rotation
-                );
-            }
-        }
-
+        // 从当前GameState创建快照
+        currentGameState.frameNumber = frameNumber;
+        var snapshot = currentGameState.Clone();
         snapshotHistory[frameNumber] = snapshot;
 
         // 清理旧的快照（保留最近maxSnapshots个）
@@ -120,18 +106,10 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
         var snapshot = snapshotHistory[frameNumber];
 
-        foreach (var kvp in snapshot.playerStates)
-        {
-            var playerId = kvp.Key;
-            var playerState = kvp.Value;
-
-            if (playerObjects.ContainsKey(playerId) && playerObjects[playerId] != null)
-            {
-                player2Pos[playerId] = playerState.position;
-                playerObjects[playerId].transform.rotation = playerState.rotation;
-            }
-        }
+        // 恢复GameState
+        currentGameState = snapshot.Clone();
     }
+
 
     /// <summary>
     /// 保存输入到历史记录
@@ -164,6 +142,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
     /// <summary>
     /// 客户端预测：立即执行输入
+    /// 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
     /// </summary>
     public void PredictInput(int playerId, InputDirection direction, long frameNumber)
     {
@@ -176,17 +155,15 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             SaveSnapshot(frameNumber - 1);
         }
 
-        // 保存输入 这个输入是假的，可能会被覆盖
+        // 保存输入（这个输入是预测的，可能会被服务器覆盖）
         SaveInput(frameNumber, playerId, direction);
 
-        // 执行预测
-        if (gameLogicExecutor != null)
-        {
-            var inputs = new Dictionary<int, InputDirection> { { playerId, direction } };
-            gameLogicExecutor.ExecuteFrame(inputs, frameNumber);
-        }
+        // 使用统一的状态机执行预测
+        // State(n+1) = StateMachine(State(n), Input(n))
+        var inputs = new Dictionary<int, InputDirection> { { playerId, direction } };
+        currentGameState = StateMachine.Execute(currentGameState, inputs);
 
-        // 保存预测后的状态快照 这个状态也是假的
+        // 保存预测后的状态快照
         SaveSnapshot(frameNumber);
 
         predictedFrame = Math.Max(predictedFrame, frameNumber);
@@ -248,11 +225,12 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
                 }
             }
         }
+
         // 运行到这里的时候，confirmedServerFrame = 1  rollbackToFrame = 1 predictedFrame = 2  serverFrameNumber = 2 
         // 执行回滚 复原状态到 rollbackToFrame
         if (needRollback && rollbackToFrame >= 0 && snapshotHistory.ContainsKey(rollbackToFrame))
         {
-            RollbackToFrame(rollbackToFrame);
+            LoadSnapshot(rollbackToFrame);
             OnRollback?.Invoke(rollbackToFrame);
         }
 
@@ -263,13 +241,13 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         }
 
         // 从回滚点重新执行到当前服务器帧
+        // 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
         for (long frame = rollbackToFrame + 1; frame <= serverFrameNumber; frame++)
         {
             var inputs = GetInputs(frame);
-            if (gameLogicExecutor != null)
-            {
-                gameLogicExecutor.ExecuteFrame(inputs, frame);
-            }
+            // 使用统一的状态机执行
+            currentGameState = StateMachine.Execute(currentGameState, inputs);
+
 
             SaveSnapshot(frame);
         }
@@ -277,22 +255,6 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         // 继续预测未来的帧（如果有本地输入）
         confirmedServerFrame = serverFrameNumber;
         predictedFrame = serverFrameNumber;
-
-
-    }
-
-    /// <summary>
-    /// 回滚到指定帧
-    /// </summary>
-    private void RollbackToFrame(long frameNumber)
-    {
-        if (frameNumber < 0 || !snapshotHistory.ContainsKey(frameNumber))
-        {
-            Debug.LogWarning($"Cannot rollback to frame {frameNumber}");
-            return;
-        }
-
-        LoadSnapshot(frameNumber);
     }
 
 
@@ -322,18 +284,4 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         confirmedServerFrame = -1;
         predictedFrame = 0;
     }
-}
-
-/// <summary>
-/// 游戏逻辑执行器接口
-/// 实现此接口以定义游戏逻辑如何执行
-/// </summary>
-public interface IGameLogicExecutor
-{
-    /// <summary>
-    /// 执行一帧游戏逻辑
-    /// </summary>
-    /// <param name="inputs">该帧所有玩家的输入</param>
-    /// <param name="frameNumber">帧号</param>
-    void ExecuteFrame(Dictionary<int, InputDirection> inputs, long frameNumber);
 }
