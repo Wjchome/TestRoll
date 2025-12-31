@@ -66,7 +66,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
         // 从当前GameState创建快照
         currentGameState.frameNumber = frameNumber;
-        var snapshot = currentGameState.Clone();
+        GameState snapshot = currentGameState.Clone();
         snapshotHistory[frameNumber] = snapshot;
 
         // 清理旧的快照（保留最近maxSnapshots个）
@@ -139,16 +139,16 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
         return new Dictionary<int, InputDirection>();
     }
-
+    public long predictedFrameIndex = 1;
     /// <summary>
     /// 客户端预测：立即执行输入
     /// 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
     /// </summary>
-    public void PredictInput(int playerId, InputDirection direction, long frameNumber)
+    public void PredictInput(int playerId, InputDirection direction)
     {
         if (!enablePredictionRollback)
             return;
-
+        long frameNumber = confirmedServerFrame + predictedFrameIndex++;
         // 如果还没有保存前一帧的快照，先保存
         if (frameNumber > 0 && !snapshotHistory.ContainsKey(frameNumber - 1))
         {
@@ -197,7 +197,8 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             needRollback = true;
             rollbackToFrame = confirmedServerFrame;
         }
-        // 比如发消息时帧 1，预测帧 2 ，收到消息帧2 ，需要对比一下帧是否正确
+        // 比如发消息时帧 1，预测帧 2 ，收到消息帧2 ，需要对比一下帧是否正确 ，不一样则用服务器的，回滚一帧
+        // 发消息时帧    1，预测帧 3 ，收到消息帧2 ，不一样则用服务器的，然后重新预测帧3
         else if (serverFrameNumber <= predictedFrame)
         {
             // 检查服务器帧中的输入是否与本地预测一致
@@ -227,6 +228,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         }
 
         // 运行到这里的时候，confirmedServerFrame = 1  rollbackToFrame = 1 predictedFrame = 2  serverFrameNumber = 2 
+        // 运行到这里的时候，confirmedServerFrame = 1  rollbackToFrame = 1 predictedFrame = 3  serverFrameNumber = 2 
         // 执行回滚 复原状态到 rollbackToFrame
         if (needRollback && rollbackToFrame >= 0 && snapshotHistory.ContainsKey(rollbackToFrame))
         {
@@ -240,21 +242,22 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             SaveInput(serverFrameNumber, frameData.PlayerId, frameData.Direction);
         }
 
-        // 从回滚点重新执行到当前服务器帧
+        // 从回滚点重新执行到当前预测帧
         // 使用统一的状态机框架：State(n+1) = StateMachine(State(n), Input(n))
-        for (long frame = rollbackToFrame + 1; frame <= serverFrameNumber; frame++)
+        for (long frame = rollbackToFrame + 1; frame <= predictedFrame; frame++)
         {
             var inputs = GetInputs(frame);
             // 使用统一的状态机执行
             currentGameState = StateMachine.Execute(currentGameState, inputs);
-
-
+            
             SaveSnapshot(frame);
         }
 
         // 继续预测未来的帧（如果有本地输入）
         confirmedServerFrame = serverFrameNumber;
-        predictedFrame = serverFrameNumber;
+        //比如只预测1帧，那么这个直接回归到1。如果预测帧3 确定帧 2，那么往后预测则是 预测帧 4
+        predictedFrameIndex = predictedFrame  - confirmedServerFrame + 1;
+        
     }
 
 

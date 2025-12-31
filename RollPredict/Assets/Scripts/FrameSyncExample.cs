@@ -15,17 +15,10 @@ public class FrameSyncExample : MonoBehaviour
     private PredictionRollbackManager predictionManager => PredictionRollbackManager.Instance;
 
     [Header("玩家设置")] public GameObject playerPrefab;
-    public float speed = 0.1f;
-    public Fix64 speedF => (Fix64)speed;
 
 
-
-    // 输入处理
-    public InputDirection currentDirection;
-    private long lastConfirmedFrame = -1; // 最后确认的服务器帧号
 
     public GameObject myPlayer;
-
 
     void Start()
     {
@@ -43,20 +36,34 @@ public class FrameSyncExample : MonoBehaviour
         // 连接服务器
         networkManager.Connect();
     }
+
     public float smoothTime = 5;
+
+    public bool isSmooth;
+
+    public float timer = 0;
+
+
     void Update()
     {
         if (!networkManager.isGameStarted)
             return;
+        timer+=Time.deltaTime;
         foreach (var kvp in predictionManager.playerObjects)
         {
             int id = kvp.Key;
-        
-            
-            //kvp.Value.transform.position =Vector3.Lerp(kvp.Value.transform.position,  (Vector3)predictionManager.currentGameState.players[id].position,Time.deltaTime * smoothTime);
-            kvp.Value.transform.position = (Vector3)predictionManager.currentGameState.players[id].position;
+
+            if (isSmooth)
+            {
+                kvp.Value.transform.position = Vector3.Lerp(kvp.Value.transform.position,
+                    (Vector3)predictionManager.currentGameState.players[id].position, Time.deltaTime * smoothTime);
+            }
+            else
+            {
+                kvp.Value.transform.position = (Vector3)predictionManager.currentGameState.players[id].position;
+            }
         }
-        
+
         // 检测输入
         InputDirection newDirection = InputDirection.DirectionNone;
 
@@ -77,23 +84,23 @@ public class FrameSyncExample : MonoBehaviour
             newDirection = InputDirection.DirectionRight;
         }
 
-
+        
         // 只收集输入，不立即预测
         // 预测将在收到服务器帧确认后，在UpdateInputState中执行
         if (newDirection != InputDirection.DirectionNone)
-            currentDirection = newDirection;
-        if (canSend)
         {
-            UpdateInputStatePredict();
+            if (timer > 0.1f)
+            {
+                timer = 0;
+                UpdateInputStatePredict(newDirection);
 
-            // 然后发送输入到服务器
-            networkManager.SendFrameData(currentDirection);
+                // 然后发送输入到服务器
+                networkManager.SendFrameData(newDirection);
 
-            // 重置输入状态，等待下一帧收集新输入
-            currentDirection = InputDirection.DirectionNone;
-
-            canSend = false;
+            }
         }
+        
+  
     }
 
     void OnDestroy()
@@ -139,7 +146,7 @@ public class FrameSyncExample : MonoBehaviour
         Fix64 index = Fix64.Zero;
         foreach (var playerId in gameStart.PlayerIds)
         {
-            var pos= new FixVector3(index, Fix64.Zero, Fix64.Zero);
+            var pos = new FixVector3(index, Fix64.Zero, Fix64.Zero);
             index += Fix64.One;
             Vector3 startPos = new Vector3((int)index, 0, 0);
             GameObject player = Instantiate(playerPrefab, startPos, Quaternion.identity);
@@ -157,8 +164,7 @@ public class FrameSyncExample : MonoBehaviour
         // 初始化随机种子
         Random.InitState((int)gameStart.RandomSeed);
 
-        // 初始化帧号（从0开始，第一帧将是1）
-        lastConfirmedFrame = 0;
+  
 
         // 保存初始状态快照
         if (predictionManager != null)
@@ -172,8 +178,7 @@ public class FrameSyncExample : MonoBehaviour
     /// </summary>
     private void OnServerFrameReceived(ServerFrame serverFrame)
     {
-        // 更新最后确认的帧号
-        lastConfirmedFrame = serverFrame.FrameNumber;
+
 
         // 使用预测回滚管理器处理服务器帧
         if (predictionManager != null && predictionManager.enablePredictionRollback)
@@ -193,35 +198,17 @@ public class FrameSyncExample : MonoBehaviour
             // 使用统一的状态机执行
             predictionManager.currentGameState = StateMachine.Execute(
                 predictionManager.currentGameState, inputs);
-            
         }
-
-        UpdateInputState();
     }
 
 
-    void UpdateInputStatePredict()
+    void UpdateInputStatePredict(InputDirection currentDirection)
     {
         // 如果启用预测回滚，先执行客户端预测（在发送前）
         if (predictionManager != null && predictionManager.enablePredictionRollback)
         {
-            // 使用下一帧号进行预测（基于最后确认的服务器帧号）
-            long nextFrameNumber = lastConfirmedFrame + 1;
             // 先预测，让玩家立即看到效果
-            predictionManager.PredictInput(networkManager.myPlayerID, currentDirection, nextFrameNumber);
+            predictionManager.PredictInput(networkManager.myPlayerID, currentDirection);
         }
     }
-
-    private bool canSend = false;
-
-    /// <summary>
-    /// 更新输入状态：先预测，再发送输入
-    /// 确保一帧只发送一次输入
-    /// 预测回滚的核心：在发送前就预测，让玩家感觉操作是即时的
-    /// </summary>
-    void UpdateInputState()
-    {
-        canSend = true;
-    }
-
 }

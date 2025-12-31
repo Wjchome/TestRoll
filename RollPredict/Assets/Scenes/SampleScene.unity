@@ -174,7 +174,7 @@ MonoBehaviour:
   isConnected: 0
   isGameStarted: 0
   myPlayerID: 20
-  delayTime: 0.03
+  delayTime: 0.1
 --- !u!114 &578085305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,10 +188,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 3173730084948646136, guid: ae5410c2b638244dc89abbbd4e8d525f, type: 3}
-  speed: 0.1
-  currentDirection: 0
   myPlayer: {fileID: 0}
   smoothTime: 5
+  isSmooth: 0
+  timer: 0
+  maxPredictions: 3
+  predictIndexFrame: 1
 --- !u!114 &578085306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,6 +210,7 @@ MonoBehaviour:
   enablePredictionRollback: 1
   currentGameState:
     frameNumber: 0
+  predictedFrameIndex: 1
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
