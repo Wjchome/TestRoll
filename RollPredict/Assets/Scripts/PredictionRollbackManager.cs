@@ -61,7 +61,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             alignment = TextAnchor.MiddleCenter // 文字居中
         };
         // 4. 绘制数字（核心：Handles.Label显示文字，Gizmos负责辅助图形）
-        Handles.Label(drawPos,Math.Max(0, predictedFrame - confirmedServerFrame).ToString(), style);
+        Handles.Label(drawPos, Math.Max(0, predictedFrame - confirmedServerFrame).ToString(), style);
 
         // 可选：绘制一个小原点，标记数字对应的位置（便于定位）
         Gizmos.color = Color.red;
@@ -84,14 +84,15 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     /// <summary>
     /// 保存当前帧的状态快照,将currentGameState存到这个frameNumber里去
     /// </summary>
-    public void SaveSnapshot(long frameNumber)
+    public void SaveSnapshot(long frameNumber, GameState saveGameState)
     {
         if (!enablePredictionRollback)
             return;
 
         // 从当前GameState创建快照
-        currentGameState.frameNumber = frameNumber;
-        GameState snapshot = currentGameState.Clone();
+        saveGameState.frameNumber = frameNumber;
+        GameState snapshot = saveGameState.Clone();
+        snapshot.frameNumber = frameNumber;
         snapshotHistory[frameNumber] = snapshot;
 
         // 清理旧的快照（保留最近maxSnapshots个）
@@ -118,38 +119,36 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     /// <summary>
     /// 加载指定帧的状态快照
     /// </summary>
-    public void LoadSnapshot(long frameNumber)
+    public GameState LoadSnapshot(long frameNumber)
     {
-        if (!enablePredictionRollback)
-            return;
-
         if (!snapshotHistory.ContainsKey(frameNumber))
         {
             Debug.LogWarning($"Snapshot for frame {frameNumber} not found!");
-            return;
+            return null;
         }
 
         var snapshot = snapshotHistory[frameNumber];
 
-        // 恢复GameState
-        currentGameState = snapshot.Clone();
+        return snapshot.Clone();
     }
 
 
     /// <summary>
     /// 保存输入到历史记录
     /// </summary>
-    public void SaveInput(long frameNumber, int playerId, InputDirection direction)
+    public void SaveInput(long frameNumber, ServerFrame serverFrame)
     {
         if (!enablePredictionRollback)
             return;
 
-        if (!inputHistory.ContainsKey(frameNumber))
-        {
-            inputHistory[frameNumber] = new Dictionary<int, InputDirection>();
-        }
 
-        inputHistory[frameNumber][playerId] = direction;
+        inputHistory[frameNumber] = new Dictionary<int, InputDirection>();
+
+
+        foreach (var frame in serverFrame.FrameDatas)
+        {
+            inputHistory[frameNumber][frame.PlayerId] = frame.Direction;
+        }
     }
 
     /// <summary>
@@ -178,7 +177,10 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         long frameNumber = confirmedServerFrame + predictedFrameIndex++;
 
         // 保存输入（这个输入是预测的，可能会被服务器覆盖）
-        SaveInput(frameNumber, playerId, direction);
+        SaveInput(frameNumber, new ServerFrame()
+        {
+            FrameDatas = { new FrameData() { PlayerId = playerId, Direction = direction } },
+        });
 
         // 使用统一的状态机执行预测
         // State(n+1) = StateMachine(State(n), Input(n))
@@ -186,7 +188,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         currentGameState = StateMachine.Execute(currentGameState, inputs);
 
         // 保存预测后的状态快照
-        SaveSnapshot(frameNumber);
+        SaveSnapshot(frameNumber, currentGameState);
 
         predictedFrame = Math.Max(predictedFrame, frameNumber);
         OnPrediction?.Invoke(frameNumber);
@@ -243,6 +245,11 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             {
                 bool needRollback = false;
 
+                if (serverFrame.FrameDatas.Count <= 0)
+                {
+                    needRollback = true;
+                }
+
                 // 检查服务器帧中的输入是否与本地预测一致
                 foreach (var serverFrameData in serverFrame.FrameDatas)
                 {
@@ -291,16 +298,13 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
                 //暂时这样，丢包需要请求
                 break;
             case NetState.NoPredictionAndSuccess:
-                LoadSnapshot(confirmedServerFrame);
-                
-                foreach (var frameData in serverFrame.FrameDatas)
-                {
-                    SaveInput(serverFrameNumber, frameData.PlayerId, frameData.Direction);
-                }
+
+
+                SaveInput(serverFrameNumber, serverFrame);
 
                 var inputs = GetInputs(serverFrameNumber);
                 currentGameState = StateMachine.Execute(currentGameState, inputs);
-                SaveSnapshot(serverFrameNumber);
+                SaveSnapshot(serverFrameNumber, currentGameState);
                 break;
 
             case NetState.PredictAndSuccessAndInputOk:
@@ -310,17 +314,16 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
             case NetState.PredictAndSuccessAndInputFail:
                 Debug.Log("PredictAndSuccessAndInputFail");
-                foreach (var frameData in serverFrame.FrameDatas)
-                {
-                    SaveInput(serverFrameNumber, frameData.PlayerId, frameData.Direction);
-                }
 
-                LoadSnapshot(confirmedServerFrame);
-                for (long frame = confirmedServerFrame + 1; frame <= predictedFrame; frame++)
+                SaveInput(serverFrameNumber, serverFrame);
+
+
+                currentGameState =  LoadSnapshot(confirmedServerFrame);
+                for (long frame = confirmedServerFrame; frame <= predictedFrame; frame++)
                 {
                     var newInputs = GetInputs(frame);
                     currentGameState = StateMachine.Execute(currentGameState, newInputs);
-                    SaveSnapshot(frame);
+                    SaveSnapshot(frame, currentGameState);
                 }
 
                 break;

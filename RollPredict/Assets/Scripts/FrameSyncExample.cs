@@ -166,11 +166,7 @@ public class FrameSyncExample : MonoBehaviour
 
   
 
-        // 保存初始状态快照
-        if (predictionManager != null)
-        {
-            predictionManager.SaveSnapshot(0);
-        }
+       
     }
 
     /// <summary>
