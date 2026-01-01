@@ -245,7 +245,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             {
                 bool needRollback = false;
 
-                if (serverFrame.FrameDatas.Count <= 0)
+                if (serverFrame.FrameDatas.Count != GetInputs(serverFrameNumber).Count)
                 {
                     needRollback = true;
                 }
