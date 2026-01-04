@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"strconv"
 	"sync"
@@ -20,19 +19,6 @@ const (
 	PORT           = ":8088"
 	MAX_PLAYERS    = 1 // 每个房间最大玩家数
 )
-
-// 服务器到客户端的延迟模拟
-// 设置为 0 表示无延迟，设置为正数表示延迟时间
-// 例如：50 * time.Millisecond 表示 50 毫秒延迟
-// 例如：100 * time.Millisecond 表示 100 毫秒延迟
-// 这个延迟会应用到所有从服务器发送到客户端的消息（包括服务器帧数据）
-var SERVER_TO_CLIENT_DELAY = 10 * time.Millisecond
-
-// 延迟随机偏移值（毫秒）
-// 实际延迟 = SERVER_TO_CLIENT_DELAY + 随机值(0 到 DELAY_JITTER)
-// 例如：如果 DELAY = 50ms, JITTER = 20ms，则实际延迟在 50ms 到 70ms 之间随机
-// 设置为 0 表示无随机偏移
-var SERVER_TO_CLIENT_DELAY_JITTER = 70 * time.Millisecond
 
 // 全局客户端计数器
 var clientCounter int64 = 0
@@ -454,18 +440,7 @@ func (s *Server) startGame(roomID string) {
 }
 
 // 发送消息（格式：len + messageType + byte[]）
-// 如果设置了延迟，会在延迟后异步发送
 func (s *Server) sendMessage(conn net.Conn, messageType myproto.MessageType, msg proto.Message) {
-	// 如果有延迟，异步发送
-	if SERVER_TO_CLIENT_DELAY > 0 {
-		go s.sendMessageWithDelay(conn, messageType, msg)
-	} else {
-		s.sendMessageImmediate(conn, messageType, msg)
-	}
-}
-
-// 立即发送消息（无延迟）
-func (s *Server) sendMessageImmediate(conn net.Conn, messageType myproto.MessageType, msg proto.Message) {
 	data, err := proto.Marshal(msg)
 	if err != nil {
 		log.Printf("Marshal error: %v\n", err)
@@ -485,23 +460,6 @@ func (s *Server) sendMessageImmediate(conn net.Conn, messageType myproto.Message
 
 	// 写入数据
 	conn.Write(data)
-}
-
-// 延迟发送消息（模拟服务器到客户端的延迟）
-func (s *Server) sendMessageWithDelay(conn net.Conn, messageType myproto.MessageType, msg proto.Message) {
-	// 计算实际延迟 = 基础延迟 + 随机偏移
-	actualDelay := SERVER_TO_CLIENT_DELAY
-	if SERVER_TO_CLIENT_DELAY_JITTER > 0 {
-		// 生成 0 到 JITTER 之间的随机偏移
-		jitter := time.Duration(rand.Int63n(int64(SERVER_TO_CLIENT_DELAY_JITTER)))
-		actualDelay += jitter
-	}
-
-	// 模拟网络延迟（带随机波动）
-	time.Sleep(actualDelay)
-
-	// 延迟后发送消息
-	s.sendMessageImmediate(conn, messageType, msg)
 }
 
 // 房间帧循环

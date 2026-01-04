@@ -330,7 +330,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         }
 
         // 继续预测未来的帧（如果有本地输入）
-        confirmedServerFrame = serverFrameNumber;
+        confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
         //比如只预测1帧，那么这个直接回归到1。如果预测帧3 确定帧 2，那么往后预测则是 预测帧 4
         predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
     }
