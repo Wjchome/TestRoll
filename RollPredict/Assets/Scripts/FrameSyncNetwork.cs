@@ -2,11 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Sockets;
 using System.Threading;
 using Frame.Core;
 using UnityEngine;
 using Google.Protobuf;
+using Google.Protobuf.Collections;
 using Proto;
 
 /// <summary>
@@ -31,11 +33,9 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     private bool isRunning = false;
 
     // 消息队列（线程安全）
-    private Queue<(MessageType, IMessage)> serverFrameQueue = new Queue<(MessageType, IMessage)>();
+    private Queue<(MessageType, IMessage)> serverDataQueue = new Queue<(MessageType, IMessage)>();
     private object queueLock = new object();
-
-    // 当前帧号
-    private long currentFrameNumber = 0;
+    
 
     // 事件回调
     public System.Action<ServerFrame> OnServerFrameReceived;
@@ -145,9 +145,18 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
         {
             PlayerId = myPlayerID,
             Direction = direction,
-            FrameNumber = currentFrameNumber
+            FrameNumber = PredictionRollbackManager.Instance.confirmedServerFrame
         };
         SendMessage(MessageType.MessageFrameData, frameData);
+    }
+
+    public void SendLossFrame(long confirmedFrame)
+    {
+        var data = new GetLossFrame
+        {
+            LastFrameNumber = confirmedFrame,
+        };
+        SendMessage(MessageType.MessageFrameLoss, data);
     }
 
     /// <summary>
@@ -160,7 +169,6 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
 
         StartCoroutine(SendMessagesWithDelay(messageType, msg));
         
-   
     }
 
     
@@ -300,7 +308,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
                         var serverFrame = ConnectMessage.Parser.ParseFrom(data);
                         lock (queueLock)
                         {
-                            serverFrameQueue.Enqueue((MessageType.MessageConnect,serverFrame));
+                            serverDataQueue.Enqueue((MessageType.MessageConnect,serverFrame));
                         }
                     }
                     break;
@@ -310,7 +318,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
                         var serverFrame = ServerFrame.Parser.ParseFrom(data);
                         lock (queueLock)
                         {
-                            serverFrameQueue.Enqueue((MessageType.MessageServerFrame,serverFrame));
+                            serverDataQueue.Enqueue((MessageType.MessageServerFrame,serverFrame));
                         }
                     }
                     break;
@@ -320,7 +328,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
                         var disconnectMsg = DisconnectMessage.Parser.ParseFrom(data);
                         lock (queueLock)
                         {
-                            serverFrameQueue.Enqueue((MessageType.MessageDisconnect, disconnectMsg));
+                            serverDataQueue.Enqueue((MessageType.MessageDisconnect, disconnectMsg));
                         }
                     }
                     break;
@@ -330,9 +338,18 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
                         var gameStart = GameStart.Parser.ParseFrom(data);
                         lock (queueLock)
                         {
-                            serverFrameQueue.Enqueue((MessageType.MessageGameStart, gameStart));
+                            serverDataQueue.Enqueue((MessageType.MessageGameStart, gameStart));
                         }
                     }
+                    break;
+                case MessageType.MessageFrameNeed:
+                {
+                    var allFrame = SendAllFrame.Parser.ParseFrom(data);
+                    lock (queueLock)
+                    {
+                        serverDataQueue.Enqueue((MessageType.MessageFrameNeed, allFrame));
+                    }
+                }
                     break;
 
                 default:
@@ -354,14 +371,14 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
         // 处理服务器帧数据队列
         lock (queueLock)
         {
-            while (serverFrameQueue.Count > 0)
+            while (serverDataQueue.Count > 0)
             {
-                var serverFrame = serverFrameQueue.Dequeue();
-                switch (serverFrame.Item1)
+                var serverData = serverDataQueue.Dequeue();
+                switch (serverData.Item1)
                 {
                     case MessageType.MessageConnect:
                         
-                        if (serverFrame.Item2 is ConnectMessage connectMessage)
+                        if (serverData.Item2 is ConnectMessage connectMessage)
                         {
                             myPlayerID = connectMessage.PlayerId;	
                             OnConnected.Invoke(connectMessage.PlayerId);
@@ -369,9 +386,8 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
                         }
                         break;
                     case MessageType.MessageServerFrame:
-                        if (serverFrame.Item2 is ServerFrame serverFrame2)
+                        if (serverData.Item2 is ServerFrame serverFrame2)
                         {
-                            currentFrameNumber = serverFrame2.FrameNumber;
                             OnServerFrameReceived?.Invoke(serverFrame2);
                         }
                         break;
@@ -384,11 +400,24 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
 
                     case MessageType.MessageGameStart:
                         {
-                            if (serverFrame.Item2 is GameStart gameStart)
+                            if (serverData.Item2 is GameStart gameStart)
                             {
                                 isGameStarted = true;
                                 OnGameStarted?.Invoke(gameStart);
                                 Debug.Log($"Game started! Room: {gameStart.RoomId}, Seed: {gameStart.RandomSeed}, Players: {gameStart.PlayerIds.Count}");
+                            }
+                        }
+                        break;
+                    case MessageType.MessageFrameNeed:
+                        {
+                            if (serverData.Item2 is SendAllFrame allFrame)
+                            {
+                                // 遍历所有补发的帧数据
+                                foreach (var serverFrame in allFrame.AllNeedFrame)
+                                {
+                                    // 触发帧接收回调
+                                    OnServerFrameReceived?.Invoke(serverFrame);
+                                }
                             }
                         }
                         break;

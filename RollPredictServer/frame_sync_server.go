@@ -43,6 +43,7 @@ type Room struct {
 	FrameNumber     int64
 	Status          string // "waiting", "playing"
 	MaxPlayers      int32
+	HistoryFrames   []*myproto.ServerFrame // 历史帧数据，用于补帧
 	Mutex           sync.Mutex
 }
 
@@ -152,6 +153,8 @@ func (s *Server) handleClient(conn net.Conn) {
 			s.handleFrameData(client, data)
 		case myproto.MessageType_MESSAGE_DISCONNECT:
 			s.handleDisconnect(client, data)
+		case myproto.MessageType_MESSAGE_FRAME_LOSS:
+			s.handleFrameLoss(client, data)
 		default:
 			log.Printf("Client %d: Unknown message type: %d\n", client.ID, messageType)
 		}
@@ -209,6 +212,78 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 func (s *Server) handleDisconnect(client *Client, data []byte) {
 	fmt.Printf("Client %d requested disconnect\n", client.ID)
 	s.handleClientDisconnect(client)
+}
+
+// 处理补帧请求
+func (s *Server) handleFrameLoss(client *Client, data []byte) {
+	if client.RoomID == "" {
+		fmt.Printf("Client %d: No room assigned\n", client.ID)
+		return
+	}
+
+	s.Mutex.Lock()
+	room, exists := s.Rooms[client.RoomID]
+	s.Mutex.Unlock()
+
+	if !exists {
+		log.Printf("Client %d: Room not found: %s\n", client.ID, client.RoomID)
+		return
+	}
+
+	var lossFrameRequest myproto.GetLossFrame
+	if err := proto.Unmarshal(data, &lossFrameRequest); err != nil {
+		log.Printf("Client %d: Unmarshal frame loss request error: %v\n", client.ID, err)
+		return
+	}
+
+	confirmedFrame := lossFrameRequest.LastFrameNumber
+	currentFrame := int64(0)
+	historyFramesLen := 0
+
+	room.Mutex.Lock()
+	currentFrame = room.FrameNumber
+	historyFramesLen = len(room.HistoryFrames)
+	// 计算需要补发的帧范围：[confirmed+1, current]
+	// 帧号从1开始，HistoryFrames[i] 对应帧号 i+1
+	// 所以帧号 frameNumber 对应的索引是 frameNumber - 1
+	startIndex := confirmedFrame // confirmedFrame+1 对应的索引
+	endIndex := currentFrame - 1 // currentFrame 对应的索引
+	room.Mutex.Unlock()
+
+	// 边界检查
+	if startIndex < 0 {
+		startIndex = 0
+	}
+	if endIndex >= int64(historyFramesLen) {
+		endIndex = int64(historyFramesLen) - 1
+	}
+	if startIndex > endIndex || endIndex < 0 {
+		// 不需要补帧或无效范围
+		fmt.Printf("Client %d: No frames to send (confirmed: %d, current: %d, historyLen: %d)\n",
+			client.ID, confirmedFrame, currentFrame, historyFramesLen)
+		return
+	}
+
+	// 直接通过索引范围获取帧数据（使用切片操作，更高效）
+	room.Mutex.Lock()
+	framesSlice := room.HistoryFrames[startIndex : endIndex+1]
+	// 需要复制一份，避免在锁外访问时数据被修改
+	framesToSend := make([]*myproto.ServerFrame, len(framesSlice))
+	copy(framesToSend, framesSlice)
+	room.Mutex.Unlock()
+
+	if len(framesToSend) > 0 {
+		// 构建补帧消息
+		sendAllFrame := &myproto.SendAllFrame{
+			AllNeedFrame: framesToSend,
+		}
+
+		// 发送给请求的客户端
+		s.sendMessage(client.Conn, myproto.MessageType_MESSAGE_FRAME_NEED, sendAllFrame)
+		fmt.Printf("Client %d: Sent %d frames (from %d to %d)\n", client.ID, len(framesToSend), confirmedFrame+1, currentFrame)
+	} else {
+		fmt.Printf("Client %d: No frames to send (confirmed: %d, current: %d)\n", client.ID, confirmedFrame, currentFrame)
+	}
 }
 
 // 处理客户端断开
@@ -270,6 +345,7 @@ func (s *Server) CreateRoom(client *Client, roomName string, maxPlayers int32) s
 		FrameDataBuffer: make([]*myproto.FrameData, 0),
 		Status:          "waiting",
 		MaxPlayers:      maxPlayers,
+		HistoryFrames:   make([]*myproto.ServerFrame, 0),
 	}
 
 	s.Mutex.Lock()
@@ -361,6 +437,7 @@ func (s *Server) autoAssignRoom(client *Client) {
 		FrameDataBuffer: make([]*myproto.FrameData, 0),
 		Status:          "waiting",
 		MaxPlayers:      MAX_PLAYERS,
+		HistoryFrames:   make([]*myproto.ServerFrame, 0),
 	}
 
 	s.Rooms[roomID] = room
@@ -493,6 +570,11 @@ func (room *Room) frameLoop(server *Server) {
 			Timestamp:   time.Now().UnixNano(),
 			FrameDatas:  frameDatas,
 		}
+
+		// 保存到历史记录
+		room.Mutex.Lock()
+		room.HistoryFrames = append(room.HistoryFrames, serverFrame)
+		room.Mutex.Unlock()
 
 		// 发送给所有客户端
 		for _, client := range clients {

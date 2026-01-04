@@ -12,6 +12,9 @@ enum MessageType {
   MESSAGE_SERVER_FRAME = 3;   // 服务器帧同步数据
   MESSAGE_DISCONNECT = 4;     // 断开连接
   MESSAGE_GAME_START = 5;     // 游戏开始
+  
+  MESSAGE_FRAME_LOSS = 6;     // 缺失帧
+  MESSAGE_FRAME_NEED = 7;     // 补发帧
 }
 
 // 输入方向
@@ -59,3 +62,10 @@ message GameStart {
 
 
 
+
+message GetLossFrame{
+  int64 last_frame_number = 1;  
+}
+message SendAllFrame{
+  repeated ServerFrame all_need_frame = 1;
+}

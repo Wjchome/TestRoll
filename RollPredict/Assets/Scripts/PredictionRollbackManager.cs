@@ -292,24 +292,28 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
             // PredictAndLose, //预测并且丢包
             // PredictAndSuccessAndInputOk, //预测并且成功 并且预测成功
             // PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
-            case NetState.NoPredictionAndLose:
+            
             case NetState.Repeat:
-            case NetState.PredictAndLose:
                 //暂时这样，丢包需要请求
                 break;
+            case NetState.NoPredictionAndLose:
+            case NetState.PredictAndLose:
+                FrameSyncNetwork.Instance.SendLossFrame(confirmedServerFrame);
+                break;
             case NetState.NoPredictionAndSuccess:
-
-
+                
                 SaveInput(serverFrameNumber, serverFrame);
-
                 var inputs = GetInputs(serverFrameNumber);
                 currentGameState = StateMachine.Execute(currentGameState, inputs);
                 SaveSnapshot(serverFrameNumber, currentGameState);
+                confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                 break;
 
             case NetState.PredictAndSuccessAndInputOk:
                 Debug.Log("PredictAndSuccessAndInputOk");
-                //不管？
+                confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                 break;
 
             case NetState.PredictAndSuccessAndInputFail:
@@ -325,14 +329,12 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
                     currentGameState = StateMachine.Execute(currentGameState, newInputs);
                     SaveSnapshot(frame, currentGameState);
                 }
-
+                confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                 break;
         }
 
-        // 继续预测未来的帧（如果有本地输入）
-        confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
-        //比如只预测1帧，那么这个直接回归到1。如果预测帧3 确定帧 2，那么往后预测则是 预测帧 4
-        predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+        
     }
 
 
