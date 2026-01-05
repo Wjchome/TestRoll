@@ -19,7 +19,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
 {
     [Header("服务器设置")]
     public string serverIP = "127.0.0.1";
-    public int serverPort = 8088;
+    public int serverPort = 8089;
     public string playerName = "Player";
 
     [Header("状态")]
@@ -44,7 +44,6 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     public System.Action OnDisconnected;
     
     
-    public float delayTime = 0.0f;
 
     void Start()
     {
@@ -156,6 +155,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
         {
             LastFrameNumber = confirmedFrame,
         };
+        Debug.Log($"Lossing frame {confirmedFrame}");
         SendMessage(MessageType.MessageFrameLoss, data);
     }
 
@@ -167,14 +167,6 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
         if (!isConnected || stream == null)
             return;
 
-        StartCoroutine(SendMessagesWithDelay(messageType, msg));
-        
-    }
-
-    
-    IEnumerator SendMessagesWithDelay(MessageType messageType, IMessage msg)
-    {
-        yield return new WaitForSeconds(delayTime);
         try
         {
             // 序列化 protobuf 消息
@@ -203,7 +195,9 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
             Debug.LogError($"Failed to send message: {e.Message}");
             Disconnect();
         }
+        
     }
+
 
     /// <summary>
     /// 接收消息线程

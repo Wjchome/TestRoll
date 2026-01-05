@@ -17,14 +17,12 @@ public class FrameSyncExample : MonoBehaviour
     [Header("玩家设置")] public GameObject playerPrefab;
 
 
-
     public GameObject myPlayer;
 
     void Start()
     {
         // 设置服务器信息
-        networkManager.serverIP = "127.0.0.1";
-        networkManager.serverPort = 8088;
+
         networkManager.playerName = "Player_" + Random.Range(1000, 9999);
 
         // 注册事件回调
@@ -48,7 +46,7 @@ public class FrameSyncExample : MonoBehaviour
     {
         if (!networkManager.isGameStarted)
             return;
-        timer+=Time.deltaTime;
+        timer += Time.deltaTime;
         foreach (var kvp in predictionManager.playerObjects)
         {
             int id = kvp.Key;
@@ -60,7 +58,10 @@ public class FrameSyncExample : MonoBehaviour
             }
             else
             {
-                kvp.Value.transform.position = (Vector3)predictionManager.currentGameState.players[id].position;
+                if (predictionManager.currentGameState.players.TryGetValue(id, out PlayerState playerState))
+                {
+                    kvp.Value.transform.position = (Vector3)playerState.position;
+                }
             }
         }
 
@@ -84,7 +85,7 @@ public class FrameSyncExample : MonoBehaviour
             newDirection = InputDirection.DirectionRight;
         }
 
-        
+
         // 只收集输入，不立即预测
         // 预测将在收到服务器帧确认后，在UpdateInputState中执行
         if (newDirection != InputDirection.DirectionNone)
@@ -96,11 +97,8 @@ public class FrameSyncExample : MonoBehaviour
 
                 // 然后发送输入到服务器
                 networkManager.SendFrameData(newDirection);
-
             }
         }
-        
-  
     }
 
     void OnDestroy()
@@ -163,10 +161,6 @@ public class FrameSyncExample : MonoBehaviour
 
         // 初始化随机种子
         Random.InitState((int)gameStart.RandomSeed);
-
-  
-
-       
     }
 
     /// <summary>
@@ -174,8 +168,6 @@ public class FrameSyncExample : MonoBehaviour
     /// </summary>
     private void OnServerFrameReceived(ServerFrame serverFrame)
     {
-
-
         // 使用预测回滚管理器处理服务器帧
         if (predictionManager != null && predictionManager.enablePredictionRollback)
         {
