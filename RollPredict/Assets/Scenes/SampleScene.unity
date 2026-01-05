@@ -168,13 +168,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c31b79ded69a41aaa385d7df7930cc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverIP: 127.0.0.1
-  serverPort: 8089
+  serverIP: 10.30.21.83
+  serverPort: 8088
   playerName: Player
   isConnected: 0
   isGameStarted: 0
   myPlayerID: 20
-  delayTime: 0
 --- !u!114 &578085305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -190,7 +189,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 3173730084948646136, guid: ae5410c2b638244dc89abbbd4e8d525f, type: 3}
   myPlayer: {fileID: 0}
   smoothTime: 5
-  isSmooth: 0
+  isSmooth: 1
   timer: 0
 --- !u!114 &578085306
 MonoBehaviour:

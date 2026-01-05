@@ -307,13 +307,15 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
                 currentGameState = StateMachine.Execute(currentGameState, inputs);
                 SaveSnapshot(serverFrameNumber, currentGameState);
                 confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
-                predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                predictedFrameIndex = 1;
                 break;
 
             case NetState.PredictAndSuccessAndInputOk:
                 Debug.Log("PredictAndSuccessAndInputOk");
                 confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
-                predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                predictedFrameIndex = 1;
                 break;
 
             case NetState.PredictAndSuccessAndInputFail:
@@ -330,7 +332,8 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
                     SaveSnapshot(frame, currentGameState);
                 }
                 confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
-                predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                predictedFrameIndex = 1;
                 break;
         }
 

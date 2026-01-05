@@ -39,10 +39,13 @@ namespace Proto {
             "TkVDVBABEhYKEk1FU1NBR0VfRlJBTUVfREFUQRACEhgKFE1FU1NBR0VfU0VS",
             "VkVSX0ZSQU1FEAMSFgoSTUVTU0FHRV9ESVNDT05ORUNUEAQSFgoSTUVTU0FH",
             "RV9HQU1FX1NUQVJUEAUSFgoSTUVTU0FHRV9GUkFNRV9MT1NTEAYSFgoSTUVT",
-            "U0FHRV9GUkFNRV9ORUVEEAcqcwoOSW5wdXREaXJlY3Rpb24SEgoORElSRUNU",
-            "SU9OX05PTkUQABIQCgxESVJFQ1RJT05fVVAQARISCg5ESVJFQ1RJT05fRE9X",
-            "ThACEhIKDkRJUkVDVElPTl9MRUZUEAMSEwoPRElSRUNUSU9OX1JJR0hUEARC",
-            "IlogZ2l0aHViLmNvbS9XamNIb21lL2dvaGVsbG8vcHJvdG9iBnByb3RvMw=="));
+            "U0FHRV9GUkFNRV9ORUVEEAcq1QEKDklucHV0RGlyZWN0aW9uEhIKDkRJUkVD",
+            "VElPTl9OT05FEAASEAoMRElSRUNUSU9OX1VQEAESEgoORElSRUNUSU9OX0RP",
+            "V04QAhISCg5ESVJFQ1RJT05fTEVGVBADEhMKD0RJUkVDVElPTl9SSUdIVBAE",
+            "EhUKEURJUkVDVElPTl9VUF9MRUZUEAUSFgoSRElSRUNUSU9OX1VQX1JJR0hU",
+            "EAYSFwoTRElSRUNUSU9OX0RPV05fTEVGVBAHEhgKFERJUkVDVElPTl9ET1dO",
+            "X1JJR0hUEAhCIlogZ2l0aHViLmNvbS9XamNIb21lL2dvaGVsbG8vcHJvdG9i",
+            "BnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proto.MessageType), typeof(global::Proto.InputDirection), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -95,7 +98,7 @@ namespace Proto {
   }
 
   /// <summary>
-  /// 输入方向
+  /// 输入方向（8个方向）
   /// </summary>
   public enum InputDirection {
     [pbr::OriginalName("DIRECTION_NONE")] DirectionNone = 0,
@@ -103,13 +106,29 @@ namespace Proto {
     [pbr::OriginalName("DIRECTION_DOWN")] DirectionDown = 2,
     [pbr::OriginalName("DIRECTION_LEFT")] DirectionLeft = 3,
     [pbr::OriginalName("DIRECTION_RIGHT")] DirectionRight = 4,
+    /// <summary>
+    /// 左上
+    /// </summary>
+    [pbr::OriginalName("DIRECTION_UP_LEFT")] DirectionUpLeft = 5,
+    /// <summary>
+    /// 右上
+    /// </summary>
+    [pbr::OriginalName("DIRECTION_UP_RIGHT")] DirectionUpRight = 6,
+    /// <summary>
+    /// 左下
+    /// </summary>
+    [pbr::OriginalName("DIRECTION_DOWN_LEFT")] DirectionDownLeft = 7,
+    /// <summary>
+    /// 右下
+    /// </summary>
+    [pbr::OriginalName("DIRECTION_DOWN_RIGHT")] DirectionDownRight = 8,
   }
 
   #endregion
 
   #region Messages
   /// <summary>
-  /// 客户端帧数据（只包含上下左右）
+  /// 客户端帧数据（包含8个方向）
   /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class FrameData : pb::IMessage<FrameData>
@@ -177,7 +196,7 @@ namespace Proto {
     public const int DirectionFieldNumber = 2;
     private global::Proto.InputDirection direction_ = global::Proto.InputDirection.DirectionNone;
     /// <summary>
-    /// 方向
+    /// 方向（8个方向）
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

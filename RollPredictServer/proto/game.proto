@@ -8,7 +8,7 @@ option go_package = "github.com/WjcHome/gohello/proto";
 enum MessageType {
   MESSAGE_UNKNOWN = 0;
   MESSAGE_CONNECT = 1;        // 客户端连接
-  MESSAGE_FRAME_DATA = 2;     // 帧数据（上下左右）
+  MESSAGE_FRAME_DATA = 2;     // 帧数据（8个方向）
   MESSAGE_SERVER_FRAME = 3;   // 服务器帧同步数据
   MESSAGE_DISCONNECT = 4;     // 断开连接
   MESSAGE_GAME_START = 5;     // 游戏开始
@@ -17,19 +17,23 @@ enum MessageType {
   MESSAGE_FRAME_NEED = 7;     // 补发帧
 }
 
-// 输入方向
+// 输入方向（8个方向）
 enum InputDirection {
   DIRECTION_NONE = 0;
   DIRECTION_UP = 1;
   DIRECTION_DOWN = 2;
   DIRECTION_LEFT = 3;
   DIRECTION_RIGHT = 4;
+  DIRECTION_UP_LEFT = 5;      // 左上
+  DIRECTION_UP_RIGHT = 6;     // 右上
+  DIRECTION_DOWN_LEFT = 7;    // 左下
+  DIRECTION_DOWN_RIGHT = 8;    // 右下
 }
 
-// 客户端帧数据（只包含上下左右）
+// 客户端帧数据（包含8个方向）
 message FrameData {
   int32 player_id = 1;              // 玩家ID
-  InputDirection direction = 2;     // 方向
+  InputDirection direction = 2;     // 方向（8个方向）
   int64 frame_number = 3;            // 帧号
 }
 

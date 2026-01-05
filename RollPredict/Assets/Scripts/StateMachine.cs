@@ -44,11 +44,15 @@ public static class StateMachine
     }
 
     /// <summary>
-    /// 根据输入方向更新玩家位置
+    /// 根据输入方向更新玩家位置（8个方向）
     /// </summary>
     private static void UpdatePlayerPosition(PlayerState playerState, InputDirection direction)
     {
         FixVector3 movement = FixVector3.Zero;
+        
+        // 斜向移动的速度需要归一化（保持与正交方向相同的速度）
+        // 使用 0.707 作为 sqrt(2)/2 的近似值
+        Fix64 diagonalSpeed = PlayerSpeed * (Fix64)0.7071067811865476f; // sqrt(2)/2
 
         switch (direction)
         {
@@ -63,6 +67,22 @@ public static class StateMachine
                 break;
             case InputDirection.DirectionRight:
                 movement = FixVector3.Right * PlayerSpeed;
+                break;
+            case InputDirection.DirectionUpLeft:
+                // 左上：上 + 左
+                movement = (FixVector3.Up + FixVector3.Left) * diagonalSpeed;
+                break;
+            case InputDirection.DirectionUpRight:
+                // 右上：上 + 右
+                movement = (FixVector3.Up + FixVector3.Right) * diagonalSpeed;
+                break;
+            case InputDirection.DirectionDownLeft:
+                // 左下：下 + 左
+                movement = (FixVector3.Down + FixVector3.Left) * diagonalSpeed;
+                break;
+            case InputDirection.DirectionDownRight:
+                // 右下：下 + 右
+                movement = (FixVector3.Down + FixVector3.Right) * diagonalSpeed;
                 break;
             case InputDirection.DirectionNone:
                 // 无输入，不移动

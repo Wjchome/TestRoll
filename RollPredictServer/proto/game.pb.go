@@ -7,11 +7,12 @@
 package proto
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -27,7 +28,7 @@ type MessageType int32
 const (
 	MessageType_MESSAGE_UNKNOWN      MessageType = 0
 	MessageType_MESSAGE_CONNECT      MessageType = 1 // 客户端连接
-	MessageType_MESSAGE_FRAME_DATA   MessageType = 2 // 帧数据（上下左右）
+	MessageType_MESSAGE_FRAME_DATA   MessageType = 2 // 帧数据（8个方向）
 	MessageType_MESSAGE_SERVER_FRAME MessageType = 3 // 服务器帧同步数据
 	MessageType_MESSAGE_DISCONNECT   MessageType = 4 // 断开连接
 	MessageType_MESSAGE_GAME_START   MessageType = 5 // 游戏开始
@@ -90,11 +91,15 @@ func (MessageType) EnumDescriptor() ([]byte, []int) {
 type InputDirection int32
 
 const (
-	InputDirection_DIRECTION_NONE  InputDirection = 0
-	InputDirection_DIRECTION_UP    InputDirection = 1
-	InputDirection_DIRECTION_DOWN  InputDirection = 2
-	InputDirection_DIRECTION_LEFT  InputDirection = 3
-	InputDirection_DIRECTION_RIGHT InputDirection = 4
+	InputDirection_DIRECTION_NONE       InputDirection = 0
+	InputDirection_DIRECTION_UP         InputDirection = 1
+	InputDirection_DIRECTION_DOWN       InputDirection = 2
+	InputDirection_DIRECTION_LEFT       InputDirection = 3
+	InputDirection_DIRECTION_RIGHT      InputDirection = 4
+	InputDirection_DIRECTION_UP_LEFT    InputDirection = 5 // 左上
+	InputDirection_DIRECTION_UP_RIGHT   InputDirection = 6 // 右上
+	InputDirection_DIRECTION_DOWN_LEFT  InputDirection = 7 // 左下
+	InputDirection_DIRECTION_DOWN_RIGHT InputDirection = 8 // 右下
 )
 
 // Enum value maps for InputDirection.
@@ -105,13 +110,21 @@ var (
 		2: "DIRECTION_DOWN",
 		3: "DIRECTION_LEFT",
 		4: "DIRECTION_RIGHT",
+		5: "DIRECTION_UP_LEFT",
+		6: "DIRECTION_UP_RIGHT",
+		7: "DIRECTION_DOWN_LEFT",
+		8: "DIRECTION_DOWN_RIGHT",
 	}
 	InputDirection_value = map[string]int32{
-		"DIRECTION_NONE":  0,
-		"DIRECTION_UP":    1,
-		"DIRECTION_DOWN":  2,
-		"DIRECTION_LEFT":  3,
-		"DIRECTION_RIGHT": 4,
+		"DIRECTION_NONE":       0,
+		"DIRECTION_UP":         1,
+		"DIRECTION_DOWN":       2,
+		"DIRECTION_LEFT":       3,
+		"DIRECTION_RIGHT":      4,
+		"DIRECTION_UP_LEFT":    5,
+		"DIRECTION_UP_RIGHT":   6,
+		"DIRECTION_DOWN_LEFT":  7,
+		"DIRECTION_DOWN_RIGHT": 8,
 	}
 )
 
@@ -142,7 +155,7 @@ func (InputDirection) EnumDescriptor() ([]byte, []int) {
 	return file_proto_game_proto_rawDescGZIP(), []int{1}
 }
 
-// 客户端帧数据（只包含上下左右）
+// 客户端帧数据（包含8个方向）
 type FrameData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      int32                  `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`             // 玩家ID

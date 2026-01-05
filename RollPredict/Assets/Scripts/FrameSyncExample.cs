@@ -40,6 +40,7 @@ public class FrameSyncExample : MonoBehaviour
     public bool isSmooth;
 
     public float timer = 0;
+    public float timer1 = 0;
 
 
     void Update()
@@ -47,6 +48,7 @@ public class FrameSyncExample : MonoBehaviour
         if (!networkManager.isGameStarted)
             return;
         timer += Time.deltaTime;
+        timer1 += Time.deltaTime;
         foreach (var kvp in predictionManager.playerObjects)
         {
             int id = kvp.Key;
@@ -65,22 +67,45 @@ public class FrameSyncExample : MonoBehaviour
             }
         }
 
-        // 检测输入
+        // 检测输入（8个方向）
         InputDirection newDirection = InputDirection.DirectionNone;
-
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        
+        bool up = Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
+        bool down = Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
+        bool left = Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+        bool right = Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+        
+        // 检测组合按键（斜向）
+        if (up && left)
+        {
+            newDirection = InputDirection.DirectionUpLeft;
+        }
+        else if (up && right)
+        {
+            newDirection = InputDirection.DirectionUpRight;
+        }
+        else if (down && left)
+        {
+            newDirection = InputDirection.DirectionDownLeft;
+        }
+        else if (down && right)
+        {
+            newDirection = InputDirection.DirectionDownRight;
+        }
+        // 检测单一方向
+        else if (up)
         {
             newDirection = InputDirection.DirectionUp;
         }
-        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        else if (down)
         {
             newDirection = InputDirection.DirectionDown;
         }
-        else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        else if (left)
         {
             newDirection = InputDirection.DirectionLeft;
         }
-        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        else if (right)
         {
             newDirection = InputDirection.DirectionRight;
         }
@@ -89,14 +114,18 @@ public class FrameSyncExample : MonoBehaviour
         // 只收集输入，不立即预测
         // 预测将在收到服务器帧确认后，在UpdateInputState中执行
         if (newDirection != InputDirection.DirectionNone)
-        {
-            if (timer > 0.1f)
+        { 
+            if (timer > 0.05f)
             {
                 timer = 0;
-                UpdateInputStatePredict(newDirection);
-
                 // 然后发送输入到服务器
                 networkManager.SendFrameData(newDirection);
+            }
+
+            if (timer1 > 0.03f)
+            {
+                timer1 = 0;
+                UpdateInputStatePredict(newDirection);
             }
         }
     }
