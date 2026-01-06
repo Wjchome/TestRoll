@@ -103,7 +103,7 @@ MonoBehaviour:
   useGravity: 0
   restitution: 0
   friction: 0.5
-  linearDamping: 0
+  linearDamping: 0.5
   shapeType: 0
   posOffset: {x: 0, y: 0}
   circleRadius: 0.5

@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 578085304}
   - component: {fileID: 578085305}
   - component: {fileID: 578085306}
+  - component: {fileID: 578085307}
   m_Layer: 0
   m_Name: NetManager
   m_TagString: Untagged
@@ -168,7 +169,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c31b79ded69a41aaa385d7df7930cc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverIP: 10.30.21.83
+  serverIP: 127.0.0.1
   serverPort: 8088
   playerName: Player
   isConnected: 0
@@ -191,6 +192,7 @@ MonoBehaviour:
   smoothTime: 5
   isSmooth: 1
   timer: 0
+  timer1: 0
 --- !u!114 &578085306
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,6 +215,23 @@ MonoBehaviour:
   textColor: {r: 1, g: 1, b: 1, a: 1}
   textSize: 15
   predictedFrameIndex: 1
+--- !u!114 &578085307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 578085301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6cdd324892b44af9960a8df8fbce7a4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gravity: {x: 0, y: -9.81}
+  iterations: 8
+  subSteps: 2
+  maxObjectsPerNode: 5
+  maxDepth: 5
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
