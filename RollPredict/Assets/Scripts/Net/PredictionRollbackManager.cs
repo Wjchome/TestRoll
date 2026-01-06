@@ -326,7 +326,6 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
 
                 currentGameState =  LoadSnapshot(confirmedServerFrame);
-                var physicsWorld = Frame.Physics2D.PhysicsWorld2DComponent.Instance?.World;
                 for (long frame = confirmedServerFrame; frame <= predictedFrame; frame++)
                 {
                     var newInputs = GetInputs(frame);

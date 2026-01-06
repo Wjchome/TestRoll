@@ -41,49 +41,50 @@ public static class PhysicsSyncHelper
     }
 
     /// <summary>
-    /// 从GameState保存物理体状态到GameState
+    /// 从Entity保存状态到GameState
     /// 在保存快照前调用，将当前Unity对象的状态保存到GameState
+    /// Entity -> State
     /// </summary>
     public static void SaveToGameState(GameState gameState)
     {   
-        var allBodies =PhysicsWorld2DComponent.Instance.World.GetAllBodies();
+        var allBodies = PhysicsWorld2DComponent.Instance.World.GetAllBodies();
         gameState.physicsBodies.Clear();
         // state = entity
         foreach (var body in allBodies)
         {
             if (body != null && body.id > 0)
             {
-                gameState.physicsBodies[body.id].bodyId = body.id;
-                gameState.physicsBodies[body.id].position= body.Position;
-                gameState.physicsBodies[body.id].velocity = body.Velocity;
+                // 创建或更新状态
+                gameState.physicsBodies[body.id] = new PhysicsBodyState(
+                    body.id, 
+                    body.Position, 
+                    body.Velocity
+                );
             }
         }
     }
 
     /// <summary>
-    /// 从GameState恢复物理体状态到Unity对象
+    /// 从GameState恢复状态到Entity
     /// 在回滚时调用，将GameState中的状态应用到Unity对象
+    /// State -> Entity
     /// </summary>
     public static void RestoreFromGameState(GameState gameState)
     {
-
         // 遍历GameState中的所有物理体状态，恢复它们
-        foreach (var (id,bodyState) in gameState.physicsBodies)
+        foreach (var (id, bodyState) in gameState.physicsBodies)
         {
-            
             // 通过ID找到对应的RigidBody2D对象
             if (bodyIdToRigidBody.TryGetValue(id, out RigidBody2D body))
             {
-                    // 恢复位置和速度
-                    body.Position = bodyState.position;
-                    body.Velocity = bodyState.velocity;
-                    // 标记为脏，需要更新四叉树
-                    body.QuadTreeDirty = true;
+                // entity = state
+                // 恢复位置和速度
+                body.Position = bodyState.position;
+                body.Velocity = bodyState.velocity;
+                // 标记为脏，需要更新四叉树
+                body.QuadTreeDirty = true;
             }
-            else
-            {
-                // 按道理说需要恢复？
-            }
+            // 如果Entity不存在，说明这个物理体已经被销毁，不需要恢复
         }
     }
 

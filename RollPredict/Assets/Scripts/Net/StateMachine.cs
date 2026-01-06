@@ -28,7 +28,6 @@ public static class StateMachine
     /// </summary>
     /// <param name="currentState">当前帧状态 State(n)</param>
     /// <param name="inputs">当前帧所有玩家的输入 Input(n)</param>
-    /// <param name="physicsWorld">物理世界（可选，如果为null则跳过物理模拟）</param>
     /// <returns>下一帧状态 State(n+1)</returns>
     public static GameState Execute(GameState currentState, Dictionary<int, InputDirection> inputs)
     {
@@ -36,16 +35,24 @@ public static class StateMachine
         GameState nextState = currentState.Clone();
         nextState.frameNumber = currentState.frameNumber + 1;
 
-
-        // 2.1 从GameState恢复物理体状态到Unity对象
+        // 1. 恢复所有Entity状态（State -> Entity）
+        // 从GameState恢复玩家状态到Entity
+        PlayerHelper.RestoreFromGameState(nextState);
+        // 从GameState恢复物理体状态到Entity
         PhysicsSyncHelper.RestoreFromGameState(nextState);
 
+        // 2. 执行游戏逻辑（更新Entity）
+        // 2.1 处理玩家输入（如果需要，可以在这里处理）
         // 2.2 执行物理模拟（这会更新所有物理体的位置和速度）
+        
         PhysicsWorld2DComponent.Instance.World.Update();
+        
 
-        // 2.3 将物理世界状态保存回GameState
+        // 3. 保存所有Entity状态到GameState（Entity -> State）
+        // 保存玩家状态
+        PlayerHelper.SaveToGameState(nextState);
+        // 保存物理体状态
         PhysicsSyncHelper.SaveToGameState(nextState);
-
 
         return nextState;
     }
