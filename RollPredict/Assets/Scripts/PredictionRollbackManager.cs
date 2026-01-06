@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Frame.Core;
 using Frame.FixMath;
+using Frame.Physics2D;
 using UnityEngine;
 using Proto;
 using UnityEditor;
@@ -31,6 +32,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
     // 玩家对象映射（视图层）
     public Dictionary<int, GameObject> playerObjects = new Dictionary<int, GameObject>();
+    public Dictionary<int, RigidBody2DComponent> playerRigidBodys = new Dictionary<int, RigidBody2DComponent>();
 
 
     // 当前游戏状态（统一的状态机框架使用）
@@ -72,13 +74,11 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
     /// <summary>
     /// 注册玩家对象
     /// </summary>
-    public void RegisterPlayer(int playerId, GameObject playerObject, FixVector3 position)
+    public void RegisterPlayer(int playerId, GameObject playerObject, RigidBody2DComponent playerRigidbody)
     {
         playerObjects[playerId] = playerObject;
-
-        // 同步到GameState
-        var playerState = currentGameState.GetOrCreatePlayer(playerId);
-        playerState.position = position;
+        playerRigidBodys[playerId] = playerRigidbody;
+     
     }
 
     /// <summary>
@@ -185,6 +185,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
         // 使用统一的状态机执行预测
         // State(n+1) = StateMachine(State(n), Input(n))
         var inputs = new Dictionary<int, InputDirection> { { playerId, direction } };
+        // 获取物理世界（如果存在）
         currentGameState = StateMachine.Execute(currentGameState, inputs);
 
         // 保存预测后的状态快照
@@ -325,6 +326,7 @@ public class PredictionRollbackManager : SingletonMono<PredictionRollbackManager
 
 
                 currentGameState =  LoadSnapshot(confirmedServerFrame);
+                var physicsWorld = Frame.Physics2D.PhysicsWorld2DComponent.Instance?.World;
                 for (long frame = confirmedServerFrame; frame <= predictedFrame; frame++)
                 {
                     var newInputs = GetInputs(frame);

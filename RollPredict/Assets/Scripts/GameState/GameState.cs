@@ -16,6 +16,12 @@ public class GameState
     public Dictionary<int, PlayerState> players;
 
     /// <summary>
+    /// 物理体状态字典 (bodyId -> PhysicsBodyState)
+    /// 存储所有需要预测回滚的物理体状态（位置、速度等）
+    /// </summary>
+    public Dictionary<int, PhysicsBodyState> physicsBodies;
+
+    /// <summary>
     /// 当前帧号
     /// </summary>
     public long frameNumber;
@@ -23,12 +29,14 @@ public class GameState
     public GameState()
     {
         players = new Dictionary<int, PlayerState>();
+        physicsBodies = new Dictionary<int, PhysicsBodyState>();
         frameNumber = 0;
     }
 
     public GameState(long frameNumber)
     {
         players = new Dictionary<int, PlayerState>();
+        physicsBodies = new Dictionary<int, PhysicsBodyState>();
         this.frameNumber = frameNumber;
     }
 
@@ -42,19 +50,12 @@ public class GameState
         {
             newState.players[kvp.Key] = kvp.Value.Clone();
         }
+        foreach (var kvp in this.physicsBodies)
+        {
+            newState.physicsBodies[kvp.Key] = kvp.Value.Clone();
+        }
         return newState;
     }
 
-    /// <summary>
-    /// 获取玩家状态，如果不存在则创建
-    /// </summary>
-    public PlayerState GetOrCreatePlayer(int playerId)
-    {
-        if (!players.ContainsKey(playerId))
-        {
-            players[playerId] = new PlayerState(playerId, FixVector3.Zero);
-        }
-        return players[playerId];
-    }
 }
 

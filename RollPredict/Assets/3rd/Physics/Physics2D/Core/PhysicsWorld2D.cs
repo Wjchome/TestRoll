@@ -109,6 +109,14 @@ namespace Frame.Physics2D
             }
         }
 
+        /// <summary>
+        /// 获取所有物理体（用于状态同步）
+        /// </summary>
+        public List<RigidBody2D> GetAllBodies()
+        {
+            return new List<RigidBody2D>(bodies);
+        }
+
 
         /// <summary>
         /// 增量更新四叉树（只更新移动的物体，支持自动扩容）

@@ -95,7 +95,7 @@ namespace Frame.Physics2D
         /// <summary>
         /// 脏标记：是否需要更新四叉树（位置改变）
         /// </summary>
-        internal bool QuadTreeDirty { get; set; } = true;
+        public bool QuadTreeDirty ;
 
         /// <summary>
         /// 是否在四叉树中

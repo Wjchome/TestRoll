@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Frame.FixMath;
+using Frame.Physics2D;
 using UnityEngine;
 using Proto;
 
@@ -53,18 +54,18 @@ public class FrameSyncExample : MonoBehaviour
         {
             int id = kvp.Key;
 
-            if (isSmooth)
-            {
-                kvp.Value.transform.position = Vector3.Lerp(kvp.Value.transform.position,
-                    (Vector3)predictionManager.currentGameState.players[id].position, Time.deltaTime * smoothTime);
-            }
-            else
-            {
-                if (predictionManager.currentGameState.players.TryGetValue(id, out PlayerState playerState))
-                {
-                    kvp.Value.transform.position = (Vector3)playerState.position;
-                }
-            }
+            // if (isSmooth)
+            // {
+            //     kvp.Value.transform.position = Vector3.Lerp(kvp.Value.transform.position,
+            //         (Vector3)predictionManager.currentGameState.[id].position, Time.deltaTime * smoothTime);
+            // }
+            // else
+            // {
+            //     if (predictionManager.currentGameState.players.TryGetValue(id, out PlayerState playerState))
+            //     {
+            //         kvp.Value.transform.position = (Vector3)playerState.position;
+            //     }
+            // }
         }
 
         // 检测输入（8个方向）
@@ -173,13 +174,14 @@ public class FrameSyncExample : MonoBehaviour
         Fix64 index = Fix64.Zero;
         foreach (var playerId in gameStart.PlayerIds)
         {
-            var pos = new FixVector3(index, Fix64.Zero, Fix64.Zero);
+            var pos = new FixVector2(index, Fix64.Zero);
             index += Fix64.One;
-            Vector3 startPos = new Vector3((int)index, 0, 0);
-            GameObject player = Instantiate(playerPrefab, startPos, Quaternion.identity);
+            FixVector2 startPos = new FixVector2(index,  Fix64.Zero);
+            GameObject player = Instantiate(playerPrefab, (Vector2)startPos, Quaternion.identity);
+            RigidBody2DComponent playerRigidbody = player.GetComponent<RigidBody2DComponent>();
+            PhysicsWorld2DComponent.Instance.AddRigidBody( playerRigidbody, startPos,PhysicsLayer.Everything);
 
-
-            predictionManager.RegisterPlayer(playerId, player, pos);
+            predictionManager.RegisterPlayer(playerId, player, playerRigidbody);
 
 
             if (playerId == networkManager.myPlayerID)

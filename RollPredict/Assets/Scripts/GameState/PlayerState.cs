@@ -11,17 +11,16 @@ using Proto;
 public class PlayerState
 {
     public int playerId;
-    public FixVector3 position;
-
-    public PlayerState(int playerId, FixVector3 position)
+    public int HP;
+    public PlayerState(int playerId, int HP)
     {
         this.playerId = playerId;
-        this.position = position;
+        this.HP = HP;
     }
 
     public PlayerState Clone()
     {
-        return new PlayerState(this.playerId, this.position);
+        return new PlayerState(this.playerId, this.HP);
     }
 }
 
