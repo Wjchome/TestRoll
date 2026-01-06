@@ -18,6 +18,11 @@ public class GameState
     /// <summary>
     /// 物理体状态字典 (bodyId -> PhysicsBodyState)
     /// 存储所有需要预测回滚的物理体状态（位置、速度等）
+    /// 
+    /// 重要：Key是物理体ID（body.id），不是玩家ID（playerId）！
+    /// - body.id: 由物理世界分配（1, 2, 3...）
+    /// - playerId: 由游戏逻辑分配（100, 200, 300...）
+    /// - 如果需要通过playerId查找物理体，需要通过PredictionRollbackManager.playerRigidBodys
     /// </summary>
     public Dictionary<int, PhysicsBodyState> physicsBodies;
 

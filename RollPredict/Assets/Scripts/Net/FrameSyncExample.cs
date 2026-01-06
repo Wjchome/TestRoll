@@ -50,23 +50,6 @@ public class FrameSyncExample : MonoBehaviour
             return;
         timer += Time.deltaTime;
         timer1 += Time.deltaTime;
-        foreach (var kvp in predictionManager.playerObjects)
-        {
-            int id = kvp.Key;
-
-            // if (isSmooth)
-            // {
-            //     kvp.Value.transform.position = Vector3.Lerp(kvp.Value.transform.position,
-            //         (Vector3)predictionManager.currentGameState.[id].position, Time.deltaTime * smoothTime);
-            // }
-            // else
-            // {
-            //     if (predictionManager.currentGameState.players.TryGetValue(id, out PlayerState playerState))
-            //     {
-            //         kvp.Value.transform.position = (Vector3)playerState.position;
-            //     }
-            // }
-        }
 
         // 检测输入（8个方向）
         InputDirection newDirection = InputDirection.DirectionNone;
@@ -131,6 +114,49 @@ public class FrameSyncExample : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 在LateUpdate中同步玩家位置，确保在所有Update之后执行
+    /// 这样可以覆盖RigidBody2DComponent.Update()的自动同步
+    /// </summary>
+    void LateUpdate()
+    {
+        if (!networkManager.isGameStarted)
+            return;
+            
+        // 同步玩家位置（从物理体状态到Unity Transform）
+        foreach (var kvp in predictionManager.playerObjects)
+        {
+            int id = kvp.Key;
+            GameObject playerObj = kvp.Value;
+            
+            // 获取物理体组件
+            if (predictionManager.playerRigidBodys.TryGetValue(id, out RigidBody2DComponent rigidBodyComp))
+            {
+                if (rigidBodyComp != null && rigidBodyComp.Body != null)
+                {
+                    // 从物理体获取目标位置
+                    FixVector2 targetPos = rigidBodyComp.Body.Position;
+                    Vector3 targetPosition = new Vector3((float)targetPos.x, (float)targetPos.y, playerObj.transform.position.z);
+                    
+                    if (isSmooth)
+                    {
+                        // 平滑插值
+                        playerObj.transform.position = Vector3.Lerp(
+                            playerObj.transform.position,
+                            targetPosition,
+                            Time.deltaTime * smoothTime
+                        );
+                    }
+                    else
+                    {
+                        // 直接同步（与物理体位置保持一致）
+                        playerObj.transform.position = targetPosition;
+                    }
+                }
+            }
+        }
+    }
+
     void OnDestroy()
     {
         if (networkManager != null)
@@ -176,19 +202,42 @@ public class FrameSyncExample : MonoBehaviour
         {
             var pos = new FixVector2(index, Fix64.Zero);
             index += Fix64.One;
-            FixVector2 startPos = new FixVector2(index,  Fix64.Zero);
+            FixVector2 startPos = new FixVector2(index, Fix64.Zero);
+            
+            // 1. 实例化玩家对象
             GameObject player = Instantiate(playerPrefab, (Vector2)startPos, Quaternion.identity);
+            
+            // 2. 获取或添加PlayerController组件，并设置playerId
+            PlayerController playerController = player.GetComponent<PlayerController>();
+            playerController.playerId = playerId;
+            playerController.HP = 100; // 初始化HP
+            
+            // 3. 获取RigidBody2DComponent并添加到物理世界
             RigidBody2DComponent playerRigidbody = player.GetComponent<RigidBody2DComponent>();
-            PhysicsWorld2DComponent.Instance.AddRigidBody( playerRigidbody, startPos,PhysicsLayer.Everything);
 
+            PhysicsWorld2DComponent.Instance.AddRigidBody(playerRigidbody, startPos, PhysicsLayer.Everything);
+            
+            // 4. 注册物理体到PhysicsSyncHelper（在AddRigidBody之后，因为需要body.id）
+            
+            PhysicsSyncHelper.Register(playerRigidbody.Body);
+            
+            // 5. 注册玩家到PlayerHelper
+            PlayerHelper.Register(playerController);
+            
+            // 6. 注册到PredictionRollbackManager（用于视图层管理）
             predictionManager.RegisterPlayer(playerId, player, playerRigidbody);
-
 
             if (playerId == networkManager.myPlayerID)
             {
                 myPlayer = player;
             }
         }
+        
+        // 7. 初始化GameState（保存初始状态）
+        // 从所有Entity保存初始状态到GameState
+        PlayerHelper.SaveToGameState(predictionManager.currentGameState);
+        PhysicsSyncHelper.SaveToGameState(predictionManager.currentGameState);
+        predictionManager.SaveSnapshot(0, predictionManager.currentGameState);
 
         // 初始化随机种子
         Random.InitState((int)gameStart.RandomSeed);
