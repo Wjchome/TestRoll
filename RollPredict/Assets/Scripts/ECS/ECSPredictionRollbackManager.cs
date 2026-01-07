@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Frame.Core;
 using Frame.ECS;
+using Google.Protobuf.Collections;
 using Proto;
 using UnityEngine;
 
@@ -30,14 +32,9 @@ namespace Frame.ECS
         /// <summary>
         /// 输入历史（按帧号索引）
         /// </summary>
-        private Dictionary<long, Dictionary<int, InputDirection>> inputHistory =
-            new Dictionary<long, Dictionary<int, InputDirection>>();
+        private Dictionary<long, List<FrameData>> inputHistory =
+            new Dictionary<long, List<FrameData>>();
 
-        /// <summary>
-        /// 发射输入历史（按帧号索引）
-        /// </summary>
-        private Dictionary<long, Dictionary<int, bool>> fireInputHistory =
-            new Dictionary<long, Dictionary<int, bool>>();
 
         /// <summary>
         /// 当前确认的服务器帧号
@@ -90,7 +87,6 @@ namespace Frame.ECS
                 {
                     snapshotHistory.Remove(frame);
                     inputHistory.Remove(frame);
-                    fireInputHistory.Remove(frame);
                 }
             }
         }
@@ -118,42 +114,22 @@ namespace Frame.ECS
             if (!enablePredictionRollback)
                 return;
 
-            inputHistory[frameNumber] = new Dictionary<int, InputDirection>();
-            fireInputHistory[frameNumber] = new Dictionary<int, bool>();
-
-            foreach (var frame in serverFrame.FrameDatas)
-            {
-                inputHistory[frameNumber][frame.PlayerId] = frame.Direction;
-                // 这里暂时不处理发射输入，可以后续扩展ServerFrame添加fire字段
-                fireInputHistory[frameNumber][frame.PlayerId] = false;
-            }
+            inputHistory[frameNumber] = serverFrame.FrameDatas.ToList();
         }
 
         /// <summary>
         /// 获取指定帧的输入
         /// </summary>
-        public Dictionary<int, InputDirection> GetInputs(long frameNumber)
+        public List<FrameData> GetInputs(long frameNumber)
         {
             if (inputHistory.ContainsKey(frameNumber))
             {
-                return new Dictionary<int, InputDirection>(inputHistory[frameNumber]);
+                return inputHistory[frameNumber].ToList();
             }
 
-            return new Dictionary<int, InputDirection>();
+            return new List<FrameData>();
         }
 
-        /// <summary>
-        /// 获取指定帧的发射输入
-        /// </summary>
-        public Dictionary<int, bool> GetFireInputs(long frameNumber)
-        {
-            if (fireInputHistory.ContainsKey(frameNumber))
-            {
-                return new Dictionary<int, bool>(fireInputHistory[frameNumber]);
-            }
-
-            return new Dictionary<int, bool>();
-        }
 
         public long predictedFrameIndex = 1;
 
@@ -168,13 +144,17 @@ namespace Frame.ECS
             long frameNumber = confirmedServerFrame + predictedFrameIndex++;
 
             // 保存输入
-            inputHistory[frameNumber] = new Dictionary<int, InputDirection> { { playerId, direction } };
-            fireInputHistory[frameNumber] = new Dictionary<int, bool> { { playerId, fire } };
+            inputHistory[frameNumber] = new List<FrameData>()
+            {
+                new FrameData()
+                {
+                    PlayerId = playerId,
+                    Direction  = direction
+                }
+            };
 
-            // 执行预测
-            var inputs = new Dictionary<int, InputDirection> { { playerId, direction } };
-            var fireInputs = new Dictionary<int, bool> { { playerId, fire } };
-            world = ECSStateMachine.Execute(world, inputs);
+   
+            world = ECSStateMachine.Execute(world, inputHistory[frameNumber]);
 
             // 保存预测后的状态快照
             SaveSnapshot(frameNumber);
@@ -232,35 +212,33 @@ namespace Frame.ECS
                 else
                 {
                     bool needRollback = false;
-
+                    
+                        // 检查服务器帧中的输入是否与本地预测一致
                     if (serverFrame.FrameDatas.Count != GetInputs(serverFrameNumber).Count)
                     {
                         needRollback = true;
                     }
-
-                    // 检查服务器帧中的输入是否与本地预测一致
-                    foreach (var serverFrameData in serverFrame.FrameDatas)
+                    else
                     {
-                        var playerId = serverFrameData.PlayerId;
-                        var serverInput = serverFrameData.Direction;
-
-                        if (inputHistory.ContainsKey(serverFrameNumber) &&
-                            inputHistory[serverFrameNumber].ContainsKey(playerId))
+                        for (int i = 0; i < serverFrame.FrameDatas.Count; i++)
                         {
-                            InputDirection predictedInput = inputHistory[serverFrameNumber][playerId];
-                            if (predictedInput != serverInput)
+                            FrameData serverFrameData =  serverFrame.FrameDatas[i];
+                            var playerId = serverFrameData.PlayerId;
+                            var direction = serverFrameData.Direction;
+                            if (playerId != GetInputs(serverFrameNumber)[i].PlayerId)
+                            {
+                                needRollback = true;
+                                break;
+                            }
+                            else if(direction != GetInputs(serverFrameNumber)[i].Direction)
                             {
                                 needRollback = true;
                                 break;
                             }
                         }
-                        else
-                        {
-                            needRollback = true;
-                            break;
-                        }
+                     
                     }
-
+                    
                     if (needRollback)
                     {
                         currentNetState = NetState.PredictAndSuccessAndInputFail;
@@ -274,8 +252,6 @@ namespace Frame.ECS
 
             switch (currentNetState)
             {
-
-
                 case NetState.Repeat:
                     //暂时这样，丢包需要请求
                     break;
@@ -329,7 +305,6 @@ namespace Frame.ECS
         {
             snapshotHistory.Clear();
             inputHistory.Clear();
-            fireInputHistory.Clear();
             confirmedServerFrame = -1;
             predictedFrame = 0;
             world.Clear();

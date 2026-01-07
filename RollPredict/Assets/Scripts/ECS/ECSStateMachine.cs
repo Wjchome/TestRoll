@@ -41,7 +41,7 @@ namespace Frame.ECS
         /// <param name="inputs">当前帧所有玩家的输入 Input(n)</param>
         /// <param name="fireInputs">当前帧所有玩家的发射输入</param>
         /// <returns>下一帧的World状态 State(n+1)</returns>
-        public static World Execute(World world, Dictionary<int, InputDirection> inputs)
+        public static World Execute(World world, List<FrameData> inputs)
         {
             // 1. 处理玩家输入：移动
             ProcessPlayerMovement(world, inputs);
@@ -58,10 +58,11 @@ namespace Frame.ECS
         /// <summary>
         /// 处理玩家移动输入
         /// </summary>
-        private static void ProcessPlayerMovement(World world, Dictionary<int, InputDirection> inputs)
+        private static void ProcessPlayerMovement(World world, List<FrameData> inputs)
         {
-            foreach (var (playerId, inputDirection) in inputs)
+            foreach (var frameData in inputs)
             {
+               var (playerId, inputDirection)  = (frameData.PlayerId,frameData.Direction);
                 // 跳过无输入
                 if (inputDirection == InputDirection.DirectionNone)
                     continue;
