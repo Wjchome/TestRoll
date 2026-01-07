@@ -41,16 +41,16 @@ namespace Frame.ECS
         /// <param name="inputs">当前帧所有玩家的输入 Input(n)</param>
         /// <param name="fireInputs">当前帧所有玩家的发射输入</param>
         /// <returns>下一帧的World状态 State(n+1)</returns>
-        public static World Execute(World world, Dictionary<int, InputDirection> inputs, Dictionary<int, bool> fireInputs)
+        public static World Execute(World world, Dictionary<int, InputDirection> inputs)
         {
             // 1. 处理玩家输入：移动
             ProcessPlayerMovement(world, inputs);
 
-            // 2. 处理玩家输入：发射子弹
-            ProcessPlayerFire(world, fireInputs);
-
-            // 3. 更新子弹位置
-            UpdateBullets(world);
+            // // 2. 处理玩家输入：发射子弹
+            // ProcessPlayerFire(world, fireInputs);
+            //
+            // // 3. 更新子弹位置
+            // UpdateBullets(world);
 
             return world;
         }

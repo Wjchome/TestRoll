@@ -22,6 +22,12 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
 
     void Start()
     {
+        // 确保这是唯一的实例
+        if (Instance != this)
+        {
+            Debug.LogWarning($"Start() called on non-singleton instance of {GetType().Name}. Ignoring.");
+            return;
+        }
 
         // 设置服务器信息
         networkManager.playerName = "Player_" + Random.Range(1000, 9999);

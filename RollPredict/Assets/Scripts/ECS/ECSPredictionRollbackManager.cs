@@ -11,14 +11,11 @@ namespace Frame.ECS
     /// ECS版本的预测回滚管理器
     /// 使用ECS World存储游戏状态
     /// </summary>
-    public class ECSPredictionRollbackManager :SingletonMono<ECSPredictionRollbackManager>
+    public class ECSPredictionRollbackManager : SingletonMono<ECSPredictionRollbackManager>
     {
-        [Header("配置")]
-        [Tooltip("最大保存的快照数量")]
-        public int maxSnapshots = 100;
+        [Header("配置")] [Tooltip("最大保存的快照数量")] public int maxSnapshots = 100;
 
-        [Tooltip("是否启用预测回滚")]
-        public bool enablePredictionRollback = true;
+        [Tooltip("是否启用预测回滚")] public bool enablePredictionRollback = true;
 
         /// <summary>
         /// ECS World：存储所有游戏状态
@@ -57,11 +54,6 @@ namespace Frame.ECS
         /// </summary>
         public ECSGameState currentGameState;
 
-        /// <summary>
-        /// 事件回调
-        /// </summary>
-        public System.Action<long> OnRollback;
-        public System.Action<long> OnPrediction;
 
         void Start()
         {
@@ -146,6 +138,7 @@ namespace Frame.ECS
             {
                 return new Dictionary<int, InputDirection>(inputHistory[frameNumber]);
             }
+
             return new Dictionary<int, InputDirection>();
         }
 
@@ -158,6 +151,7 @@ namespace Frame.ECS
             {
                 return new Dictionary<int, bool>(fireInputHistory[frameNumber]);
             }
+
             return new Dictionary<int, bool>();
         }
 
@@ -180,13 +174,22 @@ namespace Frame.ECS
             // 执行预测
             var inputs = new Dictionary<int, InputDirection> { { playerId, direction } };
             var fireInputs = new Dictionary<int, bool> { { playerId, fire } };
-            world = ECSStateMachine.Execute(world, inputs, fireInputs);
+            world = ECSStateMachine.Execute(world, inputs);
 
             // 保存预测后的状态快照
             SaveSnapshot(frameNumber);
 
             predictedFrame = Math.Max(predictedFrame, frameNumber);
-            OnPrediction?.Invoke(frameNumber);
+        }
+
+        public enum NetState
+        {
+            NoPredictionAndLose, //无预测并且丢包
+            NoPredictionAndSuccess, //无预测并且成功
+            Repeat, //重复包
+            PredictAndLose, //预测并且丢包
+            PredictAndSuccessAndInputOk, //预测并且成功 并且预测成功
+            PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
         }
 
         /// <summary>
@@ -195,79 +198,128 @@ namespace Frame.ECS
         public void ProcessServerFrame(ServerFrame serverFrame)
         {
             if (!enablePredictionRollback)
-                return;
-
-            long serverFrameNumber = serverFrame.FrameNumber;
-
-            // 检查是否需要回滚
-            bool needRollback = false;
-
-            if (serverFrameNumber <= confirmedServerFrame)
             {
-                // 重复包，忽略
                 return;
             }
 
-            if (predictedFrame > confirmedServerFrame)
-            {
-                // 检查输入是否一致
-                var serverInputs = new Dictionary<int, InputDirection>();
-                foreach (var frameData in serverFrame.FrameDatas)
-                {
-                    serverInputs[frameData.PlayerId] = frameData.Direction;
-                }
+            long serverFrameNumber = serverFrame.FrameNumber;
+            NetState currentNetState = NetState.NoPredictionAndLose;
 
-                var predictedInputs = GetInputs(serverFrameNumber);
-                if (serverInputs.Count != predictedInputs.Count)
+            // 比如发消息时帧 1，预测帧 2 ，收到消息帧1 ，重复接受
+            if (serverFrameNumber <= confirmedServerFrame)
+            {
+                currentNetState = NetState.Repeat;
+                return;
+            }
+
+            if (predictedFrame <= confirmedServerFrame)
+            {
+                if (serverFrameNumber > confirmedServerFrame + 1)
                 {
-                    needRollback = true;
+                    currentNetState = NetState.NoPredictionAndLose;
                 }
                 else
                 {
-                    foreach (var kvp in serverInputs)
+                    currentNetState = NetState.NoPredictionAndSuccess;
+                }
+            }
+            else
+            {
+                if (serverFrameNumber > confirmedServerFrame + 1)
+                {
+                    currentNetState = NetState.PredictAndLose;
+                }
+                else
+                {
+                    bool needRollback = false;
+
+                    if (serverFrame.FrameDatas.Count != GetInputs(serverFrameNumber).Count)
                     {
-                        if (!predictedInputs.ContainsKey(kvp.Key) || predictedInputs[kvp.Key] != kvp.Value)
+                        needRollback = true;
+                    }
+
+                    // 检查服务器帧中的输入是否与本地预测一致
+                    foreach (var serverFrameData in serverFrame.FrameDatas)
+                    {
+                        var playerId = serverFrameData.PlayerId;
+                        var serverInput = serverFrameData.Direction;
+
+                        if (inputHistory.ContainsKey(serverFrameNumber) &&
+                            inputHistory[serverFrameNumber].ContainsKey(playerId))
+                        {
+                            InputDirection predictedInput = inputHistory[serverFrameNumber][playerId];
+                            if (predictedInput != serverInput)
+                            {
+                                needRollback = true;
+                                break;
+                            }
+                        }
+                        else
                         {
                             needRollback = true;
                             break;
                         }
                     }
+
+                    if (needRollback)
+                    {
+                        currentNetState = NetState.PredictAndSuccessAndInputFail;
+                    }
+                    else
+                    {
+                        currentNetState = NetState.PredictAndSuccessAndInputOk;
+                    }
                 }
             }
 
-            if (needRollback)
+            switch (currentNetState)
             {
-                // 回滚
-                var snapshot = LoadSnapshot(confirmedServerFrame);
-                if (snapshot != null)
-                {
-                    snapshot.RestoreToWorld(world);
-                    ECSSyncHelper.SyncFromWorldToUnity(world);
 
-                    // 重新执行从confirmedServerFrame到serverFrameNumber的所有帧
-                    for (long frame = confirmedServerFrame + 1; frame <= serverFrameNumber; frame++)
+
+                case NetState.Repeat:
+                    //暂时这样，丢包需要请求
+                    break;
+                case NetState.NoPredictionAndLose:
+                case NetState.PredictAndLose:
+                    FrameSyncNetwork.Instance.SendLossFrame(confirmedServerFrame);
+                    break;
+                case NetState.NoPredictionAndSuccess:
+
+                    SaveInput(serverFrameNumber, serverFrame);
+                    var inputs = GetInputs(serverFrameNumber);
+                    world = ECSStateMachine.Execute(world, inputs);
+                    SaveSnapshot(serverFrameNumber);
+                    confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                    //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                    predictedFrameIndex = 1;
+                    break;
+
+                case NetState.PredictAndSuccessAndInputOk:
+                    Debug.Log("PredictAndSuccessAndInputOk");
+                    confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                    //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                    predictedFrameIndex = 1;
+                    break;
+
+                case NetState.PredictAndSuccessAndInputFail:
+                    Debug.Log("PredictAndSuccessAndInputFail");
+
+                    SaveInput(serverFrameNumber, serverFrame);
+
+
+                    currentGameState = LoadSnapshot(confirmedServerFrame);
+                    for (long frame = confirmedServerFrame; frame <= predictedFrame; frame++)
                     {
-                        var inputs = GetInputs(frame);
-                        var fireInputs = GetFireInputs(frame);
-                        world = ECSStateMachine.Execute(world, inputs, fireInputs);
+                        var newInputs = GetInputs(frame);
+                        world = ECSStateMachine.Execute(world, newInputs);
                         SaveSnapshot(frame);
                     }
 
-                    OnRollback?.Invoke(serverFrameNumber);
-                }
+                    confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                    //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+                    predictedFrameIndex = 1;
+                    break;
             }
-            else
-            {
-                // 不需要回滚，直接执行服务器帧
-                SaveInput(serverFrameNumber, serverFrame);
-                var inputs = GetInputs(serverFrameNumber);
-                var fireInputs = GetFireInputs(serverFrameNumber);
-                world = ECSStateMachine.Execute(world, inputs, fireInputs);
-                SaveSnapshot(serverFrameNumber);
-            }
-
-            confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
-            predictedFrameIndex = 1;
         }
 
         /// <summary>
@@ -284,4 +336,3 @@ namespace Frame.ECS
         }
     }
 }
-
