@@ -121,22 +121,22 @@ namespace Frame.Physics2D
         }
 
         
-        private void Update()
-        {
-            // 同步物理位置和旋转到Unity Transform
-            if (Body != null)
-            {
-                FixVector2 pos = Body.Position;
-                transform.position = new Vector3((float)pos.x, (float)pos.y, transform.position.z) - (Vector3)posOffset;
-
-                // 同步旋转（仅对矩形有效）
-                if (shapeType == ShapeType.Box && Body.Shape is BoxShape2D q)
-                {
-                    float rotationDegrees = (float)q.Rotation;
-                    transform.rotation = Quaternion.Euler(0, 0, rotationDegrees);
-                }
-            }
-        }
+        // private void Update()
+        // {
+        //     // 同步物理位置和旋转到Unity Transform
+        //     if (Body != null)
+        //     {
+        //         FixVector2 pos = Body.Position;
+        //         transform.position = new Vector3((float)pos.x, (float)pos.y, transform.position.z) - (Vector3)posOffset;
+        //
+        //         // 同步旋转（仅对矩形有效）
+        //         if (shapeType == ShapeType.Box && Body.Shape is BoxShape2D q)
+        //         {
+        //             float rotationDegrees = (float)q.Rotation;
+        //             transform.rotation = Quaternion.Euler(0, 0, rotationDegrees);
+        //         }
+        //     }
+        // }
 
 
         /// <summary>

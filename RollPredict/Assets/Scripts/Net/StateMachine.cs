@@ -77,7 +77,7 @@ public static class StateMachine
         
         // 2.2 执行物理模拟（这会更新所有物理体的位置和速度）
         
-            PhysicsWorld2DComponent.Instance.World.Update();
+            PhysicsWorld2DComponent.Instance.UpdateFrame();
         
         
 

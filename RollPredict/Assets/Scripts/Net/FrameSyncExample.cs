@@ -140,7 +140,6 @@ public class FrameSyncExample : MonoBehaviour
                     
                     if (isSmooth)
                     {
-                        // 平滑插值
                         playerObj.transform.position = Vector3.Lerp(
                             playerObj.transform.position,
                             targetPosition,
@@ -149,6 +148,7 @@ public class FrameSyncExample : MonoBehaviour
                     }
                     else
                     {
+                        
                         // 直接同步（与物理体位置保持一致）
                         playerObj.transform.position = targetPosition;
                     }
