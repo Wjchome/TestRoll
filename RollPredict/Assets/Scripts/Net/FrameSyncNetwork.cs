@@ -61,7 +61,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     }
 
     /// <summary>
-    /// 连接到服务器
+    /// 连接到服务器（异步，不阻塞主线程）
     /// </summary>
     public void Connect()
     {
@@ -71,31 +71,64 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
             return;
         }
 
-        try
+        // 在后台线程中执行连接，避免阻塞Unity主线程
+        Thread connectThread = new Thread(() =>
         {
-            tcpClient = new TcpClient();
-            tcpClient.Connect(serverIP, serverPort);
-            tcpClient.NoDelay = true; // 禁用Nagle算法，减少延迟
+            try
+            {
+                Debug.Log($"Attempting to connect to {serverIP}:{serverPort}...");
+                tcpClient = new TcpClient();
+                
+                // 设置连接超时（5秒）
+                // 注意：TcpClient没有直接的超时设置，需要通过BeginConnect + 超时来实现
+                // 这里使用简单的同步连接，但在后台线程中执行，不会阻塞主线程
+                var connectResult = tcpClient.BeginConnect(serverIP, serverPort, null, null);
+                
+                // 等待连接完成，最多等待5秒
+                bool connected = connectResult.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(5));
+                
+                if (!connected)
+                {
+                    tcpClient.Close();
+                    Debug.LogError($"Connection timeout after 5 seconds");
+                    isConnected = false;
+                    isGameStarted = false;
+                    return;
+                }
+                
+                tcpClient.EndConnect(connectResult);
+                tcpClient.NoDelay = true; // 禁用Nagle算法，减少延迟
 
-            stream = tcpClient.GetStream();
-            isRunning = true;
-            isConnected = true;
-            isGameStarted = false; // 重置游戏状态
+                stream = tcpClient.GetStream();
+                isRunning = true;
+                isConnected = true;
+                isGameStarted = false; // 重置游戏状态
 
-            // 启动接收线程
-            receiveThread = new Thread(ReceiveMessages);
-            receiveThread.IsBackground = true;
-            receiveThread.Start();
+                // 启动接收线程
+                receiveThread = new Thread(ReceiveMessages);
+                receiveThread.IsBackground = true;
+                receiveThread.Start();
 
-            Debug.Log($"Connected to server {serverIP}:{serverPort}");
+                Debug.Log($"Connected to server {serverIP}:{serverPort}");
 
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Failed to connect to server: {e.Message}");
-            isConnected = false;
-            isGameStarted = false;
-        }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to connect to server: {e.Message}");
+                isConnected = false;
+                isGameStarted = false;
+                
+                // 清理资源
+                if (tcpClient != null)
+                {
+                    try { tcpClient.Close(); } catch { }
+                    tcpClient = null;
+                }
+            }
+        });
+        
+        connectThread.IsBackground = true;
+        connectThread.Start();
     }
 
     /// <summary>
