@@ -74,12 +74,6 @@ namespace Frame.ECS
                     0
                 );
 
-                // 更新玩家HP（如果有PlayerController组件）
-                var playerController = gameObject.GetComponent<PlayerController>();
-                if (playerController != null)
-                {
-                    playerController.HP = playerComponent.hp;
-                }
             }
 
             // 同步子弹状态（这里暂时不实现，因为还没有子弹的Unity对象）
@@ -101,19 +95,15 @@ namespace Frame.ECS
                 if (!_entityToGameObject.TryGetValue(entity.Id, out var gameObject))
                     continue;
 
-                var playerController = gameObject.GetComponent<PlayerController>();
-                if (playerController == null)
-                    continue;
 
                 // 从Unity对象获取状态
                 FixVector2 position = new FixVector2(
                     (Fix64)gameObject.transform.position.x,
                     (Fix64)gameObject.transform.position.y
                 );
-                int hp = playerController.HP;
 
                 // 更新PlayerComponent
-                var playerComponent = new PlayerComponent(playerId, position, hp);
+                var playerComponent = new PlayerComponent(playerId, position, 100);
                 world.AddComponent(entity, playerComponent);
             }
         }

@@ -157,11 +157,7 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
 
             // 1. 实例化玩家对象
             GameObject player = Instantiate(playerPrefab, (Vector2)startPos, Quaternion.identity);
-
-            // 2. 获取或添加PlayerController组件，并设置playerId
-            PlayerController playerController = player.GetComponent<PlayerController>();
-            playerController.playerId = playerId;
-            playerController.HP = 100; // 初始化HP
+            
 
             // 3. 注册玩家到ECS系统
             var entity = ECSSyncHelper.RegisterPlayer(
