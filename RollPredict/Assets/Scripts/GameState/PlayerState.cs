@@ -8,7 +8,7 @@ using Proto;
 /// 玩家状态
 /// </summary>
 [Serializable]
-public class PlayerState
+public class PlayerState : ICloneable
 {
     public int playerId;
     public int HP;
@@ -21,6 +21,11 @@ public class PlayerState
     public PlayerState Clone()
     {
         return new PlayerState(this.playerId, this.HP);
+    }
+
+    object ICloneable.Clone()
+    {
+        return Clone();
     }
 }
 
