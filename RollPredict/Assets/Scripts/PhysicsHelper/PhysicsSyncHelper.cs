@@ -57,6 +57,10 @@ public static class PhysicsSyncHelper
     /// 
     /// 注意：使用 body.id 作为Key保存到 gameState.physicsBodies
     /// 这与 playerId 不同，物理体ID由物理世界分配
+    /// 
+    /// 重要：保存LastRigidBody2D的ID列表，用于回滚后正确计算Enter/Stay/Exit事件
+    /// 注意：LastRigidBody2D在ProcessAllBody()之后会被更新为当前帧的碰撞列表，
+    /// 所以这里保存的是"上一帧的碰撞列表"，用于下一帧计算Enter/Stay/Exit
     /// </summary>
     public static void SaveToGameState(GameState gameState)
     {   
@@ -68,12 +72,26 @@ public static class PhysicsSyncHelper
         {
             if (body != null && body.id > 0)
             {
+                // 提取LastRigidBody2D中的ID列表（只存储ID，不存储引用）
+                List<int> lastCollidingBodyIds = new List<int>();
+                if (body.LastRigidBody2D != null)
+                {
+                    foreach (var collidingBody in body.LastRigidBody2D)
+                    {
+                        if (collidingBody != null && collidingBody.id > 0)
+                        {
+                            lastCollidingBodyIds.Add(collidingBody.id);
+                        }
+                    }
+                }
+
                 // 创建或更新状态
                 // Key: body.id（物理体ID）
                 gameState.physicsBodies[body.id] = new PhysicsBodyState(
                     body.id, 
                     body.Position, 
-                    body.Velocity
+                    body.Velocity,
+                    lastCollidingBodyIds
                 );
             }
         }
@@ -85,6 +103,9 @@ public static class PhysicsSyncHelper
     /// State -> Entity
     /// 
     /// 注意：使用 body.id（物理体ID）查找物理体，不是playerId
+    /// 
+    /// 重要：恢复LastRigidBody2D列表，确保回滚后物理系统能正确计算Enter/Stay/Exit事件
+    /// 这是预测回滚的关键：必须恢复完整的物理状态，包括碰撞历史
     /// </summary>
     public static void RestoreFromGameState(GameState gameState)
     {
@@ -101,6 +122,27 @@ public static class PhysicsSyncHelper
                 body.Velocity = bodyState.velocity;
                 // 标记为脏，需要更新四叉树
                 body.QuadTreeDirty = true;
+
+                // 恢复碰撞状态：重建LastRigidBody2D列表（通过ID查找对应的RigidBody2D对象）
+                body.LastRigidBody2D.Clear();
+                if (bodyState.lastCollidingBodyIds != null)
+                {
+                    foreach (var collidingBodyId in bodyState.lastCollidingBodyIds)
+                    {
+                        // 通过ID查找对应的RigidBody2D对象
+                        if (bodyIdToRigidBody.TryGetValue(collidingBodyId, out RigidBody2D collidingBody))
+                        {
+                            body.LastRigidBody2D.Add(collidingBody);
+                        }
+                        // 如果找不到对应的物理体，说明该物理体已被销毁，跳过
+                    }
+                }
+
+                // 清空当前帧的碰撞列表，让物理系统重新计算
+                body.CurrentRigidBody2D.Clear();
+                body.Enter.Clear();
+                body.Stay.Clear();
+                body.Exit.Clear();
             }
             // 如果Entity不存在，说明这个物理体已经被销毁，不需要恢复
         }

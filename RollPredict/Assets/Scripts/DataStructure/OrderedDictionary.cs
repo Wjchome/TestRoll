@@ -168,7 +168,15 @@ public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
         return GetEnumerator();
     }
-
+    
+    public OrderedDictionary(OrderedDictionary <TKey, TValue> dictionary)
+    {
+        var temp = dictionary.Clone();
+        // 直接复用temp的底层集合（全新实例，无引用共享）
+        _dictionary = temp._dictionary;
+        _linkedList = temp._linkedList;
+    }
+    
     /// <summary>
     /// 深拷贝 OrderedDictionary
     /// 注意：TValue 必须是可克隆的类型（实现 Clone 方法）或值类型
@@ -185,7 +193,7 @@ public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
             }
             else
             {
-                // 对于值类型或引用类型，直接添加（浅拷贝）
+                // 对于值类型 （浅拷贝）或引用类型 （非常不建议）
                 cloned.Add(kvp.Key, kvp.Value);
             }
         }
