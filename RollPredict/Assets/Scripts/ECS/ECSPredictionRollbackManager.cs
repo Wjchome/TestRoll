@@ -313,11 +313,6 @@ namespace Frame.ECS
                     for (long frame = confirmedServerFrame + 1; frame <= predictedFrame; frame++)
                     {
                         var newInputs = GetInputs(frame);
-                        if (newInputs.Count == 0)
-                        {
-                            SaveSnapshot(frame);
-                            continue;
-                        }
 
                         world = ECSStateMachine.Execute(world, newInputs);
                         SaveSnapshot(frame);

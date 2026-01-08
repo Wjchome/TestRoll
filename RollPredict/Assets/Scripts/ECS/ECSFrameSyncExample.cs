@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Frame.Core;
 using Frame.ECS;
 using Frame.ECS.Components;
@@ -111,7 +112,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         if (fire)
         {
             // 获取鼠标在世界坐标中的位置
-            Vector3 mousePos = Input.mousePosition;
+            Vector2 mousePos = Input.mousePosition;
             fireWorldPos = Camera.main.ScreenToWorldPoint(mousePos);
             fireX = ((Fix64)fireWorldPos.x).RawValue;
             fireY = ((Fix64)fireWorldPos.y).RawValue;
@@ -202,8 +203,20 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     /// </summary>
     private void OnServerFrameReceived(ServerFrame serverFrame)
     {
-        
+        if (ecsPredictionManager.enablePredictionRollback)
+        {
             ecsPredictionManager.ProcessServerFrame(serverFrame);
+            
+        }
+        else
+        {
+       
+
+            // 使用统一的状态机执行
+            ecsPredictionManager.world = ECSStateMachine.Execute(
+                ecsPredictionManager.world, serverFrame.FrameDatas.ToList());
+        }
+            
     }
 
     /// <summary>
@@ -211,7 +224,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     /// </summary>
     void UpdateInputStatePredict(InputDirection currentDirection, bool fire, long fireX = 0, long fireY = 0)
     {
-        if (ecsPredictionManager != null && ecsPredictionManager.enablePredictionRollback)
+        if ( ecsPredictionManager.enablePredictionRollback)
         {
             // 先预测，让玩家立即看到效果
             ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY);

@@ -1,0 +1,278 @@
+[Frame 1] NoPredictionAndSuccess | ConfirmedFrame: 1 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 2] NoPredictionAndSuccess | ConfirmedFrame: 2 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 3] NoPredictionAndSuccess | ConfirmedFrame: 3 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 4] NoPredictionAndSuccess | ConfirmedFrame: 4 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 5] NoPredictionAndSuccess | ConfirmedFrame: 5 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 6] NoPredictionAndSuccess | ConfirmedFrame: 6 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 7] NoPredictionAndSuccess | ConfirmedFrame: 7 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 8] NoPredictionAndSuccess | ConfirmedFrame: 8 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 9] NoPredictionAndSuccess | ConfirmedFrame: 9 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 10] NoPredictionAndSuccess | ConfirmedFrame: 10 | PredictedFrame: 0
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=1] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 } }
+[Frame 11] PredictAndSuccessAndInputOk | ConfirmedFrame: 11 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (0.8007007313, 0.0167273046),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 12] NoPredictionAndSuccess | ConfirmedFrame: 12 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (0.6014014627, 0.0334546091),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 13] NoPredictionAndSuccess | ConfirmedFrame: 13 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (0.402102194, 0.0501819137),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 14] NoPredictionAndSuccess | ConfirmedFrame: 14 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (0.2028029254, 0.0669092182),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 15] NoPredictionAndSuccess | ConfirmedFrame: 15 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (0.0035036567, 0.0836365228),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 16] NoPredictionAndSuccess | ConfirmedFrame: 16 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-0.1957956119, 0.1003638273),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 17] NoPredictionAndSuccess | ConfirmedFrame: 17 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-0.3950948806, 0.1170911319),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 18] NoPredictionAndSuccess | ConfirmedFrame: 18 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-0.5943941493, 0.1338184364),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 19] NoPredictionAndSuccess | ConfirmedFrame: 19 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-0.7936934179, 0.150545741),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 20] NoPredictionAndSuccess | ConfirmedFrame: 20 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-0.9929926866, 0.1672730455),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 21] NoPredictionAndSuccess | ConfirmedFrame: 21 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-1.1922919552, 0.1840003501),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 22] NoPredictionAndSuccess | ConfirmedFrame: 22 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-1.3915912239, 0.2007276546),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 23] NoPredictionAndSuccess | ConfirmedFrame: 23 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-1.5908904925, 0.2174549592),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 24] NoPredictionAndSuccess | ConfirmedFrame: 24 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-1.7901897612, 0.2341822637),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 25] NoPredictionAndSuccess | ConfirmedFrame: 25 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-1.9894890299, 0.2509095683),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 26] NoPredictionAndSuccess | ConfirmedFrame: 26 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-2.1887882985, 0.2676368728),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 27] NoPredictionAndSuccess | ConfirmedFrame: 27 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-2.3880875672, 0.2843641774),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 28] NoPredictionAndSuccess | ConfirmedFrame: 28 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-2.5873868358, 0.3010914819),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 29] NoPredictionAndSuccess | ConfirmedFrame: 29 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-2.7866861045, 0.3178187865),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 30] NoPredictionAndSuccess | ConfirmedFrame: 30 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-2.9859853731, 0.334546091),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 31] NoPredictionAndSuccess | ConfirmedFrame: 31 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-3.1852846418, 0.3512733956),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 32] NoPredictionAndSuccess | ConfirmedFrame: 32 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-3.3845839105, 0.3680007001),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 33] NoPredictionAndSuccess | ConfirmedFrame: 33 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-3.5838831791, 0.3847280047),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 34] NoPredictionAndSuccess | ConfirmedFrame: 34 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-3.7831824478, 0.4014553092),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 35] NoPredictionAndSuccess | ConfirmedFrame: 35 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-3.9824817164, 0.4181826138),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 36] NoPredictionAndSuccess | ConfirmedFrame: 36 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-4.1817809851, 0.4349099183),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 37] NoPredictionAndSuccess | ConfirmedFrame: 37 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-4.3810802537, 0.4516372229),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 38] NoPredictionAndSuccess | ConfirmedFrame: 38 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-4.5803795224, 0.4683645274),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 39] NoPredictionAndSuccess | ConfirmedFrame: 39 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-4.7796787911, 0.485091832),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 40] NoPredictionAndSuccess | ConfirmedFrame: 40 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-4.9789780597, 0.5018191366),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 41] NoPredictionAndSuccess | ConfirmedFrame: 41 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-5.1782773284, 0.5185464411),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 42] NoPredictionAndSuccess | ConfirmedFrame: 42 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-5.377576597, 0.5352737457),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 43] NoPredictionAndSuccess | ConfirmedFrame: 43 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-5.5768758657, 0.5520010502),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 44] NoPredictionAndSuccess | ConfirmedFrame: 44 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-5.7761751343, 0.5687283548),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 45] NoPredictionAndSuccess | ConfirmedFrame: 45 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-5.975474403, 0.5854556593),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 46] NoPredictionAndSuccess | ConfirmedFrame: 46 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-6.1747736717, 0.6021829639),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 47] NoPredictionAndSuccess | ConfirmedFrame: 47 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-6.3740729403, 0.6189102684),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 48] NoPredictionAndSuccess | ConfirmedFrame: 48 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-6.573372209, 0.635637573),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 49] NoPredictionAndSuccess | ConfirmedFrame: 49 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-6.7726714776, 0.6523648775),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 50] NoPredictionAndSuccess | ConfirmedFrame: 50 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-6.9719707463, 0.6690921821),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 51] NoPredictionAndSuccess | ConfirmedFrame: 51 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-7.171270015, 0.6858194866),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 52] NoPredictionAndSuccess | ConfirmedFrame: 52 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-7.3705692836, 0.7025467912),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 53] NoPredictionAndSuccess | ConfirmedFrame: 53 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-7.5698685523, 0.7192740957),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 54] NoPredictionAndSuccess | ConfirmedFrame: 54 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-7.7691678209, 0.7360014003),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 55] NoPredictionAndSuccess | ConfirmedFrame: 55 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-7.9684670896, 0.7527287048),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 56] NoPredictionAndSuccess | ConfirmedFrame: 56 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-8.1677663582, 0.7694560094),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 57] NoPredictionAndSuccess | ConfirmedFrame: 57 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-8.3670656269, 0.7861833139),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 58] NoPredictionAndSuccess | ConfirmedFrame: 58 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-8.5663648956, 0.8029106185),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 59] NoPredictionAndSuccess | ConfirmedFrame: 59 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-8.7656641642, 0.819637923),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 60] NoPredictionAndSuccess | ConfirmedFrame: 60 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-8.9649634329, 0.8363652276),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 61] NoPredictionAndSuccess | ConfirmedFrame: 61 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-9.1642627015, 0.8530925321),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 62] NoPredictionAndSuccess | ConfirmedFrame: 62 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-9.3635619702, 0.8698198367),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 63] NoPredictionAndSuccess | ConfirmedFrame: 63 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-9.5628612388, 0.8865471412),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 64] NoPredictionAndSuccess | ConfirmedFrame: 64 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-9.7621605075, 0.9032744458),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 65] NoPredictionAndSuccess | ConfirmedFrame: 65 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: PlayerComponent:playerId = 39,position = (1, 0),hp = 100 }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=1] { 1: BulletComponent: position = (-9.9614597762, 0.9200017503),velocity = (-0.1992992687, 0.0167273046),ownerEntityId = 1,bulletId = 2 } }
+[Frame 66] NoPredictionAndSuccess | ConfirmedFrame: 66 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 67] NoPredictionAndSuccess | ConfirmedFrame: 67 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 68] NoPredictionAndSuccess | ConfirmedFrame: 68 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 69] NoPredictionAndSuccess | ConfirmedFrame: 69 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 70] NoPredictionAndSuccess | ConfirmedFrame: 70 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 71] NoPredictionAndSuccess | ConfirmedFrame: 71 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 72] NoPredictionAndSuccess | ConfirmedFrame: 72 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 73] NoPredictionAndSuccess | ConfirmedFrame: 73 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 74] NoPredictionAndSuccess | ConfirmedFrame: 74 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 75] NoPredictionAndSuccess | ConfirmedFrame: 75 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 76] NoPredictionAndSuccess | ConfirmedFrame: 76 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 77] NoPredictionAndSuccess | ConfirmedFrame: 77 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 78] NoPredictionAndSuccess | ConfirmedFrame: 78 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 79] NoPredictionAndSuccess | ConfirmedFrame: 79 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 80] NoPredictionAndSuccess | ConfirmedFrame: 80 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 81] NoPredictionAndSuccess | ConfirmedFrame: 81 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 82] NoPredictionAndSuccess | ConfirmedFrame: 82 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 83] NoPredictionAndSuccess | ConfirmedFrame: 83 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 84] NoPredictionAndSuccess | ConfirmedFrame: 84 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 85] NoPredictionAndSuccess | ConfirmedFrame: 85 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 86] NoPredictionAndSuccess | ConfirmedFrame: 86 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 87] NoPredictionAndSuccess | ConfirmedFrame: 87 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 88] NoPredictionAndSuccess | ConfirmedFrame: 88 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 89] NoPredictionAndSuccess | ConfirmedFrame: 89 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 90] NoPredictionAndSuccess | ConfirmedFrame: 90 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 91] NoPredictionAndSuccess | ConfirmedFrame: 91 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 92] NoPredictionAndSuccess | ConfirmedFrame: 92 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 93] NoPredictionAndSuccess | ConfirmedFrame: 93 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 94] NoPredictionAndSuccess | ConfirmedFrame: 94 | PredictedFrame: 11
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=2] { Frame.ECS.Components.PlayerComponent: OrderedDictionary<Int32, IComponent> [Count=0] { }, Frame.ECS.Components.BulletComponent: OrderedDictionary<Int32, IComponent> [Count=0] { } }
+[Frame 95] PredictAndSuccessAndInputOk | ConfirmedFrame: 95 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 96] NoPredictionAndSuccess | ConfirmedFrame: 96 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 97] NoPredictionAndSuccess | ConfirmedFrame: 97 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 98] NoPredictionAndSuccess | ConfirmedFrame: 98 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 99] NoPredictionAndSuccess | ConfirmedFrame: 99 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 100] NoPredictionAndSuccess | ConfirmedFrame: 100 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 101] NoPredictionAndSuccess | ConfirmedFrame: 101 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 102] NoPredictionAndSuccess | ConfirmedFrame: 102 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 103] NoPredictionAndSuccess | ConfirmedFrame: 103 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 104] NoPredictionAndSuccess | ConfirmedFrame: 104 | PredictedFrame: 95
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 105] PredictAndSuccessAndInputOk | ConfirmedFrame: 105 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 106] NoPredictionAndSuccess | ConfirmedFrame: 106 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 107] NoPredictionAndSuccess | ConfirmedFrame: 107 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 108] NoPredictionAndSuccess | ConfirmedFrame: 108 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 109] NoPredictionAndSuccess | ConfirmedFrame: 109 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 110] NoPredictionAndSuccess | ConfirmedFrame: 110 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 111] NoPredictionAndSuccess | ConfirmedFrame: 111 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 112] NoPredictionAndSuccess | ConfirmedFrame: 112 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 113] NoPredictionAndSuccess | ConfirmedFrame: 113 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 114] NoPredictionAndSuccess | ConfirmedFrame: 114 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 115] NoPredictionAndSuccess | ConfirmedFrame: 115 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 116] NoPredictionAndSuccess | ConfirmedFrame: 116 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 117] NoPredictionAndSuccess | ConfirmedFrame: 117 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 118] NoPredictionAndSuccess | ConfirmedFrame: 118 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 119] NoPredictionAndSuccess | ConfirmedFrame: 119 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 120] NoPredictionAndSuccess | ConfirmedFrame: 120 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 121] NoPredictionAndSuccess | ConfirmedFrame: 121 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 122] NoPredictionAndSuccess | ConfirmedFrame: 122 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 123] NoPredictionAndSuccess | ConfirmedFrame: 123 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 124] NoPredictionAndSuccess | ConfirmedFrame: 124 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 125] NoPredictionAndSuccess | ConfirmedFrame: 125 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 126] NoPredictionAndSuccess | ConfirmedFrame: 126 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 127] NoPredictionAndSuccess | ConfirmedFrame: 127 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 128] NoPredictionAndSuccess | ConfirmedFrame: 128 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 129] NoPredictionAndSuccess | ConfirmedFrame: 129 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 130] NoPredictionAndSuccess | ConfirmedFrame: 130 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 131] NoPredictionAndSuccess | ConfirmedFrame: 131 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 132] NoPredictionAndSuccess | ConfirmedFrame: 132 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 133] NoPredictionAndSuccess | ConfirmedFrame: 133 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 134] NoPredictionAndSuccess | ConfirmedFrame: 134 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 135] NoPredictionAndSuccess | ConfirmedFrame: 135 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 136] NoPredictionAndSuccess | ConfirmedFrame: 136 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 137] NoPredictionAndSuccess | ConfirmedFrame: 137 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 138] NoPredictionAndSuccess | ConfirmedFrame: 138 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
+[Frame 139] NoPredictionAndSuccess | ConfirmedFrame: 139 | PredictedFrame: 105
+ConfirmedState: OrderedDictionary<String, OrderedDictionary`2> [Count=0] { }
