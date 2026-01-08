@@ -132,7 +132,7 @@ namespace Frame.ECS
         /// <summary>
         /// 客户端预测：立即执行输入
         /// </summary>
-        public void PredictInput(int playerId, InputDirection direction, bool fire = false)
+        public void PredictInput(int playerId, InputDirection direction, bool fire = false, long fireX = 0, long fireY = 0)
         {
             if (!enablePredictionRollback)
                 return;
@@ -140,15 +140,21 @@ namespace Frame.ECS
             long frameNumber = confirmedServerFrame + predictedFrameIndex++;
 
             // 保存输入（只保存当前玩家的输入，其他玩家的输入会在收到服务器帧时补全）
-            inputHistory[frameNumber] = new List<FrameData>()
+            var frameData = new FrameData()
             {
-                new FrameData()
-                {
-                    PlayerId = playerId,
-                    Direction = direction
-                }
+                PlayerId = playerId,
+                Direction = direction,
+                IsFire = fire
             };
-
+            
+            // 如果发射，设置目标位置
+            if (fire)
+            {
+                frameData.FireX = fireX;
+                frameData.FireY = fireY;
+            }
+            
+            inputHistory[frameNumber] = new List<FrameData>() { frameData };
 
             world = ECSStateMachine.Execute(world, inputHistory[frameNumber]);
 

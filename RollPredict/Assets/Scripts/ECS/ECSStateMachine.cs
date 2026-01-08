@@ -21,7 +21,7 @@ namespace Frame.ECS
         /// <summary>
         /// 玩家移动速度（固定点）
         /// </summary>
-        public static Fix64 PlayerSpeed = (Fix64)1;
+        public static Fix64 PlayerSpeed = (Fix64)0.1f;
 
         /// <summary>
         /// 子弹速度（固定点）
@@ -46,11 +46,11 @@ namespace Frame.ECS
             // 1. 处理玩家输入：移动
             ProcessPlayerMovement(world, inputs);
 
-            // // 2. 处理玩家输入：发射子弹
-            // ProcessPlayerFire(world, fireInputs);
-            //
-            // // 3. 更新子弹位置
-            // UpdateBullets(world);
+            // 2. 处理玩家输入：发射子弹
+            ProcessPlayerFire(world, inputs);
+
+            // 3. 更新子弹位置
+            UpdateBullets(world);
 
             return world;
         }
@@ -95,12 +95,15 @@ namespace Frame.ECS
         /// <summary>
         /// 处理玩家发射子弹输入
         /// </summary>
-        private static void ProcessPlayerFire(World world, Dictionary<int, bool> fireInputs)
+        private static void ProcessPlayerFire(World world, List<FrameData> inputs)
         {
-            foreach (var (playerId, shouldFire) in fireInputs)
+            foreach (var frameData in inputs)
             {
-                if (!shouldFire)
+                // 检查是否发射子弹
+                if (!frameData.IsFire)
                     continue;
+
+                var playerId = frameData.PlayerId;
 
                 // 查找玩家的Entity
                 Entity? playerEntity = FindPlayerEntity(world, playerId);
@@ -111,20 +114,29 @@ namespace Frame.ECS
                 if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
                     continue;
 
-                // 创建子弹
-                // 子弹从玩家位置发射，方向为玩家朝向（这里简化为向上）
+                // 计算子弹方向（从玩家位置指向目标位置）
                 FixVector2 bulletPosition = playerComponent.position;
-                FixVector2 bulletVelocity = FixVector2.Up * BulletSpeed;
+                FixVector2 targetPosition = new FixVector2((Fix64)frameData.FireX, (Fix64)frameData.FireY);
+                
+                // 计算方向向量并归一化
+                FixVector2 direction = targetPosition - bulletPosition;
+                Fix64 distance = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
+                
+                if (distance > Fix64.Zero)
+                {
+                    direction.Normalize();
+                    FixVector2 bulletVelocity = direction * BulletSpeed;
 
-                // 创建子弹Entity
-                Entity bulletEntity = world.CreateEntity();
-                var bulletComponent = new BulletComponent(
-                    bulletPosition,
-                    bulletVelocity,
-                    playerEntity.Value.Id,
-                    _nextBulletId++
-                );
-                world.AddComponent(bulletEntity, bulletComponent);
+                    // 创建子弹Entity
+                    Entity bulletEntity = world.CreateEntity();
+                    var bulletComponent = new BulletComponent(
+                        bulletPosition,
+                        bulletVelocity,
+                        playerEntity.Value.Id,
+                        _nextBulletId++
+                    );
+                    world.AddComponent(bulletEntity, bulletComponent);
+                }
             }
         }
 

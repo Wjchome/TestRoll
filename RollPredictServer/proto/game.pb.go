@@ -7,12 +7,11 @@
 package proto
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -87,7 +86,7 @@ func (MessageType) EnumDescriptor() ([]byte, []int) {
 	return file_proto_game_proto_rawDescGZIP(), []int{0}
 }
 
-// 输入方向
+// 输入方向（8个方向）
 type InputDirection int32
 
 const (
@@ -159,8 +158,11 @@ func (InputDirection) EnumDescriptor() ([]byte, []int) {
 type FrameData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      int32                  `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`             // 玩家ID
-	Direction     InputDirection         `protobuf:"varint,2,opt,name=direction,proto3,enum=proto.InputDirection" json:"direction,omitempty"` // 方向
+	Direction     InputDirection         `protobuf:"varint,2,opt,name=direction,proto3,enum=proto.InputDirection" json:"direction,omitempty"` // 方向（8个方向）
 	FrameNumber   int64                  `protobuf:"varint,3,opt,name=frame_number,json=frameNumber,proto3" json:"frame_number,omitempty"`    // 帧号
+	IsFire        bool                   `protobuf:"varint,4,opt,name=is_fire,json=isFire,proto3" json:"is_fire,omitempty"`                   // 是否射击
+	FireX         *int64                 `protobuf:"varint,5,opt,name=fire_x,json=fireX,proto3,oneof" json:"fire_x,omitempty"`                // 射击目标X坐标（可选，仅当is_fire=true时有效）
+	FireY         *int64                 `protobuf:"varint,6,opt,name=fire_y,json=fireY,proto3,oneof" json:"fire_y,omitempty"`                // 射击目标Y坐标（可选，仅当is_fire=true时有效）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -212,6 +214,27 @@ func (x *FrameData) GetDirection() InputDirection {
 func (x *FrameData) GetFrameNumber() int64 {
 	if x != nil {
 		return x.FrameNumber
+	}
+	return 0
+}
+
+func (x *FrameData) GetIsFire() bool {
+	if x != nil {
+		return x.IsFire
+	}
+	return false
+}
+
+func (x *FrameData) GetFireX() int64 {
+	if x != nil && x.FireX != nil {
+		return *x.FireX
+	}
+	return 0
+}
+
+func (x *FrameData) GetFireY() int64 {
+	if x != nil && x.FireY != nil {
+		return *x.FireY
 	}
 	return 0
 }
@@ -528,11 +551,16 @@ var File_proto_game_proto protoreflect.FileDescriptor
 
 const file_proto_game_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/game.proto\x12\x05proto\"\x80\x01\n" +
+	"\x10proto/game.proto\x12\x05proto\"\xe7\x01\n" +
 	"\tFrameData\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x05R\bplayerId\x123\n" +
 	"\tdirection\x18\x02 \x01(\x0e2\x15.proto.InputDirectionR\tdirection\x12!\n" +
-	"\fframe_number\x18\x03 \x01(\x03R\vframeNumber\"\x81\x01\n" +
+	"\fframe_number\x18\x03 \x01(\x03R\vframeNumber\x12\x17\n" +
+	"\ais_fire\x18\x04 \x01(\bR\x06isFire\x12\x1a\n" +
+	"\x06fire_x\x18\x05 \x01(\x03H\x00R\x05fireX\x88\x01\x01\x12\x1a\n" +
+	"\x06fire_y\x18\x06 \x01(\x03H\x01R\x05fireY\x88\x01\x01B\t\n" +
+	"\a_fire_xB\t\n" +
+	"\a_fire_y\"\x81\x01\n" +
 	"\vServerFrame\x12!\n" +
 	"\fframe_number\x18\x01 \x01(\x03R\vframeNumber\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x121\n" +
@@ -562,13 +590,17 @@ const file_proto_game_proto_rawDesc = "" +
 	"\x12MESSAGE_DISCONNECT\x10\x04\x12\x16\n" +
 	"\x12MESSAGE_GAME_START\x10\x05\x12\x16\n" +
 	"\x12MESSAGE_FRAME_LOSS\x10\x06\x12\x16\n" +
-	"\x12MESSAGE_FRAME_NEED\x10\a*s\n" +
+	"\x12MESSAGE_FRAME_NEED\x10\a*\xd5\x01\n" +
 	"\x0eInputDirection\x12\x12\n" +
 	"\x0eDIRECTION_NONE\x10\x00\x12\x10\n" +
 	"\fDIRECTION_UP\x10\x01\x12\x12\n" +
 	"\x0eDIRECTION_DOWN\x10\x02\x12\x12\n" +
 	"\x0eDIRECTION_LEFT\x10\x03\x12\x13\n" +
-	"\x0fDIRECTION_RIGHT\x10\x04B\"Z github.com/WjcHome/gohello/protob\x06proto3"
+	"\x0fDIRECTION_RIGHT\x10\x04\x12\x15\n" +
+	"\x11DIRECTION_UP_LEFT\x10\x05\x12\x16\n" +
+	"\x12DIRECTION_UP_RIGHT\x10\x06\x12\x17\n" +
+	"\x13DIRECTION_DOWN_LEFT\x10\a\x12\x18\n" +
+	"\x14DIRECTION_DOWN_RIGHT\x10\bB\"Z github.com/WjcHome/gohello/protob\x06proto3"
 
 var (
 	file_proto_game_proto_rawDescOnce sync.Once
@@ -611,6 +643,7 @@ func file_proto_game_proto_init() {
 	if File_proto_game_proto != nil {
 		return
 	}
+	file_proto_game_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

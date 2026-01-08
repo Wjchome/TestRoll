@@ -311,7 +311,7 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     /// <summary>
     /// 发送帧数据（上下左右）
     /// </summary>
-    public void SendFrameData(InputDirection direction)
+    public void SendFrameData(InputDirection direction, bool isFire = false, long fireX = 0, long fireY = 0)
     {
         if (!isConnected || !isGameStarted)
         {
@@ -323,8 +323,17 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
         {
             PlayerId = myPlayerID,
             Direction = direction,
-            FrameNumber = ECSPredictionRollbackManager.Instance.confirmedServerFrame
+            FrameNumber = ECSPredictionRollbackManager.Instance.confirmedServerFrame,
+            IsFire = isFire
         };
+        
+        // 如果发射，设置目标位置
+        if (isFire)
+        {
+            frameData.FireX = fireX;
+            frameData.FireY = fireY;
+        }
+        
         SendMessage(MessageType.MessageFrameData, frameData);
     }
 

@@ -10,13 +10,12 @@ using UnityEngine;
 /// ECS版本的帧同步示例
 /// 使用ECS架构实现预测回滚
 /// </summary>
-public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
+public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 {
     private FrameSyncNetwork networkManager => FrameSyncNetwork.Instance;
     private ECSPredictionRollbackManager ecsPredictionManager => ECSPredictionRollbackManager.Instance;
 
-    [Header("玩家设置")]
-    public GameObject playerPrefab;
+    [Header("玩家设置")] public GameObject playerPrefab;
 
     public GameObject myPlayer;
 
@@ -44,6 +43,9 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
 
     public float timer = 0;
     public float timer1 = 0;
+    
+    public float sendInterval ;
+    public float predictInterval ;
 
     void Update()
     {
@@ -96,27 +98,36 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
             newDirection = InputDirection.DirectionRight;
         }
 
-        // 检测发射输入（空格键）
-        bool fire = Input.GetKeyDown(KeyCode.Space);
+        // 检测发射输入（鼠标左键）
+        bool fire = Input.GetMouseButtonDown(0);
+        Vector3 fireWorldPos = Vector3.zero;
+        long fireX = 0, fireY = 0;
+
+        if (fire)
+        {
+            // 获取鼠标在世界坐标中的位置
+            Vector3 mousePos = Input.mousePosition;
+            fireWorldPos = Camera.main.ScreenToWorldPoint(mousePos);
+            fireX = ((Fix64)fireWorldPos.x).RawValue;
+            fireY = ((Fix64)fireWorldPos.y).RawValue;
+        }
 
         // 发送输入到服务器
         if (newDirection != InputDirection.DirectionNone || fire)
         {
-            if (timer > 1f)
+            if (timer > sendInterval)
             {
                 timer = 0;
-                // 发送移动输入到服务器
-                if (newDirection != InputDirection.DirectionNone)
-                {
-                    networkManager.SendFrameData(newDirection);
-                }
+
+                networkManager.SendFrameData(newDirection, fire, fireX, fireY);
             }
 
+
             // 客户端预测
-            if (timer1 > 0.05f)
+            if (timer1 > predictInterval)
             {
                 timer1 = 0;
-                UpdateInputStatePredict(newDirection, fire);
+                UpdateInputStatePredict(newDirection, fire, fireX, fireY);
             }
         }
 
@@ -157,7 +168,7 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
 
             // 1. 实例化玩家对象
             GameObject player = Instantiate(playerPrefab, (Vector2)startPos, Quaternion.identity);
-            
+
 
             // 3. 注册玩家到ECS系统
             var entity = ECSSyncHelper.RegisterPlayer(
@@ -196,13 +207,12 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
     /// <summary>
     /// 客户端预测：立即执行输入
     /// </summary>
-    void UpdateInputStatePredict(InputDirection currentDirection, bool fire)
+    void UpdateInputStatePredict(InputDirection currentDirection, bool fire, long fireX = 0, long fireY = 0)
     {
         if (ecsPredictionManager != null && ecsPredictionManager.enablePredictionRollback)
         {
             // 先预测，让玩家立即看到效果
-            ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire);
+            ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY);
         }
     }
 }
-

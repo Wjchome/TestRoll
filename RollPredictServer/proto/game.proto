@@ -35,6 +35,9 @@ message FrameData {
   int32 player_id = 1;              // 玩家ID
   InputDirection direction = 2;     // 方向（8个方向）
   int64 frame_number = 3;            // 帧号
+  bool is_fire = 4;                 // 是否射击
+  optional int64 fire_x = 5;        // 射击目标X坐标（可选，仅当is_fire=true时有效）
+  optional int64 fire_y = 6;        // 射击目标Y坐标（可选，仅当is_fire=true时有效）
 }
 
 // 服务器帧同步数据
