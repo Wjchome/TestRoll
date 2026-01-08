@@ -30,6 +30,7 @@ namespace Frame.ECS
         /// Entity到playerId的映射（反向查找）
         /// </summary>
         private static Dictionary<int, int> _entityToPlayerId = new Dictionary<int, int>();
+        
 
         /// <summary>
         /// 注册玩家到ECS系统
@@ -73,11 +74,82 @@ namespace Frame.ECS
                     (float)playerComponent.position.y,
                     0
                 );
-
             }
 
-            // 同步子弹状态（这里暂时不实现，因为还没有子弹的Unity对象）
-            // 可以后续添加子弹的GameObject池
+            // 同步子弹状态
+            SyncBullets(world);
+        }
+
+        /// <summary>
+        /// 同步子弹：创建、更新、销毁
+        /// </summary>
+        private static void SyncBullets(World world)
+        {
+            // 获取所有ECS中存在的子弹Entity
+            var activeBulletEntities = new HashSet<int>();
+            foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
+            {
+                activeBulletEntities.Add(entity.Id);
+            }
+
+            if (activeBulletEntities.Count > 0)
+            {
+                int a = 0;
+            }
+            // 1. 销毁ECS中不存在的子弹GameObject
+            var entitiesToRemove = new List<int>();
+            foreach (var kvp in _entityToGameObject)
+            {
+                var entityId = kvp.Key;
+                var gameObject = kvp.Value;
+
+                // 如果不是玩家（玩家在 _entityToPlayerId 中）
+                if (!_entityToPlayerId.ContainsKey(entityId))
+                {
+                    // 如果ECS中不存在这个子弹Entity，销毁GameObject
+                    if (!activeBulletEntities.Contains(entityId))
+                    {
+                        if (gameObject != null)
+                        {
+                            Object.Destroy(gameObject);
+                        }
+                        entitiesToRemove.Add(entityId);
+                    }
+                }
+            }
+
+            // 移除映射
+            foreach (var entityId in entitiesToRemove)
+            {
+                _entityToGameObject.Remove(entityId);
+            }
+
+            // 2. 更新或创建子弹GameObject
+            foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
+            {
+                if (!world.TryGetComponent<BulletComponent>(entity, out var bulletComponent))
+                    continue;
+
+                // 如果GameObject不存在，创建它
+                if (!_entityToGameObject.TryGetValue(entity.Id, out var bulletGameObject))
+                {
+                  
+                        bulletGameObject = GameObject.Instantiate(ECSFrameSyncExample.Instance.bulletPrefab);
+                        bulletGameObject.name = $"Bulle_{entity.Id}";
+                        _entityToGameObject[entity.Id] = bulletGameObject;
+               
+                }
+
+                // 更新子弹位置
+                if (bulletGameObject != null)
+                {
+                    bulletGameObject.transform.position = new Vector3(
+                        (float)bulletComponent.position.x,
+                        (float)bulletComponent.position.y,
+                        0
+                    );
+                }
+            }
         }
 
         /// <summary>

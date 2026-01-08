@@ -116,7 +116,7 @@ namespace Frame.ECS
 
                 // 计算子弹方向（从玩家位置指向目标位置）
                 FixVector2 bulletPosition = playerComponent.position;
-                FixVector2 targetPosition = new FixVector2((Fix64)frameData.FireX, (Fix64)frameData.FireY);
+                FixVector2 targetPosition = new FixVector2(Fix64.FromRaw(frameData.FireX),Fix64.FromRaw(frameData.FireY));
                 
                 // 计算方向向量并归一化
                 FixVector2 direction = targetPosition - bulletPosition;
@@ -125,7 +125,7 @@ namespace Frame.ECS
                 if (distance > Fix64.Zero)
                 {
                     direction.Normalize();
-                    FixVector2 bulletVelocity = direction * BulletSpeed;
+                    FixVector2 bulletVelocity = direction*BulletSpeed ;
 
                     // 创建子弹Entity
                     Entity bulletEntity = world.CreateEntity();

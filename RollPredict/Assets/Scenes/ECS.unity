@@ -340,6 +340,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 3173730084948646136, guid: 6af43123ecb4646d3bec0f85d1a2a69a, type: 3}
+  bulletPrefab: {fileID: 3173730084948646136, guid: d03e3e0e0fffd46bba77cc879129a5a5, type: 3}
   myPlayer: {fileID: 0}
   timer: 0
   timer1: 0

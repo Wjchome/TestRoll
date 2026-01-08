@@ -44,7 +44,7 @@ namespace Frame.ECS.Components
         }
         public override string ToString()
         {
-            return $"{GetType().Name}: {position}, {velocity}, {velocity}";
+            return $"{GetType().Name}: position = {position},velocity = {velocity},ownerEntityId = {ownerEntityId},bulletId = {bulletId}";
         }
     }
 }

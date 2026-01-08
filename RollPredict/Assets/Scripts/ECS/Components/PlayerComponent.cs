@@ -37,14 +37,11 @@ namespace Frame.ECS.Components
             return new PlayerComponent(playerId, position, hp);
         }
 
-        // public override string ToString()
-        // {
-        //     return $"{this.GetType().Name}:playerId = {playerId},position = {position},hp = {hp}";
-        // }
         public override string ToString()
         {
-            return $"position = {position}";
+            return $"{this.GetType().Name}:playerId = {playerId},position = {position},hp = {hp}";
         }
+    
     }
 }
 

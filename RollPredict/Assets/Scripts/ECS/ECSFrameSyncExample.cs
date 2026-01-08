@@ -15,7 +15,11 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     private FrameSyncNetwork networkManager => FrameSyncNetwork.Instance;
     private ECSPredictionRollbackManager ecsPredictionManager => ECSPredictionRollbackManager.Instance;
 
-    [Header("玩家设置")] public GameObject playerPrefab;
+    [Header("玩家设置")]
+    public GameObject playerPrefab;
+
+    [Header("子弹设置")]
+    public GameObject bulletPrefab; // 可选：如果不设置，会自动创建红色小球
 
     public GameObject myPlayer;
 
@@ -30,6 +34,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
         // 设置服务器信息
         networkManager.playerName = "Player_" + Random.Range(1000, 9999);
+
 
         // 注册事件回调
         networkManager.OnConnected += OnConnected;
@@ -197,11 +202,8 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     /// </summary>
     private void OnServerFrameReceived(ServerFrame serverFrame)
     {
-        // 使用ECS预测回滚管理器处理服务器帧
-        if (ecsPredictionManager != null && ecsPredictionManager.enablePredictionRollback)
-        {
+        
             ecsPredictionManager.ProcessServerFrame(serverFrame);
-        }
     }
 
     /// <summary>
