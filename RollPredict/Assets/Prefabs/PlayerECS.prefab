@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 1831346883137094943}
   - component: {fileID: 8885532637209761042}
   - component: {fileID: 7648362809563581973}
-  - component: {fileID: -8788777695301560477}
   m_Layer: 0
   m_Name: PlayerECS
   m_TagString: Untagged
@@ -84,17 +83,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &-8788777695301560477
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3173730084948646136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ed751f174db4ca78bfc6210a7f485ce, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerId: 0
-  HP: 10

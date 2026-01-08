@@ -21,7 +21,7 @@ namespace Frame.ECS
         /// <summary>
         /// 玩家移动速度（固定点）
         /// </summary>
-        public static Fix64 PlayerSpeed = (Fix64)0.1f;
+        public static Fix64 PlayerSpeed = (Fix64)1;
 
         /// <summary>
         /// 子弹速度（固定点）
@@ -35,7 +35,7 @@ namespace Frame.ECS
 
         /// <summary>
         /// 状态机核心函数：根据当前状态和输入计算下一帧状态
-        /// State(n+1) = StateMachine(State(n), Input(n))
+        /// State(n+1) = StateMachine(State(n), Input(n+1))
         /// </summary>
         /// <param name="world">当前帧的World状态 State(n)</param>
         /// <param name="inputs">当前帧所有玩家的输入 Input(n)</param>

@@ -116,9 +116,17 @@ namespace Frame.ECS
             var result = new OrderedDictionary<Entity, IComponent>();
             foreach (var kvp in _components)
             {
-                result[kvp.Key] = kvp.Value;
+                if (kvp.Value is ICloneable cloneable)
+                {
+                    result.Add(kvp.Key, (IComponent)cloneable.Clone());
+                }
+                else
+                {
+                    // 对于值类型 （浅拷贝）或引用类型 （非常不建议）
+                    result.Add(kvp.Key, kvp.Value);
+                }
             }
-            return result;
+            return  result;
         }
 
         /// <summary>

@@ -113,7 +113,7 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
             }
 
             // 客户端预测
-            if (timer1 > 0.03f)
+            if (timer1 > 0.04f)
             {
                 timer1 = 0;
                 UpdateInputStatePredict(newDirection, fire);

@@ -1,3 +1,5 @@
+using System;
+
 namespace Frame.ECS
 {
     /// <summary>
@@ -13,12 +15,9 @@ namespace Frame.ECS
     /// - 状态快照就是Component的快照
     /// - 回滚时直接替换Component数据即可
     /// </summary>
-    public interface IComponent
+    public interface IComponent:ICloneable
     {
-        /// <summary>
-        /// 深拷贝Component
-        /// </summary>
-        IComponent Clone();
+
     }
 }
 

@@ -52,19 +52,19 @@ namespace Frame.ECS
             var state = new ECSGameState(frameNumber);
             
             // 获取World中所有Component的快照
-            var snapshots = world.GetAllComponentSnapshots();
+            OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>> snapshots = world.GetAllComponentSnapshots();
             
             // 转换为可序列化的格式
             foreach (var kvp in snapshots)
             {
-                var componentTypeName = kvp.Key.FullName;
-                var componentDict = kvp.Value; // 已经是 OrderedDictionary<Entity, IComponent> 类型
+                string componentTypeName = kvp.Key.FullName;
+                OrderedDictionary<Entity, IComponent> componentDict = kvp.Value; // 已经是 OrderedDictionary<Entity, IComponent> 类型
                 
                 var serializableDict = new OrderedDictionary<int, IComponent>();
                 foreach (var componentKvp in componentDict)
                 {
                     // 只存储Entity ID和Component的克隆
-                    serializableDict[componentKvp.Key.Id] = componentKvp.Value.Clone();
+                    serializableDict[componentKvp.Key.Id] = componentKvp.Value.Clone() as IComponent;
                 }
                 state.componentSnapshots[componentTypeName] = serializableDict;
             }
@@ -127,12 +127,17 @@ namespace Frame.ECS
                 var newDict = new OrderedDictionary<int, IComponent>();
                 foreach (var componentKvp in kvp.Value)
                 {
-                    newDict[componentKvp.Key] = componentKvp.Value.Clone();
+                    newDict[componentKvp.Key] = componentKvp.Value.Clone() as IComponent;
                 }
                 newState.componentSnapshots[kvp.Key] = newDict;
             }
             
             return newState;
+        }
+
+        public override string ToString()
+        {
+            return componentSnapshots.ToString();
         }
     }
 }

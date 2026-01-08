@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Frame.Core;
 using Frame.ECS;
 using Google.Protobuf.Collections;
@@ -167,7 +169,7 @@ namespace Frame.ECS
             PredictAndSuccessAndInputOk, //预测并且成功 并且预测成功
             PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
         }
-
+        StringBuilder sb = new StringBuilder();
         /// <summary>
         /// 处理服务器帧：检查是否需要回滚
         /// </summary>
@@ -245,7 +247,7 @@ namespace Frame.ECS
                     }
                 }
             }
-
+        
             switch (currentNetState)
             {
                 case NetState.Repeat:
@@ -256,10 +258,10 @@ namespace Frame.ECS
                     FrameSyncNetwork.Instance.SendLossFrame(confirmedServerFrame);
                     break;
                 case NetState.NoPredictionAndSuccess:
-
+                    
                     SaveInput(serverFrameNumber, serverFrame);
-                    var inputs = GetInputs(serverFrameNumber);
-                    world = ECSStateMachine.Execute(world, inputs);
+                    
+                    world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
                     SaveSnapshot(serverFrameNumber);
                     confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
                     //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
@@ -267,23 +269,30 @@ namespace Frame.ECS
                     break;
 
                 case NetState.PredictAndSuccessAndInputOk:
-                    Debug.Log("PredictAndSuccessAndInputOk");
+                    Debug.Log("PredictAndSuccessAndInputOk "+serverFrame);
                     confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
                     //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                     predictedFrameIndex = 1;
                     break;
 
                 case NetState.PredictAndSuccessAndInputFail:
-                    Debug.Log("PredictAndSuccessAndInputFail");
+                    Debug.Log("PredictAndSuccessAndInputFail "+serverFrame);
 
+                    // 先保存服务器输入（必须在回滚前保存，确保GetInputs能获取到正确的输入）
                     SaveInput(serverFrameNumber, serverFrame);
 
-
+                    // 回滚到确认的服务器帧
                     currentGameState = LoadSnapshot(confirmedServerFrame);
+
                     currentGameState.RestoreToWorld(world);
-                    for (long frame = confirmedServerFrame; frame <= predictedFrame; frame++)
+                    
+                    // 重新执行从 confirmedServerFrame+1 到 serverFrameNumber 的所有帧
+                    // 对于 serverFrameNumber 这一帧，使用服务器的输入（已经在上面保存了）
+                    // 对于之前的帧，使用本地保存的输入
+                    for (long frame = confirmedServerFrame + 1; frame <= serverFrameNumber; frame++)
                     {
                         var newInputs = GetInputs(frame);
+
                         world = ECSStateMachine.Execute(world, newInputs);
                         SaveSnapshot(frame);
                     }
@@ -292,6 +301,34 @@ namespace Frame.ECS
                     //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                     predictedFrameIndex = 1;
                     break;
+            }
+            sb.AppendLine($"[Frame {serverFrameNumber}] {currentNetState} | ConfirmedFrame: {confirmedServerFrame} | PredictedFrame: {predictedFrame}");
+            sb.AppendLine($"ServerFrame: {serverFrame}");
+            var confirmedSnapshot = LoadSnapshot(confirmedServerFrame);
+            if (confirmedSnapshot != null)
+            {
+                sb.AppendLine($"ConfirmedState: {confirmedSnapshot}");
+            }
+            else
+            {
+                sb.AppendLine($"ConfirmedState: NULL (frame {confirmedServerFrame})");
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (sb.Length > 0)
+            {
+                try
+                {
+                    string filePath = Path.Combine(Application.dataPath, $"prediction_rollback_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+                    File.WriteAllText(filePath, sb.ToString());
+                    Debug.Log($"Prediction rollback log saved to: {filePath}");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to write prediction rollback log to file: {e.Message}");
+                }
             }
         }
 

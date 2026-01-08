@@ -1,0 +1,59 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.2.9 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.2.9">
+  <diagram name="第 1 页" id="wloJUxzUKYan4mIjfnJ8">
+    <mxGraphModel dx="706" dy="604" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="SiRqCTNNqW6rhubN98ma-3" edge="1" parent="1" source="SiRqCTNNqW6rhubN98ma-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="SiRqCTNNqW6rhubN98ma-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-4" connectable="0" parent="SiRqCTNNqW6rhubN98ma-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="作用" vertex="1">
+          <mxGeometry relative="1" x="-0.2" y="-1" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-9" edge="1" parent="1" source="SiRqCTNNqW6rhubN98ma-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="SiRqCTNNqW6rhubN98ma-8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="FrameSyncNetwork" vertex="1">
+          <mxGeometry height="60" width="120" x="70" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-6" edge="1" parent="1" source="SiRqCTNNqW6rhubN98ma-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="SiRqCTNNqW6rhubN98ma-5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-7" connectable="0" parent="SiRqCTNNqW6rhubN98ma-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="GameSta&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;rt&lt;/span&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.3" as="geometry">
+            <mxPoint y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-2" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="处理网络连接" vertex="1">
+          <mxGeometry height="60" width="120" x="294" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-11" edge="1" parent="1" source="SiRqCTNNqW6rhubN98ma-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="SiRqCTNNqW6rhubN98ma-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-13" edge="1" parent="1" source="SiRqCTNNqW6rhubN98ma-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="SiRqCTNNqW6rhubN98ma-12" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-5" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="生成player" vertex="1">
+          <mxGeometry height="60" width="240" x="400" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-8" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="&lt;p class=&quot;p1&quot; style=&quot;margin: 0px; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 13px; line-height: normal; font-family: &amp;quot;Helvetica Neue&amp;quot;; text-align: start;&quot;&gt;&lt;b&gt;ECSFrameSyncExample&lt;/b&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="60" width="230" x="15" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-10" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="&lt;div&gt;注册到ECS里&lt;/div&gt;&lt;div&gt;player作为一个entity&lt;/div&gt;&lt;div&gt;添加一个playerComponent&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="230" x="760" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-15" edge="1" parent="1" source="SiRqCTNNqW6rhubN98ma-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="SiRqCTNNqW6rhubN98ma-14" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-12" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="拍快照" vertex="1">
+          <mxGeometry height="90" width="160" x="440" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="SiRqCTNNqW6rhubN98ma-14" parent="1" style="whiteSpace=wrap;html=1;rounded=0;" value="world-&amp;gt;&amp;nbsp;&lt;span style=&quot;font-family: &amp;quot;Helvetica Neue&amp;quot;; font-size: 13px; text-align: start; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;OrderedDictionary&amp;lt;Type, IComponentStorage&amp;gt; _componentStorages 存储成&lt;/span&gt;&lt;div&gt;&lt;p class=&quot;p1&quot; style=&quot;margin: 0px; font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 13px; line-height: normal; font-family: &amp;quot;Helvetica Neue&amp;quot;; text-align: start;&quot;&gt;ECSGameState-&amp;gt;&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;OrderedDictionary&amp;lt;string, OrderedDictionary&amp;lt;int, IComponent&amp;gt;&amp;gt;&lt;/span&gt;&lt;/p&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="100" width="640" x="660" y="325" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

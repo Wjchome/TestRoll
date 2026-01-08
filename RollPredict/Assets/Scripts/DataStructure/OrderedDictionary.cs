@@ -169,12 +169,23 @@ public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
         return GetEnumerator();
     }
     
-    public OrderedDictionary(OrderedDictionary <TKey, TValue> dictionary)
+    public OrderedDictionary(OrderedDictionary<TKey, TValue> dictionary)
     {
-        var temp = dictionary.Clone();
-        // 直接复用temp的底层集合（全新实例，无引用共享）
-        _dictionary = temp._dictionary;
-        _linkedList = temp._linkedList;
+        // 修复原克隆构造函数的逻辑问题：原代码调用temp.Clone()会重复创建，改为直接克隆底层数据
+        _dictionary = new Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>(dictionary._dictionary.Comparer);
+        _linkedList = new LinkedList<KeyValuePair<TKey, TValue>>();
+        
+        foreach (var kvp in dictionary._linkedList)
+        {
+            TValue clonedValue = kvp.Value;
+            // 兼容ICloneable的深拷贝
+            if (kvp.Value is ICloneable cloneable)
+            {
+                clonedValue = (TValue)cloneable.Clone();
+            }
+            var newNode = _linkedList.AddLast(new KeyValuePair<TKey, TValue>(kvp.Key, clonedValue));
+            _dictionary[kvp.Key] = newNode;
+        }
     }
     
     /// <summary>
@@ -183,21 +194,28 @@ public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     /// </summary>
     public OrderedDictionary<TKey, TValue> Clone()
     {
-        var cloned = new OrderedDictionary<TKey, TValue>(_dictionary.Comparer);
+        return new OrderedDictionary<TKey, TValue>(this);
+    }
+    public override string ToString()
+    {
+        // 处理空字典
+        if (Count == 0)
+        {
+            return $"OrderedDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> [Count=0] {{ }}";
+        }
+
+        // 拼接有序键值对（保持插入顺序，符合帧同步遍历逻辑）
+        var kvpStrings = new List<string>();
         foreach (var kvp in _linkedList)
         {
-            // 如果 TValue 实现了 ICloneable，使用 Clone
-            if (kvp.Value is ICloneable cloneable)
-            {
-                cloned.Add(kvp.Key, (TValue)cloneable.Clone());
-            }
-            else
-            {
-                // 对于值类型 （浅拷贝）或引用类型 （非常不建议）
-                cloned.Add(kvp.Key, kvp.Value);
-            }
+            string keyStr = kvp.Key?.ToString() ?? "null";
+            string valueStr = kvp.Value?.ToString() ?? "null";
+            // 对复杂类型（如结构体Component），保证Value的ToString能显示关键字段
+            kvpStrings.Add($"{keyStr}: {valueStr}");
         }
-        return cloned;
+
+        // 最终格式：类型[数量] { 键值对列表 }
+        return $"OrderedDictionary<{typeof(TKey).Name}, {typeof(TValue).Name}> [Count={Count}] {{ {string.Join(", ", kvpStrings)} }}";
     }
 }
 

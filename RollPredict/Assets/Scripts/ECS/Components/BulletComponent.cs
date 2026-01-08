@@ -38,9 +38,13 @@ namespace Frame.ECS.Components
             this.bulletId = bulletId;
         }
 
-        public IComponent Clone()
+        public object Clone()
         {
             return new BulletComponent(position, velocity, ownerEntityId, bulletId);
+        }
+        public override string ToString()
+        {
+            return $"{GetType().Name}: {position}, {velocity}, {velocity}";
         }
     }
 }
