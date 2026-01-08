@@ -141,7 +141,7 @@ namespace Frame.ECS
 
             long frameNumber = confirmedServerFrame + predictedFrameIndex++;
 
-            // 保存输入
+            // 保存输入（只保存当前玩家的输入，其他玩家的输入会在收到服务器帧时补全）
             inputHistory[frameNumber] = new List<FrameData>()
             {
                 new FrameData()
@@ -151,7 +151,7 @@ namespace Frame.ECS
                 }
             };
 
-   
+
             world = ECSStateMachine.Execute(world, inputHistory[frameNumber]);
 
             // 保存预测后的状态快照
@@ -281,18 +281,16 @@ namespace Frame.ECS
                     // 先保存服务器输入（必须在回滚前保存，确保GetInputs能获取到正确的输入）
                     SaveInput(serverFrameNumber, serverFrame);
 
-                    // 回滚到确认的服务器帧
-                    currentGameState = LoadSnapshot(confirmedServerFrame);
+
+                    currentGameState = LoadSnapshot( confirmedServerFrame);
 
                     currentGameState.RestoreToWorld(world);
-                    
-                    // 重新执行从 confirmedServerFrame+1 到 serverFrameNumber 的所有帧
-                    // 对于 serverFrameNumber 这一帧，使用服务器的输入（已经在上面保存了）
-                    // 对于之前的帧，使用本地保存的输入
-                    for (long frame = confirmedServerFrame + 1; frame <= serverFrameNumber; frame++)
+
+                    // 重新执行从 rollbackToFrame+1 到 serverFrameNumber 的所有帧
+                    // 使用服务器的输入（已经在上面保存了）
+                    for (long frame = confirmedServerFrame + 1; frame <= predictedFrame; frame++)
                     {
                         var newInputs = GetInputs(frame);
-
                         world = ECSStateMachine.Execute(world, newInputs);
                         SaveSnapshot(frame);
                     }

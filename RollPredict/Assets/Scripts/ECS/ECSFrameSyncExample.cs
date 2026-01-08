@@ -102,7 +102,7 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
         // 发送输入到服务器
         if (newDirection != InputDirection.DirectionNone || fire)
         {
-            if (timer > 0.05f)
+            if (timer > 1f)
             {
                 timer = 0;
                 // 发送移动输入到服务器
@@ -113,7 +113,7 @@ public class ECSFrameSyncExample :SingletonMono<ECSFrameSyncExample>
             }
 
             // 客户端预测
-            if (timer1 > 0.04f)
+            if (timer1 > 0.1f)
             {
                 timer1 = 0;
                 UpdateInputStatePredict(newDirection, fire);
