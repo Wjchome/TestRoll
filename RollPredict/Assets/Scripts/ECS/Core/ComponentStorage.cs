@@ -17,7 +17,7 @@ namespace Frame.ECS
     ///     那么这里边就是 1 -> IComponent(1) 3 -> IComponent(3)...
     ///     如果有两个IComponent,一个玩家，一个子弹，那么这个应该只用实例化2个
     /// </summary>
-    public class ComponentStorage<TComponent> where TComponent : IComponent
+    public class ComponentStorage<TComponent> : IComponentStorage where TComponent : IComponent
     {
         private OrderedDictionary<Entity, TComponent> _components = new OrderedDictionary<Entity, TComponent>();
 
@@ -97,6 +97,52 @@ namespace Frame.ECS
         /// 获取Component数量
         /// </summary>
         public int Count => _components.Count;
+
+        // IComponentStorage 接口实现
+
+        /// <summary>
+        /// 移除指定Entity的Component（接口实现）
+        /// </summary>
+        bool IComponentStorage.Remove(Entity entity)
+        {
+            return Remove(entity);
+        }
+
+        /// <summary>
+        /// 获取所有Component的快照（接口实现，返回IComponent类型）
+        /// </summary>
+        OrderedDictionary<Entity, IComponent> IComponentStorage.GetAllComponentsAsIComponent()
+        {
+            var result = new OrderedDictionary<Entity, IComponent>();
+            foreach (var kvp in _components)
+            {
+                result[kvp.Key] = kvp.Value;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 批量设置Component（接口实现，从IComponent类型恢复）
+        /// </summary>
+        void IComponentStorage.SetAllAsIComponent(OrderedDictionary<Entity, IComponent> components)
+        {
+            _components.Clear();
+            foreach (var kvp in components)
+            {
+                if (kvp.Value is TComponent typedComponent)
+                {
+                    _components[kvp.Key] = typedComponent;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 清空所有Component（接口实现）
+        /// </summary>
+        void IComponentStorage.Clear()
+        {
+            Clear();
+        }
     }
 }
 

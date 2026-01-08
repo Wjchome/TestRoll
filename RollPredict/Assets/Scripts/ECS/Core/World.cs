@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Frame.ECS.Components;
 
 namespace Frame.ECS
 {
@@ -22,7 +23,8 @@ namespace Frame.ECS
         private HashSet<Entity> _entities = new HashSet<Entity>();
         
         // Component存储：每种Component类型一个存储
-        private OrderedDictionary<Type, object> _componentStorages = new OrderedDictionary<Type, object>();
+        // 使用IComponentStorage接口，类型更清晰，避免使用object
+        private OrderedDictionary<Type, IComponentStorage> _componentStorages = new OrderedDictionary<Type, IComponentStorage>();
 
         /// <summary>
         /// 创建新Entity
@@ -44,12 +46,10 @@ namespace Frame.ECS
 
             _entities.Remove(entity);
 
-            // 移除该Entity的所有Component
+            // 移除该Entity的所有Component（使用接口，避免反射）
             foreach (var (_,storage) in _componentStorages)
             {
-                // 使用反射调用Remove方法（简化实现）
-                var removeMethod = storage.GetType().GetMethod("Remove");
-                removeMethod?.Invoke(storage, new object[] { entity });
+                storage.Remove(entity);
             }
         }
 
@@ -154,16 +154,17 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 获取所有Component的快照（用于状态保存）OrderedDictionary<Type,OrderedDictionary<Entity, TComponent> >
+        /// 获取所有Component的快照（用于状态保存）
+        /// 返回 OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>>
+        /// 使用接口，避免反射
         /// </summary>
-        public OrderedDictionary<Type, object> GetAllComponentSnapshots()
+        public OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>> GetAllComponentSnapshots()
         {
-            var snapshots = new OrderedDictionary<Type, object>();
+            var snapshots = new OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>>();
             foreach (var (type,storage) in _componentStorages)
             {
-                // 使用反射调用GetAllComponents方法
-                var getAllMethod = storage.GetType().GetMethod("GetAllComponents");
-                var snapshot = getAllMethod?.Invoke(storage, null);
+                // 使用接口方法，避免反射
+                var snapshot = storage.GetAllComponentsAsIComponent();
                 snapshots[type] = snapshot;
             }
             return snapshots;
@@ -171,22 +172,23 @@ namespace Frame.ECS
 
         /// <summary>
         /// 恢复所有Component的状态（用于状态恢复）
+        /// 接受 OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>>
+        /// 使用接口，避免反射
         /// </summary>
-        public void RestoreComponentSnapshots(OrderedDictionary<Type, object> snapshots)
+        public void RestoreComponentSnapshots(OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>> snapshots)
         {
             foreach (var (type,components) in snapshots)
             {
                 if (!_componentStorages.TryGetValue(type, out var storage))
-                {   // storage type ->  OrderedDictionary<Entity, TComponent> 
-                    // 如果存储不存在，创建它
+                {
+                    // 如果存储不存在，创建它（这里仍需要反射，但只执行一次）
                     var storageType = typeof(ComponentStorage<>).MakeGenericType(type);
-                    storage = Activator.CreateInstance(storageType);
+                    storage = (IComponentStorage)Activator.CreateInstance(storageType);
                     _componentStorages[type] = storage;
                 }
 
-                // 使用反射调用SetAll方法
-                var setAllMethod = storage.GetType().GetMethod("SetAll");
-                setAllMethod?.Invoke(storage, new[] { components });
+                // 使用接口方法，避免反射
+                storage.SetAllAsIComponent(components);
             }
         }
 

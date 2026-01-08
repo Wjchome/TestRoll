@@ -58,18 +58,15 @@ namespace Frame.ECS
             foreach (var kvp in snapshots)
             {
                 var componentTypeName = kvp.Key.FullName;
-                var componentDict = kvp.Value as OrderedDictionary<Entity, IComponent>;
+                var componentDict = kvp.Value; // 已经是 OrderedDictionary<Entity, IComponent> 类型
                 
-                if (componentDict != null)
+                var serializableDict = new OrderedDictionary<int, IComponent>();
+                foreach (var componentKvp in componentDict)
                 {
-                    var serializableDict = new OrderedDictionary<int, IComponent>();
-                    foreach (var componentKvp in componentDict)
-                    {
-                        // 只存储Entity ID和Component的克隆
-                        serializableDict[componentKvp.Key.Id] = componentKvp.Value.Clone();
-                    }
-                    state.componentSnapshots[componentTypeName] = serializableDict;
+                    // 只存储Entity ID和Component的克隆
+                    serializableDict[componentKvp.Key.Id] = componentKvp.Value.Clone();
                 }
+                state.componentSnapshots[componentTypeName] = serializableDict;
             }
             
             return state;

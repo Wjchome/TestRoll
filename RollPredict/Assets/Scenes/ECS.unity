@@ -356,7 +356,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serverIP: 127.0.0.1
-  serverPort: 8088
+  serverPort: 8089
   playerName: Player
   isConnected: 0
   isGameStarted: 0

@@ -52,14 +52,10 @@ namespace Frame.ECS
         public ECSGameState currentGameState;
 
 
-        void Start()
-        {
-            // 初始化当前游戏状态
-            currentGameState = ECSGameState.CreateSnapshot(world, 0);
-        }
+
 
         /// <summary>
-        /// 保存当前帧的状态快照
+        /// 保存当前帧的状态快照   World + frameNumber    ->  ECSGameState
         /// </summary>
         public void SaveSnapshot(long frameNumber)
         {
@@ -92,7 +88,7 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 加载指定帧的状态快照
+        /// 加载指定帧的状态快照     frameNumber ->  ECSGameState
         /// </summary>
         public ECSGameState LoadSnapshot(long frameNumber)
         {
@@ -284,6 +280,7 @@ namespace Frame.ECS
 
 
                     currentGameState = LoadSnapshot(confirmedServerFrame);
+                    currentGameState.RestoreToWorld(world);
                     for (long frame = confirmedServerFrame; frame <= predictedFrame; frame++)
                     {
                         var newInputs = GetInputs(frame);
