@@ -75,11 +75,22 @@ namespace Frame.ECS
                     continue;
 
                 // 更新Unity对象的位置
-                gameObject.transform.position = new Vector3(
-                    (float)playerComponent.position.x,
-                    (float)playerComponent.position.y,
-                    0
-                );
+                if (ECSFrameSyncExample.Instance.isSmooth)
+                {
+                    gameObject.transform.position = Vector3.Lerp(gameObject.transform.position, new Vector3(
+                        (float)playerComponent.position.x,
+                        (float)playerComponent.position.y,
+                        0
+                    ), ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime);
+                }
+                else
+                {
+                    gameObject.transform.position = new Vector3(
+                        (float)playerComponent.position.x,
+                        (float)playerComponent.position.y,
+                        0
+                    );
+                }
             }
 
             // 同步子弹状态
@@ -173,16 +184,33 @@ namespace Frame.ECS
                     bulletGameObject = Object.Instantiate(ECSFrameSyncExample.Instance.bulletPrefab);
                     bulletGameObject.name = $"Bullet_{entity.Id}";
                     _entityToGameObject[entity.Id] = bulletGameObject;
-                }
-
-                // 更新子弹位置
-                if (bulletGameObject != null)
-                {
                     bulletGameObject.transform.position = new Vector3(
                         (float)bulletComponent.position.x,
                         (float)bulletComponent.position.y,
                         0
                     );
+                }
+
+                // 更新子弹位置
+                if (bulletGameObject != null)
+                {
+                    if (ECSFrameSyncExample.Instance.isSmooth)
+                    {
+                        bulletGameObject.transform.position = Vector3.Lerp(bulletGameObject.transform.position,
+                            new Vector3(
+                                (float)bulletComponent.position.x,
+                                (float)bulletComponent.position.y,
+                                0
+                            ), ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime);
+                    }
+                    else
+                    {
+                        bulletGameObject.transform.position = new Vector3(
+                            (float)bulletComponent.position.x,
+                            (float)bulletComponent.position.y,
+                            0
+                        );
+                    }
                 }
             }
 
