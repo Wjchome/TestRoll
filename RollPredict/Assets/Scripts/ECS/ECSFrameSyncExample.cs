@@ -129,7 +129,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     /// </summary>
     private void DetectFireInput(out bool fire, out long fireX, out long fireY)
     {
-        fire = Input.GetMouseButtonDown(0);
+        fire = Input.GetMouseButton(0);
         fireX = 0;
         fireY = 0;
 

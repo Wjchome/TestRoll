@@ -34,7 +34,7 @@ namespace Frame.ECS
         /// <summary>
         /// 跟踪上一帧已知的Entity ID（用于检测回滚后的Entity ID重用）
         /// </summary>
-        private static HashSet<int> _lastFrameEntityIds = new HashSet<int>();
+       // private static HashSet<int> _lastFrameEntityIds = new HashSet<int>();
 
 
         /// <summary>
@@ -111,58 +111,47 @@ namespace Frame.ECS
 
             var currentBulletEntityIdSet = new HashSet<int>(currentBulletEntityIds);
 
-            // 2. 检测"复活"的Entity ID（回滚后重新使用的ID）
-            // 如果一个Entity ID：
-            // - 上一帧不存在（不在 _lastFrameEntityIds 中）
-            // - 但GameObject映射存在（说明之前创建过）
-            // - 当前帧又出现了
-            // → 说明发生了回滚，这是重新创建的Entity，需要销毁旧GameObject
-            var reusedEntityIds = new List<int>();
-            foreach (var entityId in currentBulletEntityIds)
-            {
-                // 如果是玩家，跳过（玩家是持久的）
-                if (_entityToPlayerId.ContainsKey(entityId))
-                    continue;
-
-                // 如果当前Entity ID在上一帧不存在，但GameObject映射存在
-                if (!_lastFrameEntityIds.Contains(entityId) && _entityToGameObject.ContainsKey(entityId))
-                {
-                    reusedEntityIds.Add(entityId);
-                    Debug.Log($"[ECSSyncHelper] 检测到Entity ID重用：{entityId}，销毁旧GameObject");
-
-                    // 销毁旧的GameObject
-                    if (_entityToGameObject.TryGetValue(entityId, out var oldGameObject))
-                    {
-                        if (oldGameObject != null)
-                        {
-                            Object.Destroy(oldGameObject);
-                        }
-
-                        _entityToGameObject.Remove(entityId);
-                    }
-                }
-            }
+            // // 2. 检测"复活"的Entity ID（回滚后重新使用的ID）
+            // // 如果一个Entity ID：
+            // // - 上一帧不存在（不在 _lastFrameEntityIds 中）
+            // // - 但GameObject映射存在（说明之前创建过）
+            // // - 当前帧又出现了
+            // // → 说明发生了回滚，这是重新创建的Entity，需要销毁旧GameObject
+            // var reusedEntityIds = new List<int>();
+            // foreach (var entityId in currentBulletEntityIds)
+            // {
+            //     // 如果当前Entity ID在上一帧不存在，但GameObject映射存在
+            //     if (!_lastFrameEntityIds.Contains(entityId) && _entityToGameObject.ContainsKey(entityId))
+            //     {
+            //         reusedEntityIds.Add(entityId);
+            //         Debug.Log($"[ECSSyncHelper] 检测到Entity ID重用：{entityId}，销毁旧GameObject");
+            //
+            //         // 销毁旧的GameObject
+            //         if (_entityToGameObject.TryGetValue(entityId, out var oldGameObject))
+            //         {
+            //             if (oldGameObject != null)
+            //             {
+            //                 Object.Destroy(oldGameObject);
+            //             }
+            //
+            //             _entityToGameObject.Remove(entityId);
+            //         }
+            //     }
+            // }
 
             // 3. 销毁ECS中不存在的子弹GameObject
             var entitiesToRemove = new List<int>();
-            foreach (var kvp in _entityToGameObject)
+            foreach (var (entityId,gameObject) in _entityToGameObject)
             {
-                var entityId = kvp.Key;
-                var gameObject = kvp.Value;
-
-                // 如果不是玩家（玩家在 _entityToPlayerId 中）
-                if (!_entityToPlayerId.ContainsKey(entityId))
+                // 如果ECS中不存在这个子弹Entity，销毁GameObject
+                if (!_entityToPlayerId.ContainsKey(entityId)&&!currentBulletEntityIdSet.Contains(entityId))
                 {
-                    // 如果ECS中不存在这个子弹Entity，销毁GameObject
-                    if (!currentBulletEntityIdSet.Contains(entityId))
+                    if (gameObject != null)
                     {
-                        if (gameObject != null)
-                        {
-                            Object.Destroy(gameObject);
-                        }
-
-                        entitiesToRemove.Add(entityId);
+                        Object.Destroy(gameObject);
                     }
+
+                    entitiesToRemove.Add(entityId);
                 }
             }
 
@@ -214,12 +203,12 @@ namespace Frame.ECS
                 }
             }
 
-            // 5. 更新 _lastFrameEntityIds（保存当前帧的所有Entity ID）
-            _lastFrameEntityIds.Clear();
-            foreach (var entity in world.GetAllEntities())
-            {
-                _lastFrameEntityIds.Add(entity.Id);
-            }
+            // // 5. 更新 _lastFrameEntityIds（保存当前帧的所有Entity ID）
+            // _lastFrameEntityIds.Clear();
+            // foreach (var entity in world.GetAllEntities())
+            // {
+            //     _lastFrameEntityIds.Add(entity.Id);
+            // }
         }
 
 
@@ -285,7 +274,7 @@ namespace Frame.ECS
             _entityToGameObject.Clear();
             _playerIdToEntity.Clear();
             _entityToPlayerId.Clear();
-            _lastFrameEntityIds.Clear();
+           // _lastFrameEntityIds.Clear();
         }
     }
 }

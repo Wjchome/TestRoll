@@ -53,7 +53,9 @@ namespace Frame.ECS
         /// </summary>
         public ECSGameState currentGameState;
 
-
+        public bool enableLog;
+        StringBuilder sb = new StringBuilder();
+        StringBuilder sb1 = new StringBuilder();
         /// <summary>
         /// 保存当前帧的状态快照   World + frameNumber    ->  ECSGameState
         /// </summary>
@@ -174,8 +176,7 @@ namespace Frame.ECS
             PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
         }
 
-        StringBuilder sb = new StringBuilder();
-        StringBuilder sb1 = new StringBuilder();
+
 
         /// <summary>
         /// 处理服务器帧：检查是否需要回滚
@@ -339,21 +340,25 @@ namespace Frame.ECS
 
         private void OnDisable()
         {
-            Debug.Log(sb1.ToString());
-            if (sb.Length > 0)
+            if (enableLog)
             {
-                try
+                Debug.Log(sb1.ToString());
+                if (sb.Length > 0)
                 {
-                    string filePath = Path.Combine(Application.dataPath,
-                        $"prediction_rollback_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
-                    File.WriteAllText(filePath, sb.ToString());
-                    Debug.Log($"Prediction rollback log saved to: {filePath}");
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Failed to write prediction rollback log to file: {e.Message}");
+                    try
+                    {
+                        string filePath = Path.Combine(Application.dataPath,
+                            $"prediction_rollback_log_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
+                        File.WriteAllText(filePath, sb.ToString());
+                        Debug.Log($"Prediction rollback log saved to: {filePath}");
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError($"Failed to write prediction rollback log to file: {e.Message}");
+                    }
                 }
             }
+            
         }
 
         /// <summary>

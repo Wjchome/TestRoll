@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	FRAME_INTERVAL = 100 * time.Millisecond // 20帧每秒
+	FRAME_INTERVAL = 200 * time.Millisecond // 20帧每秒
 	PORT           = ":8088"
 	MAX_PLAYERS    = 1 // 每个房间最大玩家数
 )

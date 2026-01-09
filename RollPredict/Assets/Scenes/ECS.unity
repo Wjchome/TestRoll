@@ -411,12 +411,12 @@ MonoBehaviour:
   bulletPrefab: {fileID: 3173730084948646136, guid: d03e3e0e0fffd46bba77cc879129a5a5, type: 3}
   debugText: {fileID: 1476675299}
   myPlayer: {fileID: 0}
-  isSmooth: 0
+  isSmooth: 1
   smoothNum: 5
   timer: 0
   timer1: 0
-  sendInterval: 0.05
-  predictInterval: 0.03
+  sendInterval: 0.1
+  predictInterval: 0.1
 --- !u!114 &996293668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -469,6 +469,7 @@ MonoBehaviour:
   currentGameState:
     nextEntityId: 1
     frameNumber: 0
+  enableLog: 0
   predictedFrameIndex: 1
 --- !u!1 &1476675297
 GameObject:
