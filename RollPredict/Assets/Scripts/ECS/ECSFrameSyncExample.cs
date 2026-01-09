@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Frame.Core;
 using Frame.ECS;
-using Frame.ECS.Components;
 using Frame.FixMath;
 using Proto;
 using UnityEngine;

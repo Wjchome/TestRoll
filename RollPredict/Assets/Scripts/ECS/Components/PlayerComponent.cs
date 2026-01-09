@@ -2,7 +2,7 @@ using System;
 using Frame.ECS;
 using Frame.FixMath;
 
-namespace Frame.ECS.Components
+namespace Frame.ECS
 {
     /// <summary>
     /// 玩家Component：存储玩家状态

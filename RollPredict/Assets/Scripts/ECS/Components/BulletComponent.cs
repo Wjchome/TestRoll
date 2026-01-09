@@ -2,7 +2,7 @@ using System;
 using Frame.ECS;
 using Frame.FixMath;
 
-namespace Frame.ECS.Components
+namespace Frame.ECS
 {
     /// <summary>
     /// 子弹Component：存储子弹状态

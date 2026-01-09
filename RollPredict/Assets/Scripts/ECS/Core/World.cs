@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Frame.ECS.Components;
 
 namespace Frame.ECS
 {
@@ -169,6 +168,22 @@ namespace Frame.ECS
         }
 
         /// <summary>
+        /// 检查Entity是否有指定类型的Component（非泛型版本，用于查询系统）
+        /// </summary>
+        /// <param name="entity">要检查的Entity</param>
+        /// <param name="componentType">Component类型</param>
+        /// <returns>是否有该Component</returns>
+        public bool HasComponentOfType(Entity entity, Type componentType)
+        {
+            if (_componentStorages.TryGetValue(componentType, out var storage))
+            {
+                // 使用接口方法检查（无反射）
+                return storage.Has(entity);
+            }
+            return false;
+        }
+
+        /// <summary>
         /// 获取所有有指定Component的Entity（用于System遍历）
         /// </summary>
         public IEnumerable<Entity> GetEntitiesWithComponent<TComponent>() where TComponent : IComponent
@@ -237,6 +252,25 @@ namespace Frame.ECS
         public int GetEntityCount()
         {
             return _entities.Count;
+        }
+
+        /// <summary>
+        /// 创建Entity查询
+        /// 
+        /// 示例：
+        /// var query = world.CreateQuery()
+        ///     .WithAll&lt;PlayerComponent, HealthComponent&gt;()
+        ///     .WithNone&lt;DeadTag&gt;();
+        /// 
+        /// foreach (var entity in query.GetEntities())
+        /// {
+        ///     // 处理活着的玩家
+        /// }
+        /// </summary>
+        /// <returns>新的Entity查询对象</returns>
+        public EntityQuery CreateQuery()
+        {
+            return new EntityQuery(this);
         }
     }
 }

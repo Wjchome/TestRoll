@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Frame.ECS;
-using Frame.ECS.Components;
 using Frame.FixMath;
 using UnityEngine;
 
