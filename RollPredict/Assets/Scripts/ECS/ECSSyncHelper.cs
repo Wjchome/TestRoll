@@ -30,12 +30,18 @@ namespace Frame.ECS
         /// Entity到playerId的映射（反向查找）
         /// </summary>
         private static Dictionary<int, int> _entityToPlayerId = new Dictionary<int, int>();
-        
+
+        /// <summary>
+        /// 跟踪上一帧已知的Entity ID（用于检测回滚后的Entity ID重用）
+        /// </summary>
+        private static HashSet<int> _lastFrameEntityIds = new HashSet<int>();
+
 
         /// <summary>
         /// 注册玩家到ECS系统
         /// </summary>
-        public static Entity RegisterPlayer(World world, int playerId, GameObject gameObject, FixVector2 initialPosition, int initialHp)
+        public static Entity RegisterPlayer(World world, int playerId, GameObject gameObject,
+            FixVector2 initialPosition, int initialHp)
         {
             // 创建Entity
             Entity entity = world.CreateEntity();
@@ -85,18 +91,48 @@ namespace Frame.ECS
         /// </summary>
         private static void SyncBullets(World world)
         {
-            // 获取所有ECS中存在的子弹Entity
-            var activeBulletEntities = new HashSet<int>();
+            // 1. 收集当前帧所有子弹Entity ID（按顺序）
+            var currentBulletEntityIds = new List<int>();
             foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
             {
-                activeBulletEntities.Add(entity.Id);
+                currentBulletEntityIds.Add(entity.Id);
             }
 
-            if (activeBulletEntities.Count > 0)
+            var currentBulletEntityIdSet = new HashSet<int>(currentBulletEntityIds);
+
+            // 2. 检测"复活"的Entity ID（回滚后重新使用的ID）
+            // 如果一个Entity ID：
+            // - 上一帧不存在（不在 _lastFrameEntityIds 中）
+            // - 但GameObject映射存在（说明之前创建过）
+            // - 当前帧又出现了
+            // → 说明发生了回滚，这是重新创建的Entity，需要销毁旧GameObject
+            var reusedEntityIds = new List<int>();
+            foreach (var entityId in currentBulletEntityIds)
             {
-                int a = 0;
+                // 如果是玩家，跳过（玩家是持久的）
+                if (_entityToPlayerId.ContainsKey(entityId))
+                    continue;
+
+                // 如果当前Entity ID在上一帧不存在，但GameObject映射存在
+                if (!_lastFrameEntityIds.Contains(entityId) && _entityToGameObject.ContainsKey(entityId))
+                {
+                    reusedEntityIds.Add(entityId);
+                    Debug.Log($"[ECSSyncHelper] 检测到Entity ID重用：{entityId}，销毁旧GameObject");
+
+                    // 销毁旧的GameObject
+                    if (_entityToGameObject.TryGetValue(entityId, out var oldGameObject))
+                    {
+                        if (oldGameObject != null)
+                        {
+                            Object.Destroy(oldGameObject);
+                        }
+
+                        _entityToGameObject.Remove(entityId);
+                    }
+                }
             }
-            // 1. 销毁ECS中不存在的子弹GameObject
+
+            // 3. 销毁ECS中不存在的子弹GameObject
             var entitiesToRemove = new List<int>();
             foreach (var kvp in _entityToGameObject)
             {
@@ -107,12 +143,13 @@ namespace Frame.ECS
                 if (!_entityToPlayerId.ContainsKey(entityId))
                 {
                     // 如果ECS中不存在这个子弹Entity，销毁GameObject
-                    if (!activeBulletEntities.Contains(entityId))
+                    if (!currentBulletEntityIdSet.Contains(entityId))
                     {
                         if (gameObject != null)
                         {
                             Object.Destroy(gameObject);
                         }
+
                         entitiesToRemove.Add(entityId);
                     }
                 }
@@ -124,7 +161,7 @@ namespace Frame.ECS
                 _entityToGameObject.Remove(entityId);
             }
 
-            // 2. 更新或创建子弹GameObject
+            // 4. 创建或更新子弹GameObject（按顺序遍历，确保确定性）
             foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
             {
                 if (!world.TryGetComponent<BulletComponent>(entity, out var bulletComponent))
@@ -133,11 +170,9 @@ namespace Frame.ECS
                 // 如果GameObject不存在，创建它
                 if (!_entityToGameObject.TryGetValue(entity.Id, out var bulletGameObject))
                 {
-                  
-                        bulletGameObject = GameObject.Instantiate(ECSFrameSyncExample.Instance.bulletPrefab);
-                        bulletGameObject.name = $"Bulle_{entity.Id}";
-                        _entityToGameObject[entity.Id] = bulletGameObject;
-               
+                    bulletGameObject = Object.Instantiate(ECSFrameSyncExample.Instance.bulletPrefab);
+                    bulletGameObject.name = $"Bullet_{entity.Id}";
+                    _entityToGameObject[entity.Id] = bulletGameObject;
                 }
 
                 // 更新子弹位置
@@ -150,7 +185,15 @@ namespace Frame.ECS
                     );
                 }
             }
+
+            // 5. 更新 _lastFrameEntityIds（保存当前帧的所有Entity ID）
+            _lastFrameEntityIds.Clear();
+            foreach (var entity in world.GetAllEntities())
+            {
+                _lastFrameEntityIds.Add(entity.Id);
+            }
         }
+
 
         /// <summary>
         /// 从Unity对象同步状态到ECS World（用于保存状态）
@@ -189,6 +232,7 @@ namespace Frame.ECS
             {
                 return entity;
             }
+
             return null;
         }
 
@@ -201,6 +245,7 @@ namespace Frame.ECS
             {
                 return playerId;
             }
+
             return null;
         }
 
@@ -212,7 +257,7 @@ namespace Frame.ECS
             _entityToGameObject.Clear();
             _playerIdToEntity.Clear();
             _entityToPlayerId.Clear();
+            _lastFrameEntityIds.Clear();
         }
     }
 }
-

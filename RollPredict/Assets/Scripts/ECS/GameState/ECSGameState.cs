@@ -28,6 +28,18 @@ namespace Frame.ECS
         public OrderedDictionary<string, OrderedDictionary<int, IComponent>> componentSnapshots;
 
         /// <summary>
+        /// World元数据：下一个Entity ID
+        /// 用于回滚后确保Entity ID的确定性
+        /// </summary>
+        public int nextEntityId;
+
+        /// <summary>
+        /// World元数据：所有活跃的Entity ID列表（按创建顺序）
+        /// 使用List而不是HashSet，确保遍历顺序确定性（帧同步关键）
+        /// </summary>
+        public OrderedHashSet<int> activeEntityIds;
+
+        /// <summary>
         /// 当前帧号
         /// </summary>
         public long frameNumber;
@@ -35,12 +47,16 @@ namespace Frame.ECS
         public ECSGameState()
         {
             componentSnapshots = new OrderedDictionary<string, OrderedDictionary<int, IComponent>>();
+            activeEntityIds = new OrderedHashSet<int>();
+            nextEntityId = 1;
             frameNumber = 0;
         }
 
         public ECSGameState(long frameNumber)
         {
             componentSnapshots = new OrderedDictionary<string, OrderedDictionary<int, IComponent>>();
+            activeEntityIds = new OrderedHashSet<int>();
+            nextEntityId = 1;
             this.frameNumber = frameNumber;
         }
 
@@ -69,6 +85,14 @@ namespace Frame.ECS
                 state.componentSnapshots[componentTypeName] = serializableDict;
             }
             
+            // ✓ 新增：保存World元数据
+            state.nextEntityId = world.GetNextEntityId();
+            state.activeEntityIds = new OrderedHashSet<int>();
+            foreach (var entity in world.GetAllEntities())
+            {
+                state.activeEntityIds.Add(entity.Id);
+            }
+            
             return state;
         }
 
@@ -79,6 +103,14 @@ namespace Frame.ECS
         {
             // 清空World
             world.Clear();
+            
+            // ✓ 新增：先恢复Entity列表（确保Entity存在）
+            var entities = new OrderedHashSet<Entity>();
+            foreach (var entityId in activeEntityIds)
+            {
+                entities.Add(new Entity(entityId));
+            }
+            world.RestoreMetadata(nextEntityId, entities);
             
             // 恢复所有Component
             foreach (var kvp in componentSnapshots)
@@ -122,6 +154,7 @@ namespace Frame.ECS
         {
             var newState = new ECSGameState(this.frameNumber);
             
+            // 拷贝Component快照
             foreach (var kvp in this.componentSnapshots)
             {
                 var newDict = new OrderedDictionary<int, IComponent>();
@@ -131,6 +164,10 @@ namespace Frame.ECS
                 }
                 newState.componentSnapshots[kvp.Key] = newDict;
             }
+            // job burst        ecs
+            // ✓ 新增：拷贝World元数据
+            newState.nextEntityId = this.nextEntityId;
+            newState.activeEntityIds = new OrderedHashSet<int>(this.activeEntityIds);
             
             return newState;
         }

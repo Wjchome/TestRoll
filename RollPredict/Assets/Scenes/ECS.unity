@@ -344,8 +344,8 @@ MonoBehaviour:
   myPlayer: {fileID: 0}
   timer: 0
   timer1: 0
-  sendInterval: 0.05
-  predictInterval: 0.04
+  sendInterval: 1
+  predictInterval: 0.1
 --- !u!114 &996293668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -396,6 +396,7 @@ MonoBehaviour:
   confirmedServerFrame: 0
   predictedFrame: 0
   currentGameState:
+    nextEntityId: 1
     frameNumber: 0
   predictedFrameIndex: 1
 --- !u!1660057539 &9223372036854775807

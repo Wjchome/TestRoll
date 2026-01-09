@@ -24,27 +24,22 @@ namespace Frame.ECS.Components
         /// 发射者Entity ID（哪个玩家发射的）
         /// </summary>
         public int ownerEntityId;
+        
 
-        /// <summary>
-        /// 子弹ID（用于标识子弹，可以用于碰撞检测等）
-        /// </summary>
-        public int bulletId;
-
-        public BulletComponent(FixVector2 position, FixVector2 velocity, int ownerEntityId, int bulletId)
+        public BulletComponent(FixVector2 position, FixVector2 velocity, int ownerEntityId)
         {
             this.position = position;
             this.velocity = velocity;
             this.ownerEntityId = ownerEntityId;
-            this.bulletId = bulletId;
         }
 
         public object Clone()
         {
-            return new BulletComponent(position, velocity, ownerEntityId, bulletId);
+            return new BulletComponent(position, velocity, ownerEntityId);
         }
         public override string ToString()
         {
-            return $"{GetType().Name}: position = {position},velocity = {velocity},ownerEntityId = {ownerEntityId},bulletId = {bulletId}";
+            return $"{GetType().Name}: position = {position},velocity = {velocity},ownerEntityId = {ownerEntityId}";
         }
     }
 }

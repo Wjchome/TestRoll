@@ -29,11 +29,6 @@ namespace Frame.ECS
         public static Fix64 BulletSpeed = (Fix64)0.2f;
 
         /// <summary>
-        /// 子弹ID生成器
-        /// </summary>
-        private static int _nextBulletId = 1;
-
-        /// <summary>
         /// 状态机核心函数：根据当前状态和输入计算下一帧状态
         /// State(n+1) = StateMachine(State(n), Input(n+1))
         /// </summary>
@@ -128,12 +123,12 @@ namespace Frame.ECS
                     FixVector2 bulletVelocity = direction*BulletSpeed ;
 
                     // 创建子弹Entity
+                    // 注意：子弹不再需要单独的bulletId，Entity.Id本身就是唯一标识
                     Entity bulletEntity = world.CreateEntity();
                     var bulletComponent = new BulletComponent(
                         bulletPosition,
                         bulletVelocity,
-                        playerEntity.Value.Id,
-                        _nextBulletId++
+                        playerEntity.Value.Id
                     );
                     world.AddComponent(bulletEntity, bulletComponent);
                 }
@@ -176,8 +171,7 @@ namespace Frame.ECS
                 var updatedComponent = new BulletComponent(
                     newPosition,
                     bulletComponent.velocity,
-                    bulletComponent.ownerEntityId,
-                    bulletComponent.bulletId
+                    bulletComponent.ownerEntityId
                 );
                 world.AddComponent(bulletEntity, updatedComponent);
             }

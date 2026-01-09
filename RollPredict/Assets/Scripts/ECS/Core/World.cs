@@ -20,7 +20,8 @@ namespace Frame.ECS
     public class World
     {
         private int _nextEntityId = 1;
-        private HashSet<Entity> _entities = new HashSet<Entity>();
+        // ⚠️ 帧同步关键：使用List而不是HashSet，确保遍历顺序确定性
+        private OrderedHashSet<Entity> _entities = new OrderedHashSet<Entity>();
         
         // Component存储：每种Component类型一个存储
         // 使用IComponentStorage接口，类型更清晰，避免使用object
@@ -32,7 +33,9 @@ namespace Frame.ECS
         public Entity CreateEntity()
         {
             var entity = new Entity(_nextEntityId++);
-            _entities.Add(entity);
+            
+                _entities.Add(entity);
+            
             return entity;
         }
 
@@ -59,6 +62,32 @@ namespace Frame.ECS
         public bool HasEntity(Entity entity)
         {
             return _entities.Contains(entity);
+        }
+
+        /// <summary>
+        /// 获取下一个Entity ID（用于快照）
+        /// </summary>
+        public int GetNextEntityId()
+        {
+            return _nextEntityId;
+        }
+
+        /// <summary>
+        /// 获取所有Entity的列表（用于快照）
+        /// 返回副本，保持顺序
+        /// </summary>
+        public OrderedHashSet<Entity> GetAllEntities()
+        {
+            return new OrderedHashSet<Entity>(_entities);
+        }
+
+        /// <summary>
+        /// 恢复World元数据（用于回滚）
+        /// </summary>
+        public void RestoreMetadata(int nextEntityId, OrderedHashSet<Entity> entities)
+        {
+            _nextEntityId = nextEntityId;
+            _entities = new OrderedHashSet<Entity>(entities);
         }
 
         /// <summary>
@@ -200,6 +229,14 @@ namespace Frame.ECS
             _entities.Clear();
             _componentStorages.Clear();
             _nextEntityId = 1;
+        }
+
+        /// <summary>
+        /// 获取Entity数量（用于调试）
+        /// </summary>
+        public int GetEntityCount()
+        {
+            return _entities.Count;
         }
     }
 }
