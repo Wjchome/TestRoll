@@ -409,8 +409,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isKCP: 1
-  playerPrefab: {fileID: 3173730084948646136, guid: 6af43123ecb4646d3bec0f85d1a2a69a, type: 3}
-  bulletPrefab: {fileID: 3173730084948646136, guid: d03e3e0e0fffd46bba77cc879129a5a5, type: 3}
+  playerPrefab: {fileID: 3616316222496744120, guid: 05ece5f144b4b4c0e8c7fe3246cf3634, type: 3}
+  bulletPrefab: {fileID: 2836734389060522652, guid: 4f7b66dc7177245919c31b66c3818aae, type: 3}
   debugText: {fileID: 1476675299}
   myPlayer: {fileID: 0}
   isSmooth: 0
