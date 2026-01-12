@@ -81,6 +81,21 @@ namespace Frame.ECS
         }
 
         /// <summary>
+        /// 获取指定类型的System
+        /// </summary>
+        /// <typeparam name="T">System类型</typeparam>
+        /// <returns>System实例，如果不存在则返回null</returns>
+        public static T GetSystem<T>() where T : class, ISystem
+        {
+            foreach (var system in _systems)
+            {
+                if (system is T typedSystem)
+                    return typedSystem;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// 获取已注册的System数量
         /// </summary>
         public static int GetSystemCount()

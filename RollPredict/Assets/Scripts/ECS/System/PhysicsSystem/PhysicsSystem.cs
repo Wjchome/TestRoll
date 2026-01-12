@@ -305,7 +305,7 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 清空所有Entity的碰撞信息
+        /// 清空所有Entity的碰撞信息（每帧开始时调用）
         /// </summary>
         private void ClearCollisionInfo(World world, List<Entity> entities)
         {
