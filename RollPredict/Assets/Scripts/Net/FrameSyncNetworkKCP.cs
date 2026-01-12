@@ -2,23 +2,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Buffers;
 using Frame.Core;
 using Frame.ECS;
 using UnityEngine;
 using Google.Protobuf;
 using Proto;
+using System.Net.Sockets.Kcp;
 
 /// <summary>
 /// 帧同步网络管理器（KCP版本）
 /// 使用KCP协议替代TCP，提供更低的延迟
 /// 
-/// 依赖：需要添加kcp2k库
-/// 安装方法：
-/// 1. 通过Unity Package Manager添加Git URL: https://github.com/vis2k/kcp2k.git
-/// 2. 或者下载kcp2k.dll并放到Plugins文件夹
+/// 依赖：System.Net.Sockets.Kcp（已安装）
+/// 使用SimpleSegManager.Kcp实现KCP协议
 /// </summary>
 public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
 {
@@ -50,10 +52,14 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     public bool isGameStarted = false;
     public int myPlayerID;
 
-    // KCP客户端（需要kcp2k库）
-   //  private KcpClient kcpClient;  // 取消注释当添加kcp2k库后
+    // KCP客户端
+    private UdpClient udpClient;
+    private SimpleSegManager.Kcp kcp;
+    private IPEndPoint serverEndPoint;
+    private const uint KCP_CONV = 2001; // KCP会话ID，客户端和服务器必须一致
     
     private Thread receiveThread;
+    private Thread updateThread;
     private bool isRunning = false;
     private bool isConnecting = false;
     private readonly object threadLock = new object();
@@ -87,6 +93,12 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     {
         // 在主线程中处理消息队列
         ProcessMessageQueue();
+        
+        // 更新KCP（需要在主线程或固定线程中调用）
+        if (kcp != null && isRunning)
+        {
+            kcp.Update(DateTimeOffset.UtcNow);
+        }
     }
 
     /// <summary>
@@ -123,52 +135,99 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             {
                 Debug.Log($"Attempting to connect to KCP server {serverIP}:{serverPort}...");
 
-                // TODO: 初始化KCP客户端
-                // 需要添加kcp2k库后才能使用
-                /*
-                kcpClient = new KcpClient(
-                    (ArraySegment<byte> data) => {
-                        // 发送回调
-                        // 通过UDP发送数据
-                    },
-                    (ArraySegment<byte> data) => {
-                        // 接收回调
-                        // 处理接收到的数据
-                        OnKCPDataReceived(data);
-                    }
-                );
+                // 创建UDP客户端（绑定任意可用端口）
+                udpClient = new UdpClient(0);  // 0表示系统自动分配端口
+                serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIP), serverPort);
 
-                // 配置KCP参数
-                kcpClient.NoDelay = noDelay;
-                kcpClient.Interval = (int)interval;
-                kcpClient.FastResend = (int)fastResend;
-                kcpClient.SendWindowSize = (int)sendWindowSize;
-                kcpClient.ReceiveWindowSize = (int)receiveWindowSize;
-                kcpClient.Mtu = (int)mtu;
-                kcpClient.MinRto = (int)minRto;
+                // 创建KCP实例
+                kcp = new SimpleSegManager.Kcp(KCP_CONV, new KcpCallbackImpl(this));
 
-                // 连接到服务器
-                kcpClient.Connect(serverIP, serverPort);
-                */
+                // 配置KCP参数（快速模式，低延迟）
+                if (noDelay)
+                {
+                    kcp.NoDelay(1, (int)interval, (int)resend, 1); // nodelay, interval, resend, nc
+                }
+                else
+                {
+                    kcp.NoDelay(0, (int)interval, 0, 0);
+                }
+                kcp.WndSize((int)sendWindowSize, (int)receiveWindowSize);
+                kcp.SetMtu((int)mtu);
 
-                // 临时实现：使用UDP Socket（需要手动实现KCP）
-                // 这里提供一个基础框架，实际需要集成KCP库
-                Debug.LogWarning("KCP库未集成，请先添加kcp2k库");
-                
+                // 启动接收线程
+                isRunning = true;
+                receiveThread = new Thread(ReceiveLoop)
+                {
+                    IsBackground = true,
+                    Name = "KCP Receive Thread"
+                };
+                receiveThread.Start();
+
+                // 启动KCP更新线程（定期调用kcp.Update()来发送握手包和保持连接）
+                updateThread = new Thread(KCPUpdateLoop)
+                {
+                    IsBackground = true,
+                    Name = "KCP Update Thread"
+                };
+                updateThread.Start();
+
+                // 等待一小段时间，确保KCP更新线程已启动
+                Thread.Sleep(50);
+
+                // 发送一个初始握手消息来触发KCP连接建立
+                // KCP需要先发送数据包，服务器端的AcceptKCP()才会返回
+                // 这里发送一个空的ConnectMessage来触发握手（服务器端会忽略这个消息，但会建立KCP连接）
+                try
+                {
+                    var connectMsg = new ConnectMessage
+                    {
+                        PlayerName = playerName
+                    };
+                    byte[] data = connectMsg.ToByteArray();
+                    byte[] lengthBytes = BitConverter.GetBytes((uint)(1 + data.Length));
+                    if (BitConverter.IsLittleEndian)
+                        Array.Reverse(lengthBytes);
+                    byte[] messageTypeBytes = new byte[] { (byte)MessageType.MessageConnect };
+                    byte[] message = new byte[4 + 1 + data.Length];
+                    Buffer.BlockCopy(lengthBytes, 0, message, 0, 4);
+                    Buffer.BlockCopy(messageTypeBytes, 0, message, 4, 1);
+                    Buffer.BlockCopy(data, 0, message, 5, data.Length);
+                    
+                    kcp.Send(message);
+                    kcp.Update(DateTimeOffset.UtcNow);
+                    Debug.Log("Sent initial KCP handshake message");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Failed to send initial handshake: {e.Message}");
+                }
+
                 lock (threadLock)
                 {
-                    isConnected = false;
+                    // 注意：此时isConnected设为true只是表示UDP和KCP已初始化
+                    // 真正的连接成功需要等待服务器返回ConnectMessage
                     isConnecting = false;
                 }
+                isGameStarted = false;
+
+                Debug.Log($"KCP client initialized, waiting for server response...");
             }
             catch (Exception e)
             {
-                Debug.LogError($"KCP Connection error: {e.Message}");
+                Debug.LogError($"KCP Connection error: {e.Message}\n{e.StackTrace}");
                 lock (threadLock)
                 {
                     isConnected = false;
                     isConnecting = false;
                 }
+                
+                // 清理资源
+                if (udpClient != null)
+                {
+                    try { udpClient.Close(); } catch { }
+                    udpClient = null;
+                }
+                kcp = null;
             }
         });
         connectThread.IsBackground = true;
@@ -190,17 +249,39 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             isConnected = false;
         }
 
-        // TODO: 关闭KCP连接
-        // if (kcpClient != null)
-        // {
-        //     kcpClient.Disconnect();
-        //     kcpClient = null;
-        // }
+        // 关闭UDP连接
+        if (udpClient != null)
+        {
+            try
+            {
+                udpClient.Close();
+                udpClient.Dispose();
+            }
+            catch { }
+            udpClient = null;
+        }
+
+        // 清理KCP
+        if (kcp != null)
+        {
+            try
+            {
+                kcp.Dispose();
+            }
+            catch { }
+            kcp = null;
+        }
 
         if (receiveThread != null && receiveThread.IsAlive)
         {
             receiveThread.Join(1000);
             receiveThread = null;
+        }
+
+        if (updateThread != null && updateThread.IsAlive)
+        {
+            updateThread.Join(1000);
+            updateThread = null;
         }
 
         OnDisconnected?.Invoke();
@@ -210,7 +291,7 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     /// <summary>
     /// 发送帧数据
     /// </summary>
-    public void SendFrameData(FrameData frameData)
+    public void SendFrameData(InputDirection direction, bool isFire = false, long fireX = 0, long fireY = 0)
     {
         if (!isConnected)
         {
@@ -220,6 +301,20 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
 
         try
         {
+            var frameData = new FrameData
+            {
+                PlayerId = myPlayerID,
+                Direction = direction,
+                FrameNumber = ECSPredictionRollbackManager.Instance.confirmedServerFrame,
+                IsFire = isFire
+            };
+        
+            // 如果发射，设置目标位置
+            if (isFire)
+            {
+                frameData.FireX = fireX;
+                frameData.FireY = fireY;
+            }
             // 序列化消息
             byte[] data = frameData.ToByteArray();
             
@@ -236,8 +331,12 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             Buffer.BlockCopy(messageTypeBytes, 0, message, 4, 1);
             Buffer.BlockCopy(data, 0, message, 5, data.Length);
 
-            // TODO: 通过KCP发送
-            // kcpClient.Send(new ArraySegment<byte>(message));
+            // 通过KCP发送
+            if (kcp != null && serverEndPoint != null)
+            {
+                kcp.Send(message);
+                kcp.Update(DateTimeOffset.UtcNow);
+            }
         }
         catch (Exception e)
         {
@@ -272,8 +371,12 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             Buffer.BlockCopy(messageTypeBytes, 0, message, 4, 1);
             Buffer.BlockCopy(data, 0, message, 5, data.Length);
 
-            // TODO: 通过KCP发送
-            // kcpClient.Send(new ArraySegment<byte>(message));
+            // 通过KCP发送
+            if (kcp != null && serverEndPoint != null)
+            {
+                kcp.Send(message);
+                kcp.Update(DateTimeOffset.UtcNow);
+            }
         }
         catch (Exception e)
         {
@@ -282,56 +385,116 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     }
 
     /// <summary>
-    /// KCP数据接收回调
+    /// 处理KCP接收到的数据（可能包含多个消息）
     /// </summary>
-    private void OnKCPDataReceived(ArraySegment<byte> data)
+    private void ProcessKCPData(byte[] data)
     {
-        try
+        int offset = 0;
+        Debug.Log($"[KCP] Received data: {data.Length} bytes, offset: {offset}");
+        
+        while (offset < data.Length)
         {
-            using (MemoryStream stream = new MemoryStream(data.Array, data.Offset, data.Count))
-            using (BinaryReader reader = new BinaryReader(stream))
+            // 检查是否有足够的数据读取消息长度（至少需要4字节）
+            if (offset + 4 > data.Length)
             {
-                // 读取消息长度
-                byte[] lengthBytes = reader.ReadBytes(4);
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(lengthBytes);
-                uint length = BitConverter.ToUInt32(lengthBytes, 0);
+                Debug.LogWarning($"Incomplete message: need 4 bytes for length, but only {data.Length - offset} bytes available");
+                break;
+            }
 
-                // 读取消息类型
-                MessageType messageType = (MessageType)reader.ReadByte();
+            // 读取消息长度（4字节，大端序）
+            byte[] lengthBytes = new byte[4];
+            Array.Copy(data, offset, lengthBytes, 0, 4);
+            
+            // 先保存原始字节用于调试
+            byte[] originalLengthBytes = new byte[4];
+            Array.Copy(lengthBytes, originalLengthBytes, 4);
+            
+            if (BitConverter.IsLittleEndian)
+                Array.Reverse(lengthBytes);
+            uint totalLength = BitConverter.ToUInt32(lengthBytes, 0);
+            
+            Debug.Log($"[KCP] Message at offset {offset}: lengthBytes=[{originalLengthBytes[0]}, {originalLengthBytes[1]}, {originalLengthBytes[2]}, {originalLengthBytes[3]}], totalLength={totalLength}, remaining data={data.Length - offset} bytes");
 
-                // 读取数据
-                int dataLength = (int)length - 1;
-                byte[] messageData = reader.ReadBytes(dataLength);
+            // 检查长度是否合理（至少包含消息类型1字节）
+            if (totalLength < 1)
+            {
+                Debug.LogError($"[KCP] Invalid message length: {totalLength} (must be >= 1)");
+                break;
+            }
+            
+            if (totalLength > 1024 * 1024) // 最大1MB
+            {
+                Debug.LogError($"[KCP] Message too large: {totalLength} bytes (max 1MB)");
+                break;
+            }
 
-                // 解析消息
+            // 检查是否有足够的数据读取完整消息
+            int requiredBytes = 4 + (int)totalLength;
+            int availableBytes = data.Length - offset;
+            if (availableBytes < requiredBytes)
+            {
+                Debug.LogWarning($"[KCP] Incomplete message: need {requiredBytes} bytes, but only {availableBytes} bytes available. Waiting for more data...");
+                break; // 等待更多数据
+            }
+
+            // 读取消息类型（1字节）
+            MessageType messageType = (MessageType)data[offset + 4];
+            Debug.Log($"[KCP] Message type: {messageType} (value: {(int)messageType}), data length: {totalLength - 1}");
+
+            // 读取数据部分
+            int dataLength = (int)totalLength - 1;
+            byte[] messageData = new byte[dataLength];
+            if (dataLength > 0)
+            {
+                Array.Copy(data, offset + 5, messageData, 0, dataLength);
+            }
+
+            // 解析消息
+            try
+            {
                 IMessage message = null;
                 switch (messageType)
                 {
                     case MessageType.MessageConnect:
                         message = ConnectMessage.Parser.ParseFrom(messageData);
+                        Debug.Log($"[KCP] Parsed ConnectMessage: PlayerId={((ConnectMessage)message).PlayerId}, PlayerName={((ConnectMessage)message).PlayerName}");
                         break;
                     case MessageType.MessageServerFrame:
                         message = ServerFrame.Parser.ParseFrom(messageData);
+                        Debug.Log($"[KCP] Parsed ServerFrame");
                         break;
                     case MessageType.MessageGameStart:
                         message = GameStart.Parser.ParseFrom(messageData);
+                        Debug.Log($"[KCP] Parsed GameStart");
                         break;
                     default:
-                        Debug.LogWarning($"Unknown message type: {messageType}");
-                        return;
+                        Debug.LogWarning($"[KCP] Unknown message type: {messageType} (value: {(int)messageType})");
+                        // 跳过这个消息，继续处理下一个
+                        offset += 4 + (int)totalLength;
+                        continue;
                 }
 
                 // 加入消息队列（在主线程处理）
-                lock (queueLock)
+                if (message != null)
                 {
-                    serverDataQueue.Enqueue((messageType, message));
+                    lock (queueLock)
+                    {
+                        serverDataQueue.Enqueue((messageType, message));
+                    }
+                    Debug.Log($"[KCP] Message queued: {messageType}");
                 }
             }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"OnKCPDataReceived error: {e.Message}");
+            catch (Exception e)
+            {
+                Debug.LogError($"[KCP] Failed to parse message type {messageType}: {e.Message}\n{e.StackTrace}");
+                // 即使解析失败，也要移动到下一个消息，避免无限循环
+                offset += 4 + (int)totalLength;
+                continue;
+            }
+
+            // 移动到下一个消息
+            offset += 4 + (int)totalLength;
+            Debug.Log($"[KCP] Processed message, new offset: {offset}/{data.Length}");
         }
     }
 
@@ -361,7 +524,10 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                 if (message is ConnectMessage connectMsg)
                 {
                     myPlayerID = connectMsg.PlayerId;
-                    isConnected = true;
+                    lock (threadLock)
+                    {
+                        isConnected = true; // 收到服务器响应后，才真正标记为已连接
+                    }
                     OnConnected?.Invoke(connectMsg.PlayerId);
                     Debug.Log($"Connected to KCP server, PlayerID: {myPlayerID}");
                 }
@@ -386,6 +552,210 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             default:
                 Debug.LogWarning($"Unhandled message type: {messageType}");
                 break;
+        }
+    }
+
+    /// <summary>
+    /// UDP接收循环（在后台线程中运行）
+    /// </summary>
+    private void ReceiveLoop()
+    {
+        try
+        {
+            while (isRunning && udpClient != null)
+            {
+                try
+                {
+                    // 接收UDP数据
+                    IPEndPoint remoteEndPoint = null;
+                    byte[] data = udpClient.Receive(ref remoteEndPoint);
+
+                    if (data == null || data.Length == 0)
+                        continue;
+
+                    // 将UDP数据输入到KCP
+                    if (kcp != null)
+                    {
+                        Debug.Log($"[KCP] Received UDP packet: {data.Length} bytes");
+                        kcp.Input(data);
+                        kcp.Update(DateTimeOffset.UtcNow);
+
+                        // 尝试从KCP接收完整的数据包
+                        // 注意：TryRecv() 只有在收到完整消息（所有分片）时才会返回数据
+                        // 如果消息被分片，需要等待所有分片到达
+                        int recvCount = 0;
+                        while (true)
+                        {
+                            var (buffer, length) = kcp.TryRecv();
+                            if (buffer == null || length <= 0)
+                            {
+                                // length == -1 表示没有可用数据或分片不完整（需要等待更多数据）
+                                // length == -2 表示错误
+                                if (length == -2)
+                                {
+                                    Debug.LogWarning("[KCP] TryRecv returned error: -2");
+                                }
+                                else if (length == -1 && recvCount == 0)
+                                {
+                                    // 第一次调用 TryRecv 返回 -1，说明数据不完整或还在等待
+                                    Debug.Log($"[KCP] TryRecv returned -1: waiting for more data or fragments");
+                                }
+                                break;
+                            }
+
+                            recvCount++;
+                            try
+                            {
+                                Debug.Log($"[KCP] TryRecv returned: length={length} bytes");
+                                
+                                // 立即复制数据，避免 buffer 被释放
+                                byte[] receivedData = new byte[length];
+                                var span = buffer.Memory.Span.Slice(0, length);
+                                span.CopyTo(receivedData);
+                                
+                                // 立即释放 buffer
+                                buffer.Dispose();
+                                buffer = null;
+
+                                // 只显示前16字节的预览，避免日志过长
+                                string preview = receivedData.Length <= 16 
+                                    ? string.Join(", ", receivedData.Select(b => b.ToString()))
+                                    : string.Join(", ", receivedData.Take(16).Select(b => b.ToString())) + "...";
+                                Debug.Log($"[KCP] Received complete message: {length} bytes, data preview: [{preview}]");
+                                
+                                // 处理接收到的数据（可能包含多个消息）
+                                ProcessKCPData(receivedData);
+                            }
+                            catch (ObjectDisposedException e)
+                            {
+                                Debug.LogError($"[KCP] Buffer was disposed before access: {e.Message}");
+                            }
+                            catch (Exception e)
+                            {
+                                Debug.LogError($"[KCP] Error processing KCP data: {e.Message}\n{e.StackTrace}");
+                            }
+                            finally
+                            {
+                                // 确保 buffer 被释放
+                                if (buffer != null)
+                                {
+                                    try { buffer.Dispose(); } catch { }
+                                }
+                            }
+                        }
+                        
+                        if (recvCount > 0)
+                        {
+                            Debug.Log($"[KCP] Processed {recvCount} complete message(s) from this UDP packet");
+                        }
+                    }
+                }
+                catch (SocketException e)
+                {
+                    if (isRunning)
+                    {
+                        Debug.LogWarning($"UDP receive error: {e.Message}");
+                    }
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    // UDP客户端已关闭，正常退出
+                    break;
+                }
+                catch (Exception e)
+                {
+                    if (isRunning)
+                    {
+                        Debug.LogError($"UDP receive loop error: {e.Message}\n{e.StackTrace}");
+                    }
+                    break;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"ReceiveLoop fatal error: {e.Message}\n{e.StackTrace}");
+        }
+        finally
+        {
+            Debug.Log("KCP receive loop exited");
+        }
+    }
+
+    /// <summary>
+    /// KCP更新循环（定期调用kcp.Update()来发送握手包和保持连接）
+    /// </summary>
+    private void KCPUpdateLoop()
+    {
+        try
+        {
+            while (isRunning && kcp != null)
+            {
+                try
+                {
+                    // 定期更新KCP（每10ms更新一次，与interval配置一致）
+                    if (kcp != null)
+                    {
+                        kcp.Update(DateTimeOffset.UtcNow);
+                    }
+                    
+                    // 等待10ms后再次更新
+                    Thread.Sleep(10);
+                }
+                catch (Exception e)
+                {
+                    if (isRunning)
+                    {
+                        Debug.LogError($"KCP update error: {e.Message}");
+                    }
+                    break;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"KCP update loop fatal error: {e.Message}\n{e.StackTrace}");
+        }
+        finally
+        {
+            Debug.Log("KCP update loop exited");
+        }
+    }
+
+    /// <summary>
+    /// KCP输出回调实现（将KCP数据通过UDP发送）
+    /// </summary>
+    private class KcpCallbackImpl : IKcpCallback
+    {
+        private FrameSyncNetworkKCP parent;
+
+        public KcpCallbackImpl(FrameSyncNetworkKCP parent)
+        {
+            this.parent = parent;
+        }
+
+        public void Output(IMemoryOwner<byte> buffer, int avalidLength)
+        {
+            try
+            {
+                if (parent.udpClient == null || parent.serverEndPoint == null)
+                {
+                    buffer.Dispose();
+                    return;
+                }
+
+                // 将KCP输出的数据通过UDP发送
+                byte[] data = new byte[avalidLength];
+                buffer.Memory.Span.Slice(0, avalidLength).CopyTo(data);
+                buffer.Dispose();
+
+                parent.udpClient.Send(data, data.Length, parent.serverEndPoint);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"KCP Output error: {e.Message}");
+            }
         }
     }
 }

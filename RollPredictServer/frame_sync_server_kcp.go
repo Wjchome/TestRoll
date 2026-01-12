@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sync"
 	"time"
 
 	myproto "github.com/WjcHome/gohello/proto"
@@ -15,20 +14,18 @@ import (
 )
 
 const (
-	FRAME_INTERVAL = 200 * time.Millisecond // 20帧每秒
-	KCP_PORT       = ":8088"                // KCP服务器端口
-	TCP_PORT       = ":8089"                // TCP服务器端口（可选，用于兼容）
-	MAX_PLAYERS    = 2                      // 每个房间最大玩家数
+	KCP_PORT = ":8088" // KCP服务器端口
+	TCP_PORT = ":8089" // TCP服务器端口（可选，用于兼容）
 )
 
 // KCP配置
 func configureKCP(conn *kcp.UDPSession) {
 	// 快速模式配置（低延迟，适合帧同步）
 	conn.SetNoDelay(1, 10, 2, 1) // nodelay, interval, resend, nc
-	conn.SetWindowSize(128, 128)  // send window, recv window
-	conn.SetMtu(1400)             // MTU
-	conn.SetACKNoDelay(true)      // 立即发送ACK
-	conn.SetStreamMode(false)     // 非流模式（数据包模式）
+	conn.SetWindowSize(128, 128) // send window, recv window
+	conn.SetMtu(1400)            // MTU
+	conn.SetACKNoDelay(true)     // 立即发送ACK
+	conn.SetStreamMode(false)    // 非流模式（数据包模式）
 }
 
 // 启动KCP服务器
@@ -36,8 +33,9 @@ func (s *Server) StartKCP() {
 	// 启动定期清理任务
 	go s.cleanupEmptyRooms()
 
-	// 监听UDP端口
-	ln, err := kcp.Listen(KCP_PORT)
+	// 监听UDP端口（使用ListenWithOptions获取*Listener类型，支持AcceptKCP）
+	// 参数：laddr, block(加密，nil表示不加密), dataShards, parityShards(前向纠错，0表示不使用)
+	ln, err := kcp.ListenWithOptions(KCP_PORT, nil, 0, 0)
 	if err != nil {
 		log.Fatal("KCP Listen error:", err)
 	}
@@ -126,6 +124,10 @@ func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 
 		// 根据消息类型处理
 		switch messageType {
+		case myproto.MessageType_MESSAGE_CONNECT:
+			// 客户端发送的ConnectMessage用于触发KCP连接建立，服务器端已经发送了ConnectMessage响应
+			// 这里可以记录或忽略
+			log.Printf("KCP Client %d: Received connect message (already connected)\n", client.ID)
 		case myproto.MessageType_MESSAGE_FRAME_DATA:
 			s.handleFrameData(client, data)
 		case myproto.MessageType_MESSAGE_DISCONNECT:
@@ -150,28 +152,21 @@ func (s *Server) sendKCPMessage(conn *kcp.UDPSession, messageType myproto.Messag
 	}
 
 	// 消息格式：len(4 bytes) + messageType(1 byte) + data
+	// 重要：必须一次性写入所有数据，避免KCP将消息分片
 	totalLength := uint32(1 + len(data))
 	lengthBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(lengthBytes, totalLength)
 
-	// 写入长度
-	_, err = conn.Write(lengthBytes)
-	if err != nil {
-		log.Printf("KCP Write length error: %v\n", err)
-		return
-	}
+	// 组合完整消息到一个缓冲区
+	message := make([]byte, 4+1+len(data))
+	copy(message[0:4], lengthBytes)
+	message[4] = byte(messageType)
+	copy(message[5:], data)
 
-	// 写入消息类型
-	_, err = conn.Write([]byte{byte(messageType)})
+	// 一次性写入完整消息
+	_, err = conn.Write(message)
 	if err != nil {
-		log.Printf("KCP Write message type error: %v\n", err)
-		return
-	}
-
-	// 写入数据
-	_, err = conn.Write(data)
-	if err != nil {
-		log.Printf("KCP Write data error: %v\n", err)
+		log.Printf("KCP Write error: %v\n", err)
 		return
 	}
 }
@@ -204,4 +199,3 @@ func (s *Server) StartBoth() {
 	// 启动KCP服务器
 	s.StartKCP()
 }
-

@@ -5,7 +5,7 @@ using Frame.ECS;
 using Frame.FixMath;
 using Proto;
 using UnityEngine;
-using UnityEngine.UI;  // 添加UI命名空间
+using UnityEngine.UI; // 添加UI命名空间
 
 /// <summary>
 /// ECS版本的帧同步示例
@@ -13,17 +13,16 @@ using UnityEngine.UI;  // 添加UI命名空间
 /// </summary>
 public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 {
+    public bool isKCP;
     private FrameSyncNetwork networkManager => FrameSyncNetwork.Instance;
+    private FrameSyncNetworkKCP networkManagerKCP => FrameSyncNetworkKCP.Instance;
     private ECSPredictionRollbackManager ecsPredictionManager => ECSPredictionRollbackManager.Instance;
 
-    [Header("玩家设置")]
-    public GameObject playerPrefab;
+    [Header("玩家设置")] public GameObject playerPrefab;
 
-    [Header("子弹设置")]
-    public GameObject bulletPrefab; // 可选：如果不设置，会自动创建红色小球
+    [Header("子弹设置")] public GameObject bulletPrefab; // 可选：如果不设置，会自动创建红色小球
 
-    [Header("UI设置")]
-    public Text debugText; // 调试信息显示
+    [Header("UI设置")] public Text debugText; // 调试信息显示
 
     public GameObject myPlayer;
     public bool isSmooth;
@@ -35,25 +34,36 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
     void Start()
     {
-        // 确保这是唯一的实例
-        if (Instance != this)
+        if (isKCP)
         {
-            Debug.LogWarning($"Start() called on non-singleton instance of {GetType().Name}. Ignoring.");
-            return;
+            // 设置服务器信息
+            networkManagerKCP.playerName = "Player_" + Random.Range(1000, 9999);
+
+
+            // 注册事件回调
+            networkManagerKCP.OnConnected += OnConnected;
+            networkManagerKCP.OnDisconnected += OnDisconnected;
+            networkManagerKCP.OnGameStarted += OnGameStarted;
+            networkManagerKCP.OnServerFrameReceived += OnServerFrameReceived;
+
+            // 连接服务器
+            networkManagerKCP.Connect();
         }
+        else
+        {
+            // 设置服务器信息
+            networkManager.playerName = "Player_" + Random.Range(1000, 9999);
 
-        // 设置服务器信息
-        networkManager.playerName = "Player_" + Random.Range(1000, 9999);
-        
 
-        // 注册事件回调
-        networkManager.OnConnected += OnConnected;
-        networkManager.OnDisconnected += OnDisconnected;
-        networkManager.OnGameStarted += OnGameStarted;
-        networkManager.OnServerFrameReceived += OnServerFrameReceived;
+            // 注册事件回调
+            networkManager.OnConnected += OnConnected;
+            networkManager.OnDisconnected += OnDisconnected;
+            networkManager.OnGameStarted += OnGameStarted;
+            networkManager.OnServerFrameReceived += OnServerFrameReceived;
 
-        // 连接服务器
-        networkManager.Connect();
+            // 连接服务器
+            networkManager.Connect();
+        }
     }
 
     public float timer = 0;
@@ -64,8 +74,17 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
     void Update()
     {
-        if (!networkManager.isGameStarted || ecsPredictionManager == null)
-            return;
+        if (isKCP)
+        {
+            if (!networkManagerKCP.isGameStarted)
+                return;
+        }
+        else
+        {
+            if (!networkManager.isGameStarted)
+                return;
+        }
+
 
         timer += Time.deltaTime;
         timer1 += Time.deltaTime;
@@ -80,7 +99,14 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         if ((newDirection != InputDirection.DirectionNone || fire) && timer > sendInterval)
         {
             timer = 0;
-            networkManager.SendFrameData(newDirection, fire, fireX, fireY);
+            if (isKCP)
+            {
+                networkManagerKCP.SendFrameData(newDirection, fire, fireX, fireY);
+            }
+            else
+            {
+                networkManager.SendFrameData(newDirection, fire, fireX, fireY);
+            }
         }
 
         // 3. 客户端预测（无论是否有输入，都要持续预测）
@@ -155,13 +181,13 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         long pendingFrames = predictedFrame - confirmedFrame;
 
         debugText.text = $"<b>帧同步调试信息</b>\n" +
-                        $"发送帧率: {1/sendInterval} fps\n" +
-                        $"预测帧率: {1/predictInterval} fps\n" +
-                        $"预测帧: {predictedFrame}\n" +
-                        $"确认帧: {confirmedFrame}\n" +
-                        $"<color=yellow>待确认帧数: {pendingFrames}</color>\n" +
-                        $"<color=cyan>网络延迟: {networkLatency:F0} ms</color>\n" +
-                        $"FPS: {(1.0f / Time.deltaTime):F0}";
+                         $"发送帧率: {1 / sendInterval} fps\n" +
+                         $"预测帧率: {1 / predictInterval} fps\n" +
+                         $"预测帧: {predictedFrame}\n" +
+                         $"确认帧: {confirmedFrame}\n" +
+                         $"<color=yellow>待确认帧数: {pendingFrames}</color>\n" +
+                         $"<color=cyan>网络延迟: {networkLatency:F0} ms</color>\n" +
+                         $"FPS: {(1.0f / Time.deltaTime):F0}";
     }
 
     /// <summary>
@@ -207,10 +233,19 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
                 startPos,
                 100
             );
-
-            if (playerId == networkManager.myPlayerID)
+            if (isKCP)
             {
-                myPlayer = player;
+                if (playerId == networkManagerKCP.myPlayerID)
+                {
+                    myPlayer = player;
+                }
+            }
+            else
+            {
+                if (playerId == networkManager.myPlayerID)
+                {
+                    myPlayer = player;
+                }
             }
         }
 
@@ -233,6 +268,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
             float deltaTime = currentTime - lastServerFrameTime;
             networkLatency = deltaTime * 1000f; // 转换为毫秒
         }
+
         lastServerFrameTime = currentTime;
 
         if (ecsPredictionManager.enablePredictionRollback)
@@ -255,7 +291,14 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         if (ecsPredictionManager.enablePredictionRollback)
         {
             // 先预测，让玩家立即看到效果
-            ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY);
+            if (isKCP)
+            {
+                ecsPredictionManager.PredictInput(networkManagerKCP.myPlayerID, currentDirection, fire, fireX, fireY);
+            }
+            else
+            {
+                ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY);
+            }
         }
     }
 }

@@ -388,6 +388,7 @@ GameObject:
   - component: {fileID: 996293668}
   - component: {fileID: 996293667}
   - component: {fileID: 996293670}
+  - component: {fileID: 996293671}
   m_Layer: 0
   m_Name: NetManager (1)
   m_TagString: Untagged
@@ -407,6 +408,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9858f977262a4f9a92b1e4db06f4094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isKCP: 1
   playerPrefab: {fileID: 3173730084948646136, guid: 6af43123ecb4646d3bec0f85d1a2a69a, type: 3}
   bulletPrefab: {fileID: 3173730084948646136, guid: d03e3e0e0fffd46bba77cc879129a5a5, type: 3}
   debugText: {fileID: 1476675299}
@@ -430,7 +432,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   serverIP: 127.0.0.1
-  serverPort: 8088
+  serverPort: 8089
   playerName: Player
   isConnected: 0
   isGameStarted: 0
@@ -471,6 +473,32 @@ MonoBehaviour:
     frameNumber: 0
   enableLog: 0
   predictedFrameIndex: 1
+--- !u!114 &996293671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 996293665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba120dfd0f8234c6fbad5edfc0336018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverIP: 127.0.0.1
+  serverPort: 8088
+  playerName: Player
+  sendWindowSize: 32
+  receiveWindowSize: 32
+  mtu: 1400
+  fastResend: 2
+  noDelay: 1
+  interval: 10
+  resend: 2
+  minRto: 30
+  isConnected: 0
+  isGameStarted: 0
+  myPlayerID: 0
 --- !u!1 &1476675297
 GameObject:
   m_ObjectHideFlags: 0

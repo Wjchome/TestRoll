@@ -17,7 +17,7 @@ import (
 const (
 	FRAME_INTERVAL = 200 * time.Millisecond // 20帧每秒
 	PORT           = ":8088"
-	MAX_PLAYERS    = 2 // 每个房间最大玩家数
+	MAX_PLAYERS    = 1 // 每个房间最大玩家数
 )
 
 // 全局客户端计数器
@@ -530,13 +530,19 @@ func (s *Server) sendMessage(conn net.Conn, messageType myproto.MessageType, msg
 	// 写入长度 (4 bytes, big endian)
 	lengthBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(lengthBytes, totalLength)
-	conn.Write(lengthBytes)
 
-	// 写入消息类型 (1 byte)
-	conn.Write([]byte{byte(messageType)})
+	// 组合完整消息到一个缓冲区（虽然TCP是流式协议，但合并写入更高效且一致）
+	message := make([]byte, 4+1+len(data))
+	copy(message[0:4], lengthBytes)
+	message[4] = byte(messageType)
+	copy(message[5:], data)
 
-	// 写入数据
-	conn.Write(data)
+	// 一次性写入完整消息
+	_, err = conn.Write(message)
+	if err != nil {
+		log.Printf("TCP Write error: %v\n", err)
+		return
+	}
 }
 
 // 房间帧循环
@@ -611,5 +617,6 @@ func (s *Server) cleanupEmptyRooms() {
 
 func main() {
 	server := NewServer()
-	server.Start()
+	// 同时启动TCP和KCP服务器（兼容旧客户端和新客户端）
+	server.StartBoth()
 }
