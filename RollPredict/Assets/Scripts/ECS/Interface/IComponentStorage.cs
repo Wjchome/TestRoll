@@ -42,6 +42,7 @@ namespace Frame.ECS
         /// 获取所有拥有此Component的Entity
         /// </summary>
         IEnumerable<Entity> GetAllEntities();
+        
     }
 }
 

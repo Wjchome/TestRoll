@@ -196,6 +196,135 @@ namespace Frame.ECS
             }
             return new List<Entity>();
         }
+        
+        /// <summary>
+        /// 获取组件存储（内部方法，用于查询优化）
+        /// </summary>
+        internal IComponentStorage GetComponentStorage(Type componentType)
+        {
+            _componentStorages.TryGetValue(componentType, out var storage);
+            return storage;
+        }
+        
+        /// <summary>
+        /// 批量获取组件（返回 Entity 和所有组件的元组）
+        /// 用于查询有多个组件的 Entity 时，避免逐个 TryGet
+        /// 
+        /// 示例：
+        /// foreach (var (entity, transform, velocity) in world.GetEntitiesWithComponents<Transform2DComponent, VelocityComponent>())
+        /// {
+        ///     // 直接使用 transform 和 velocity，无需 TryGet
+        /// }
+        /// </summary>
+        public IEnumerable<(Entity entity, T1 component1)> GetEntitiesWithComponents<T1>() 
+            where T1 : IComponent
+        {
+            var storage1 = GetOrCreateStorage<T1>();
+            foreach (var entity in storage1.GetAllEntities())
+            {
+                if (storage1.TryGet(entity, out var comp1))
+                {
+                    yield return (entity, comp1);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 批量获取组件（2个组件）
+        /// </summary>
+        public IEnumerable<(Entity entity, T1 component1, T2 component2)> GetEntitiesWithComponents<T1, T2>() 
+            where T1 : IComponent 
+            where T2 : IComponent
+        {
+            ComponentStorage<T1> storage1 = GetOrCreateStorage<T1>();
+            ComponentStorage<T2>  storage2 = GetOrCreateStorage<T2>();
+            
+            // 从较小的集合开始遍历（优化）
+            IComponentStorage smallerStorage = storage1.Count <= storage2.Count ? storage1 : storage2;
+            
+            foreach (var entity in smallerStorage.GetAllEntities())
+            {
+                if (storage1.TryGet(entity, out var comp1) && storage2.TryGet(entity, out var comp2))
+                {
+                    yield return (entity, comp1, comp2);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 批量获取组件（3个组件）
+        /// </summary>
+        public IEnumerable<(Entity entity, T1 component1, T2 component2, T3 component3)> GetEntitiesWithComponents<T1, T2, T3>() 
+            where T1 : IComponent 
+            where T2 : IComponent 
+            where T3 : IComponent
+        {
+            ComponentStorage<T1>  storage1 = GetOrCreateStorage<T1>();
+            ComponentStorage<T2>  storage2 = GetOrCreateStorage<T2>();
+            ComponentStorage<T3>  storage3 = GetOrCreateStorage<T3>();
+            
+            // 找到最小的集合（优化）
+            (IComponentStorage,int)[] storages = new[] { ((IComponentStorage)storage1, 1), (storage2, 2), (storage3, 3) };
+            var smallest = storages[0];
+            foreach (var storage in storages)
+            {
+                if (storage.Item1.Count < smallest.Item1.Count)
+                {
+                    smallest = storage;
+                }
+            }
+            
+            // 从最小的集合开始遍历
+            foreach (var entity in smallest.Item1.GetAllEntities())
+            {
+                if (storage1.TryGet(entity, out var comp1) && 
+                    storage2.TryGet(entity, out var comp2) && 
+                    storage3.TryGet(entity, out var comp3))
+                {
+                    yield return (entity, comp1, comp2, comp3);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 批量获取组件（4个组件）
+        /// </summary>
+        public IEnumerable<(Entity entity, T1 component1, T2 component2, T3 component3, T4 component4)> GetEntitiesWithComponents<T1, T2, T3, T4>() 
+            where T1 : IComponent 
+            where T2 : IComponent 
+            where T3 : IComponent
+            where T4 : IComponent
+        {
+            var storage1 = GetOrCreateStorage<T1>();
+            var storage2 = GetOrCreateStorage<T2>();
+            var storage3 = GetOrCreateStorage<T3>();
+            var storage4 = GetOrCreateStorage<T4>();
+            
+            // 找到最小的集合（优化）
+            var storages = new[] { 
+                ((IComponentStorage)storage1, 1), (storage2, 2), (storage3, 3), (storage4, 4) 
+            };
+            var smallest = storages[0];
+            foreach (var storage in storages)
+            {
+                if (storage.Item1.Count < smallest.Item1.Count)
+                {
+                    smallest = storage;
+                }
+            }
+            
+            // 从最小的集合开始遍历
+            foreach (var entity in smallest.Item1.GetAllEntities())
+            {
+                if (storage1.TryGet(entity, out var comp1) && 
+                    storage2.TryGet(entity, out var comp2) && 
+                    storage3.TryGet(entity, out var comp3) &&
+                    storage4.TryGet(entity, out var comp4))
+                {
+                    yield return (entity, comp1, comp2, comp3, comp4);
+                }
+            }
+        }
 
         /// <summary>
         /// 获取所有Component的快照（用于状态保存）
@@ -213,28 +342,7 @@ namespace Frame.ECS
             }
             return snapshots;
         }
-
-        /// <summary>
-        /// 恢复所有Component的状态（用于状态恢复）
-        /// 接受 OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>>
-        /// 使用接口，避免反射
-        /// </summary>
-        public void RestoreComponentSnapshots(OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>> snapshots)
-        {
-            foreach (var (type,components) in snapshots)
-            {
-                if (!_componentStorages.TryGetValue(type, out var storage))
-                {
-                    // 如果存储不存在，创建它（这里仍需要反射，但只执行一次）
-                    var storageType = typeof(ComponentStorage<>).MakeGenericType(type);
-                    storage = (IComponentStorage)Activator.CreateInstance(storageType);
-                    _componentStorages[type] = storage;
-                }
-
-                // 使用接口方法，避免反射
-                storage.SetAllAsIComponent(components);
-            }
-        }
+        
 
         /// <summary>
         /// 清空所有Entity和Component
@@ -268,10 +376,10 @@ namespace Frame.ECS
         /// }
         /// </summary>
         /// <returns>新的Entity查询对象</returns>
-        public EntityQuery CreateQuery()
-        {
-            return new EntityQuery(this);
-        }
+        // public EntityQuery CreateQuery()
+        // {
+        //     return new EntityQuery(this);
+        // }
     }
 }
 

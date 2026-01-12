@@ -72,7 +72,7 @@ namespace Frame.ECS
         private List<Entity> CollectPhysicsEntities(World world)
         {
             var entities = new List<Entity>();
-            foreach (var entity in world.CreateQuery().WithAll<PhysicsBodyComponent,Transform2DComponent,CollisionShapeComponent,VelocityComponent>().GetEntities())
+            foreach (var (entity,_,_,_,_) in world.GetEntitiesWithComponents<PhysicsBodyComponent,Transform2DComponent,CollisionShapeComponent,VelocityComponent>())
             {
                 entities.Add(entity);
             }
