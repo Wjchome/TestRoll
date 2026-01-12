@@ -1,15 +1,16 @@
 using System.Collections.Generic;
+using Frame.Core;
 using UnityEngine;
 using Frame.FixMath;
-using Frame.Core;
 
 namespace Frame.Physics2D
 {
     /// <summary>
     /// Unity组件：物理世界管理器
     /// </summary>
-    public class PhysicsWorld2DComponent : SingletonMono<PhysicsWorld2DComponent>
+    public class PhysicsWorld2DComponent :  SingletonMono<PhysicsWorld2DComponent>
     {
+        
         /// <summary>
         /// 物理世界实例
         /// </summary>
@@ -95,4 +96,6 @@ namespace Frame.Physics2D
             World.quadTree.DrawGizmos();
         }
     }
+
+
 }
