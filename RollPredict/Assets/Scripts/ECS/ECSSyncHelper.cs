@@ -30,10 +30,7 @@ namespace Frame.ECS
         /// </summary>
         private static Dictionary<int, int> _entityToPlayerId = new Dictionary<int, int>();
 
-        /// <summary>
-        /// 跟踪上一帧已知的Entity ID（用于检测回滚后的Entity ID重用）
-        /// </summary>
-       // private static HashSet<int> _lastFrameEntityIds = new HashSet<int>();
+
 
 
         /// <summary>
@@ -46,9 +43,18 @@ namespace Frame.ECS
             Entity entity = world.CreateEntity();
 
             // 添加PlayerComponent
-            var playerComponent = new PlayerComponent(playerId, initialPosition, initialHp);
+            var playerComponent = new PlayerComponent(playerId,  initialHp);
+            var transform2DComponent = new Transform2DComponent(initialPosition);
+            var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, false, Fix64.Zero
+                , Fix64.Zero, (Fix64)0.5);
+            var collisionShapeComponent = new CollisionShapeComponent(ShapeType.Box,Fix64.One,FixVector2.One);
+            var velocityComponent = new VelocityComponent();
             world.AddComponent(entity, playerComponent);
-
+            world.AddComponent(entity, transform2DComponent);
+            world.AddComponent(entity, physicsBodyComponent);
+            world.AddComponent(entity, collisionShapeComponent);
+            world.AddComponent(entity, velocityComponent);
+            
             // 建立映射
             _entityToGameObject[entity.Id] = gameObject;
             _playerIdToEntity[playerId] = entity;
@@ -66,7 +72,7 @@ namespace Frame.ECS
             // 同步玩家状态
             foreach (var entity in world.GetEntitiesWithComponent<PlayerComponent>())
             {
-                if (!world.TryGetComponent<PlayerComponent>(entity, out var playerComponent))
+                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform2DComponent))
                     continue;
 
                 // 查找对应的Unity对象
@@ -77,16 +83,16 @@ namespace Frame.ECS
                 if (ECSFrameSyncExample.Instance.isSmooth)
                 {
                     gameObject.transform.position = Vector3.Lerp(gameObject.transform.position, new Vector3(
-                        (float)playerComponent.position.x,
-                        (float)playerComponent.position.y,
+                        (float)transform2DComponent.position.x,
+                        (float)transform2DComponent.position.y,
                         0
                     ), ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime);
                 }
                 else
                 {
                     gameObject.transform.position = new Vector3(
-                        (float)playerComponent.position.x,
-                        (float)playerComponent.position.y,
+                        (float)transform2DComponent.position.x,
+                        (float)transform2DComponent.position.y,
                         0
                     );
                 }
@@ -163,7 +169,7 @@ namespace Frame.ECS
             // 4. 创建或更新子弹GameObject（按顺序遍历，确保确定性）
             foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
             {
-                if (!world.TryGetComponent<BulletComponent>(entity, out var bulletComponent))
+                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform2DComponent))
                     continue;
 
                 // 如果GameObject不存在，创建它
@@ -173,8 +179,8 @@ namespace Frame.ECS
                     bulletGameObject.name = $"Bullet_{entity.Id}";
                     _entityToGameObject[entity.Id] = bulletGameObject;
                     bulletGameObject.transform.position = new Vector3(
-                        (float)bulletComponent.position.x,
-                        (float)bulletComponent.position.y,
+                        (float)transform2DComponent.position.x,
+                        (float)transform2DComponent.position.y,
                         0
                     );
                 }
@@ -186,16 +192,16 @@ namespace Frame.ECS
                     {
                         bulletGameObject.transform.position = Vector3.Lerp(bulletGameObject.transform.position,
                             new Vector3(
-                                (float)bulletComponent.position.x,
-                                (float)bulletComponent.position.y,
+                                (float)transform2DComponent.position.x,
+                                (float)transform2DComponent.position.y,
                                 0
                             ), ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime);
                     }
                     else
                     {
                         bulletGameObject.transform.position = new Vector3(
-                            (float)bulletComponent.position.x,
-                            (float)bulletComponent.position.y,
+                            (float)transform2DComponent.position.x,
+                            (float)transform2DComponent.position.y,
                             0
                         );
                     }
@@ -210,34 +216,6 @@ namespace Frame.ECS
             // }
         }
 
-
-        /// <summary>
-        /// 从Unity对象同步状态到ECS World（用于保存状态）
-        /// Unity -> World
-        /// </summary>
-        public static void SyncFromUnityToWorld(World world)
-        {
-            // 同步玩家状态
-            foreach (var kvp in _playerIdToEntity)
-            {
-                var playerId = kvp.Key;
-                var entity = kvp.Value;
-
-                if (!_entityToGameObject.TryGetValue(entity.Id, out var gameObject))
-                    continue;
-
-
-                // 从Unity对象获取状态
-                FixVector2 position = new FixVector2(
-                    (Fix64)gameObject.transform.position.x,
-                    (Fix64)gameObject.transform.position.y
-                );
-
-                // 更新PlayerComponent
-                var playerComponent = new PlayerComponent(playerId, position, 100);
-                world.AddComponent(entity, playerComponent);
-            }
-        }
 
         /// <summary>
         /// 通过playerId获取Entity

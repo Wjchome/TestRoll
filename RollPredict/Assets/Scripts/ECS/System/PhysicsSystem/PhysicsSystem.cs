@@ -12,8 +12,8 @@ namespace Frame.ECS
     public class PhysicsSystem : ISystem
     {
         // 物理世界配置
-        public FixVector2 gravity = FixVector2.Zero;
-        public int iterations = 8;  // 碰撞分离迭代次数
+        public FixVector2 gravity = FixVector2.Down;
+        public int iterations = 4;  // 碰撞分离迭代次数
         public int subSteps = 2;    // 子步迭代次数
 
         // 碰撞矩阵（Layer -> Layer -> 是否忽略）
@@ -25,9 +25,7 @@ namespace Frame.ECS
         // 力累加器（Entity ID -> 力向量）
         private Dictionary<Entity, FixVector2> forceAccumulator = new Dictionary<Entity, FixVector2>();
 
-        // 子步迭代状态缓存（Entity ID -> (位置, 速度)）
-        private Dictionary<Entity, (FixVector2 position, FixVector2 velocity)> subStepStateCache = new Dictionary<Entity, (FixVector2, FixVector2)>();
-
+  
 
         public void Execute(World world, List<FrameData> inputs)
         {
@@ -43,17 +41,7 @@ namespace Frame.ECS
 
             for (int subStep = 0; subStep < subSteps; subStep++)
             {
-                if (subStep > 0)
-                {
-                    RestoreState(world, physicsEntities);
-                }
-
                 UpdateSingleStep(world, physicsEntities, subStepDeltaTime);
-
-                if (subStep < subSteps - 1)
-                {
-                    SaveState(world, physicsEntities);
-                }
             }
         }
 
@@ -491,57 +479,7 @@ namespace Frame.ECS
             collisionMatrix.Remove(key2);
         }
 
-        #region 子步迭代状态管理
 
-        /// <summary>
-        /// 保存当前所有物体的状态（位置和速度）
-        /// </summary>
-        private void SaveState(World world, List<Entity> entities)
-        {
-            subStepStateCache.Clear();
-            foreach (var entity in entities)
-            {
-                if (!world.TryGetComponent<PhysicsBodyComponent>(entity, out var body))
-                    continue;
-                
-                if (!body.IsDynamic)
-                    continue;
-                
-                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform))
-                    continue;
-
-                if (!world.TryGetComponent<VelocityComponent>(entity, out var velocity))
-                    continue;
-
-                subStepStateCache[entity] = (transform.position, velocity.velocity);
-            }
-        }
-
-        /// <summary>
-        /// 恢复所有物体的状态（位置和速度）
-        /// </summary>
-        private void RestoreState(World world, List<Entity> entities)
-        {
-            foreach (var entity in entities)
-            {
-                if (!subStepStateCache.TryGetValue(entity, out var state))
-                    continue;
-
-                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform))
-                    continue;
-
-                if (!world.TryGetComponent<VelocityComponent>(entity, out var velocity))
-                    continue;
-
-                transform.position = state.position;
-                velocity.velocity = state.velocity;
-                
-                world.AddComponent(entity, transform);
-                world.AddComponent(entity, velocity);
-            }
-        }
-
-        #endregion
     }
 }
 

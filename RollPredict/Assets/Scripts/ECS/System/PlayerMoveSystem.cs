@@ -23,23 +23,18 @@ namespace Frame.ECS
                 if (!playerEntity.HasValue)
                     continue;
 
-                // 获取PlayerComponent
-                if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
+                // 获取V
+                if (!world.TryGetComponent<VelocityComponent>(playerEntity.Value, out var velocityComponent))
                     continue;
-
+                
+                
                 // 将输入方向转换为移动向量
                 FixVector2 movementDirection = Util.GetMovementDirection(inputDirection);
 
                 // 更新玩家位置
-                FixVector2 newPosition = playerComponent.position + movementDirection * PlayerSpeed;
-
-                // 更新PlayerComponent
-                var updatedComponent = new PlayerComponent(
-                    playerComponent.playerId,
-                    newPosition,
-                    playerComponent.hp
-                );
-                world.AddComponent(playerEntity.Value, updatedComponent);
+                velocityComponent.velocity += movementDirection * PlayerSpeed;
+                
+                world.AddComponent(playerEntity.Value, velocityComponent);
             }
         }
         private static Entity? FindPlayerEntity(World world, int playerId)

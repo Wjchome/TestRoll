@@ -10,15 +10,6 @@ namespace Frame.ECS
     [Serializable]
     public struct BulletComponent : IComponent
     {
-        /// <summary>
-        /// 位置（世界坐标）
-        /// </summary>
-        public FixVector2 position;
-
-        /// <summary>
-        /// 速度
-        /// </summary>
-        public FixVector2 velocity;
 
         /// <summary>
         /// 发射者Entity ID（哪个玩家发射的）
@@ -26,20 +17,18 @@ namespace Frame.ECS
         public int ownerEntityId;
         
 
-        public BulletComponent(FixVector2 position, FixVector2 velocity, int ownerEntityId)
+        public BulletComponent( int ownerEntityId)
         {
-            this.position = position;
-            this.velocity = velocity;
             this.ownerEntityId = ownerEntityId;
         }
 
         public object Clone()
         {
-            return new BulletComponent(position, velocity, ownerEntityId);
+            return this;
         }
         public override string ToString()
         {
-            return $"{GetType().Name}: position = {position},velocity = {velocity},ownerEntityId = {ownerEntityId}";
+            return $"{GetType().Name}: ownerEntityId = {ownerEntityId}";
         }
     }
 }
