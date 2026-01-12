@@ -56,6 +56,7 @@ namespace Frame.ECS
         public bool enableLog;
         StringBuilder sb = new StringBuilder();
         StringBuilder sb1 = new StringBuilder();
+
         /// <summary>
         /// 保存当前帧的状态快照   World + frameNumber    ->  ECSGameState
         /// </summary>
@@ -134,7 +135,8 @@ namespace Frame.ECS
         /// <summary>
         /// 客户端预测：立即执行输入
         /// </summary>
-        public void PredictInput(int playerId, InputDirection direction, bool fire = false, long fireX = 0, long fireY = 0)
+        public void PredictInput(int playerId, InputDirection direction, bool fire = false, long fireX = 0,
+            long fireY = 0)
         {
             if (!enablePredictionRollback)
                 return;
@@ -148,14 +150,14 @@ namespace Frame.ECS
                 Direction = direction,
                 IsFire = fire
             };
-            
+
             // 如果发射，设置目标位置
             if (fire)
             {
                 frameData.FireX = fireX;
                 frameData.FireY = fireY;
             }
-            
+
             inputHistory[frameNumber] = new List<FrameData>() { frameData };
 
             world = ECSStateMachine.Execute(world, inputHistory[frameNumber]);
@@ -175,7 +177,6 @@ namespace Frame.ECS
             PredictAndSuccessAndInputOk, //预测并且成功 并且预测成功
             PredictAndSuccessAndInputFail, //预测并且成功 并且预测失败
         }
-
 
 
         /// <summary>
@@ -277,24 +278,24 @@ namespace Frame.ECS
 
                 case NetState.PredictAndSuccessAndInputOk:
                     Debug.Log("PredictAndSuccessAndInputOk " + serverFrame);
-                    
+
                     currentGameState = LoadSnapshot(confirmedServerFrame);
-                        //为什么这个地方需要加载
+                    //为什么这个地方需要加载
                     //如果预测多帧，那么现在会，比如预测到了4帧，然后2-4都是预测的，world也不对，现在已经到了第三帧，第三帧已经纠正过来了，world和预测时的world并不同
                     //检测点1 world
-                   // sb1.AppendLine(serverFrameNumber.ToString()+" " + ECSGameState.CreateSnapshot(world, -1).ToString());
-                    
+                    // sb1.AppendLine(serverFrameNumber.ToString()+" " + ECSGameState.CreateSnapshot(world, -1).ToString());
+
                     currentGameState.RestoreToWorld(world);
                     world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
                     //检测点2 world
                     //sb1.AppendLine( ECSGameState.CreateSnapshot(world, -1).ToString());
                     //sb1.AppendLine();
                     SaveSnapshot(confirmedServerFrame + 1);
-                    
-                    confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+
+                    confirmedServerFrame =  serverFrameNumber;
                     //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                     predictedFrameIndex = 1;
-                    
+
 
                     break;
 
@@ -308,18 +309,20 @@ namespace Frame.ECS
                     currentGameState = LoadSnapshot(confirmedServerFrame);
 
                     currentGameState.RestoreToWorld(world);
+                    // // 没必要，只用执行一帧
+                    // // 重新执行从 rollbackToFrame+1 到 predictedFrame 的所有帧
+                    // // 使用服务器的输入（已经在上面保存了）
+                    // for (long frame = confirmedServerFrame + 1; frame <=predictedFrame; frame++)
+                    // {
+                    //     var newInputs = GetInputs(frame);
+                    //     world = ECSStateMachine.Execute(world, newInputs);
+                    //     SaveSnapshot(frame);
+                    // }
+                    world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
+                    SaveSnapshot(serverFrameNumber);
 
-                    // 重新执行从 rollbackToFrame+1 到 serverFrameNumber 的所有帧
-                    // 使用服务器的输入（已经在上面保存了）
-                    for (long frame = confirmedServerFrame + 1; frame <= predictedFrame; frame++)
-                    {
-                        var newInputs = GetInputs(frame);
 
-                        world = ECSStateMachine.Execute(world, newInputs);
-                        SaveSnapshot(frame);
-                    }
-
-                    confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
+                    confirmedServerFrame = serverFrameNumber;
                     //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                     predictedFrameIndex = 1;
                     break;
@@ -358,7 +361,6 @@ namespace Frame.ECS
                     }
                 }
             }
-            
         }
 
         /// <summary>
