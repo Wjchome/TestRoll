@@ -413,7 +413,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                 Array.Reverse(lengthBytes);
             uint totalLength = BitConverter.ToUInt32(lengthBytes, 0);
             
-            Debug.Log($"[KCP] Message at offset {offset}: lengthBytes=[{originalLengthBytes[0]}, {originalLengthBytes[1]}, {originalLengthBytes[2]}, {originalLengthBytes[3]}], totalLength={totalLength}, remaining data={data.Length - offset} bytes");
 
             // 检查长度是否合理（至少包含消息类型1字节）
             if (totalLength < 1)
@@ -481,7 +480,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                     {
                         serverDataQueue.Enqueue((messageType, message));
                     }
-                    Debug.Log($"[KCP] Message queued: {messageType}");
                 }
             }
             catch (Exception e)
@@ -494,7 +492,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
 
             // 移动到下一个消息
             offset += 4 + (int)totalLength;
-            Debug.Log($"[KCP] Processed message, new offset: {offset}/{data.Length}");
         }
     }
 
@@ -576,7 +573,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                     // 将UDP数据输入到KCP
                     if (kcp != null)
                     {
-                        Debug.Log($"[KCP] Received UDP packet: {data.Length} bytes");
                         kcp.Input(data);
                         kcp.Update(DateTimeOffset.UtcNow);
 
@@ -606,7 +602,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                             recvCount++;
                             try
                             {
-                                Debug.Log($"[KCP] TryRecv returned: length={length} bytes");
                                 
                                 // 立即复制数据，避免 buffer 被释放
                                 byte[] receivedData = new byte[length];
@@ -621,7 +616,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                                 string preview = receivedData.Length <= 16 
                                     ? string.Join(", ", receivedData.Select(b => b.ToString()))
                                     : string.Join(", ", receivedData.Take(16).Select(b => b.ToString())) + "...";
-                                Debug.Log($"[KCP] Received complete message: {length} bytes, data preview: [{preview}]");
                                 
                                 // 处理接收到的数据（可能包含多个消息）
                                 ProcessKCPData(receivedData);
@@ -644,10 +638,7 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                             }
                         }
                         
-                        if (recvCount > 0)
-                        {
-                            Debug.Log($"[KCP] Processed {recvCount} complete message(s) from this UDP packet");
-                        }
+                      
                     }
                 }
                 catch (SocketException e)

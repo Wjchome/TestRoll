@@ -413,7 +413,7 @@ MonoBehaviour:
   bulletPrefab: {fileID: 3173730084948646136, guid: d03e3e0e0fffd46bba77cc879129a5a5, type: 3}
   debugText: {fileID: 1476675299}
   myPlayer: {fileID: 0}
-  isSmooth: 0
+  isSmooth: 1
   smoothNum: 5
   timer: 0
   timer1: 0
