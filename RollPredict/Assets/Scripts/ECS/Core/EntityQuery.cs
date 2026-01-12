@@ -72,6 +72,20 @@ namespace Frame.ECS
             return this;
         }
         
+        public EntityQuery WithAll<T1, T2, T3,T4>() 
+            where T1 : IComponent 
+            where T2 : IComponent 
+            where T3 : IComponent
+            where T4 : IComponent
+
+        {
+            _allTypes.Add(typeof(T1));
+            _allTypes.Add(typeof(T2));
+            _allTypes.Add(typeof(T3));
+            _allTypes.Add(typeof(T4));
+            return this;
+        }
+        
         /// <summary>
         /// 至少有一个指定的Component（单个）
         /// </summary>

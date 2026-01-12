@@ -87,14 +87,23 @@ namespace Frame.Physics2D
         /// <summary>
         /// 计算两个矩形的并集（包围盒）
         /// </summary>
-        public static FixRect Union(FixRect a, FixRect b)
+        public static FixRect Union(FixRect other, FixRect b)
         {
-            Fix64 minX = Fix64.Min(a.X, b.X);
-            Fix64 minY = Fix64.Min(a.Y, b.Y);
-            Fix64 maxRight = Fix64.Max(a.Right, b.Right);
-            Fix64 maxTop = Fix64.Max(a.Top, b.Top);
+            Fix64 minX = Fix64.Min(other.X, b.X);
+            Fix64 minY = Fix64.Min(other.Y, b.Y);
+            Fix64 maxRight = Fix64.Max(other.Right, b.Right);
+            Fix64 maxTop = Fix64.Max(other.Top, b.Top);
             
             return new FixRect(minX, minY, maxRight - minX, maxTop - minY);
+        }
+        
+        public void Union(FixRect other)
+        {
+            this.X = Fix64.Min(other.X, this.X);
+            this.Y = Fix64.Min(other.Y, this.Y);
+            this.Width = Fix64.Max(other.Right, this.Right) - X;
+            this.Height = Fix64.Max(other.Top, this.Top) - Y;
+
         }
     }
 }

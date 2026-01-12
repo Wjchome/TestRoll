@@ -102,6 +102,9 @@ namespace Frame.ECS
             ClearSystems();
 
             // 注册默认System（按执行顺序）
+            // 物理系统应该在其他系统之前执行，因为物理会影响位置
+            RegisterSystem(new PhysicsSystem());
+            
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new BulletMoveSystem());
