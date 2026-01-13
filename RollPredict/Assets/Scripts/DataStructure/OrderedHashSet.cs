@@ -6,7 +6,9 @@ using System.Linq;
 /// <summary>
 /// 有序哈希集合：结合 HashSet 的 O(1) 存在性检查和 LinkedList 的有序遍历
 /// 用于帧同步系统，确保遍历顺序的一致性（普通HashSet遍历顺序不保证）
-/// 
+/// 1. 有序遍历
+/// 2. 尾增 随机删 随机改 随机查找 O(1)
+/// 3. 可以看作是一个 HashSet + 有序遍历 
 /// 实现原理：
 /// - Dictionary<T, LinkedListNode<T>> 提供 O(1) 元素访问/存在性检查
 /// - LinkedList<T> 保持元素的插入顺序

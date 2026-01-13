@@ -6,7 +6,9 @@ using System.Linq;
 /// <summary>
 /// 有序字典：结合 Dictionary 的 O(1) 访问和 LinkedList 的有序遍历
 /// 用于帧同步系统，确保遍历顺序的一致性
-/// 
+/// 1. 有序遍历
+/// 2. 尾增 随机删 随机改 随机查找 O(1)
+/// 3. 可以看作是一个 Dictionary + 有序遍历 
 /// 实现原理：
 /// - Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>> 提供 O(1) 访问
 /// - LinkedList<KeyValuePair<TKey, TValue>> 保持插入顺序

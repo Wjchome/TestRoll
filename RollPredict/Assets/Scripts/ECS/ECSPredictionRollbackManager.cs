@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using DataStructure;
 using Frame.Core;
 using Frame.ECS;
 using Google.Protobuf.Collections;
@@ -30,13 +31,12 @@ namespace Frame.ECS
         /// 快照历史（按帧号索引）
         /// 使用World直接存储，避免转换开销
         /// </summary>
-        private Dictionary<long, World> snapshotHistory = new Dictionary<long, World>();
+        private CircularBuffer<long, World> snapshotHistory;
 
         /// <summary>
         /// 输入历史（按帧号索引）
         /// </summary>
-        private Dictionary<long, List<FrameData>> inputHistory =
-            new Dictionary<long, List<FrameData>>();
+        private CircularBuffer<long, List<FrameData>> inputHistory;
 
 
         /// <summary>
@@ -53,6 +53,12 @@ namespace Frame.ECS
         public bool enableLog;
         StringBuilder sb = new StringBuilder();
         StringBuilder sb1 = new StringBuilder();
+
+        private void Start()
+        {
+             snapshotHistory = new CircularBuffer<long, World>(maxSnapshots);
+             inputHistory = new CircularBuffer<long, List<FrameData>>(maxSnapshots);
+        }
 
         /// <summary>
         /// 保存当前帧的状态快照
@@ -71,26 +77,6 @@ namespace Frame.ECS
             // 直接克隆World（性能更好，避免转换）
             var snapshot = currentWorld.Clone();
             snapshotHistory[frameNumber] = snapshot;
-
-            // 清理旧的快照
-            if (snapshotHistory.Count > maxSnapshots)
-            {
-                var framesToRemove = new List<long>();
-                var sortedFrames = new List<long>(snapshotHistory.Keys);
-                sortedFrames.Sort();
-
-                int removeCount = sortedFrames.Count - maxSnapshots;
-                for (int i = 0; i < removeCount; i++)
-                {
-                    framesToRemove.Add(sortedFrames[i]);
-                }
-
-                foreach (var frame in framesToRemove)
-                {
-                    snapshotHistory.Remove(frame);
-                    inputHistory.Remove(frame);
-                }
-            }
         }
 
         /// <summary>

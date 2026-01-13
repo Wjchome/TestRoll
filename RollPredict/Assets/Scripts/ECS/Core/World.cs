@@ -25,7 +25,7 @@ namespace Frame.ECS
         // Component存储：每种Component类型一个存储
         // 使用IComponentStorage接口，类型更清晰，避免使用object
         private OrderedDictionary<Type, IComponentStorage> _componentStorages = new OrderedDictionary<Type, IComponentStorage>();
-        
+
         // 单例组件缓存：Component类型 -> Entity
         // 用于快速访问单例组件（如地图、全局配置等）
         private Dictionary<Type, Entity> _singletonComponents = new Dictionary<Type, Entity>();
