@@ -356,7 +356,7 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             Debug.LogWarning("Not connected to server");
             return;
         }
-
+        
 
         var frameData = new FrameData
         {

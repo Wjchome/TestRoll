@@ -144,21 +144,31 @@ namespace Frame.ECS
             long frameNumber = confirmedServerFrame + predictedFrameIndex++;
 
             // 保存输入（只保存当前玩家的输入，其他玩家的输入会在收到服务器帧时补全）
-            var frameData = new FrameData()
-            {
-                PlayerId = playerId,
-                Direction = direction,
-                IsFire = fire
-            };
+            bool isSave = direction != InputDirection.DirectionNone || fire;
 
-            // 如果发射，设置目标位置
-            if (fire)
+            if (isSave)
             {
-                frameData.FireX = fireX;
-                frameData.FireY = fireY;
+                var frameData = new FrameData()
+                {
+                    PlayerId = playerId,
+                    Direction = direction,
+                    IsFire = fire
+                };
+
+                // 如果发射，设置目标位置
+                if (fire)
+                {
+                    frameData.FireX = fireX;
+                    frameData.FireY = fireY;
+                }
+
+                inputHistory[frameNumber] = new List<FrameData>() { frameData };
             }
-
-            inputHistory[frameNumber] = new List<FrameData>() { frameData };
+            else
+            {
+                inputHistory[frameNumber] = new List<FrameData>() ;
+            }
+            
 
             world = ECSStateMachine.Execute(world, inputHistory[frameNumber]);
 
@@ -281,11 +291,11 @@ namespace Frame.ECS
 
                     currentGameState = LoadSnapshot(confirmedServerFrame);
                     //为什么这个地方需要加载
-                    //如果预测多帧，那么现在会，比如预测到了4帧，然后2-4都是预测的，world也不对，现在已经到了第三帧，第三帧已经纠正过来了，world和预测时的world并不同
+                    //如果预测多帧，那么现在会，比如预测到了4帧，然后2-4都是预测的，world也不对，2预测错，3预测对 现在已经到了第三帧，第三帧已经纠正过来了，world和预测时的world并不同
                     //检测点1 world
                     // sb1.AppendLine(serverFrameNumber.ToString()+" " + ECSGameState.CreateSnapshot(world, -1).ToString());
 
-                    currentGameState.RestoreToWorld(world);
+                     currentGameState.RestoreToWorld(world); 
                     world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
                     //检测点2 world
                     //sb1.AppendLine( ECSGameState.CreateSnapshot(world, -1).ToString());
