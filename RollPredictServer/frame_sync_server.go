@@ -635,9 +635,9 @@ func (s *Server) checkHeartbeatTimeout() {
 			for _, client := range room.Clients {
 				timeSinceLastSeen := now.Sub(client.LastSeen)
 				if timeSinceLastSeen > HEARTBEAT_TIMEOUT {
-					// 判断连接失败，但不做任何操作（因为现在没有任何重连）
-					log.Printf("Client %d: Heartbeat timeout (last seen %v ago), connection considered failed\n",
-						client.ID, timeSinceLastSeen)
+					// // 判断连接失败，但不做任何操作（因为现在没有任何重连）
+					// log.Printf("Client %d: Heartbeat timeout (last seen %v ago), connection considered failed\n",
+					// 	client.ID, timeSinceLastSeen)
 				}
 			}
 			room.Mutex.Unlock()

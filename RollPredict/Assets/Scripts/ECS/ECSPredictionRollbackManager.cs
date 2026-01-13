@@ -17,7 +17,7 @@ namespace Frame.ECS
     /// </summary>
     public class ECSPredictionRollbackManager : SingletonMono<ECSPredictionRollbackManager>
     {
-        [Header("配置")] [Tooltip("最大保存的快照数量")] public int maxSnapshots = 1000;
+        [Header("配置")] [Tooltip("最大保存的快照数量")] public int maxSnapshots = 100;
 
         [Tooltip("是否启用预测回滚")] public bool enablePredictionRollback = true;
 
@@ -292,39 +292,38 @@ namespace Frame.ECS
                     break;
 
                 case NetState.PredictAndSuccessAndInputOk:
-                    Debug.Log("PredictAndSuccessAndInputOk " + serverFrame);
-
-             
-                    //currentWorld = LoadSnapshot(serverFrameNumber);
-                    var snapshotWorld = LoadSnapshot(confirmedServerFrame);
+                case NetState.PredictAndSuccessAndInputFail:
+                    // 预测成功和失败的处理逻辑相同：
+                    // 1. 都需要保存服务器输入（确保输入历史正确）
+                    // 2. 都需要回滚到confirmedServerFrame（因为world可能已经执行到了更后面的帧）
+                    // 3. 都需要用服务器确认的输入重新执行serverFrameNumber
+                    // 4. 都需要保存快照并更新confirmedServerFrame
+                    //
+                    // 区别：
+                    // - 预测成功：输入是正确的，但world状态可能已经偏离（因为执行了后续预测帧）
+                    // - 预测失败：输入是错误的，world状态也是错误的
+                    // 但处理方式相同：都回滚到confirmedServerFrame，然后用正确的输入重新执行
                     
-                    if (snapshotWorld != null)
+                    if (currentNetState == NetState.PredictAndSuccessAndInputOk)
                     {
-                        // 直接恢复World（比RestoreToWorld快很多）
-                        currentWorld.RestoreFrom(snapshotWorld);
+                        Debug.Log("PredictAndSuccessAndInputOk " + serverFrame);
+                    }
+                    else
+                    {
+                        Debug.Log("PredictAndSuccessAndInputFail " + serverFrame);
                     }
 
-                    // 执行服务器帧
-                    currentWorld = ECSStateMachine.Execute(currentWorld, serverFrame.FrameDatas.ToList());
-                    SaveSnapshot(serverFrameNumber);
-
-
-                    confirmedServerFrame = serverFrameNumber;
-                    predictedFrameIndex = 1;
-                    break;
-
-                case NetState.PredictAndSuccessAndInputFail:
-                    Debug.Log("PredictAndSuccessAndInputFail " + serverFrame);
-
-                    // 先保存服务器输入（必须在回滚前保存，确保GetInputs能获取到正确的输入）
+                    // 保存服务器输入（必须在回滚前保存，确保GetInputs能获取到正确的输入）
                     SaveInput(serverFrameNumber, serverFrame);
 
-                    // 优化：直接使用World作为快照，避免转换
+                    // 回滚到confirmedServerFrame
                     var rollbackWorld = LoadSnapshot(confirmedServerFrame);
-
-                    currentWorld.RestoreFrom(rollbackWorld);
+                    if (rollbackWorld != null)
+                    {
+                        currentWorld.RestoreFrom(rollbackWorld);
+                    }
                     
-                    // 执行服务器帧
+                    // 用服务器确认的输入重新执行serverFrameNumber
                     currentWorld = ECSStateMachine.Execute(currentWorld, serverFrame.FrameDatas.ToList());
                     SaveSnapshot(serverFrameNumber);
 
