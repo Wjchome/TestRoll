@@ -17,19 +17,20 @@ namespace Frame.ECS
     /// </summary>
     public class ECSPredictionRollbackManager : SingletonMono<ECSPredictionRollbackManager>
     {
-        [Header("配置")] [Tooltip("最大保存的快照数量")] public int maxSnapshots = 100;
+        [Header("配置")] [Tooltip("最大保存的快照数量")] public int maxSnapshots = 1000;
 
         [Tooltip("是否启用预测回滚")] public bool enablePredictionRollback = true;
 
         /// <summary>
         /// ECS World：存储所有游戏状态
         /// </summary>
-        public World world = new World();
+        public World currentWorld = new World();
 
         /// <summary>
         /// 快照历史（按帧号索引）
+        /// 使用World直接存储，避免转换开销
         /// </summary>
-        private Dictionary<long, ECSGameState> snapshotHistory = new Dictionary<long, ECSGameState>();
+        private Dictionary<long, World> snapshotHistory = new Dictionary<long, World>();
 
         /// <summary>
         /// 输入历史（按帧号索引）
@@ -48,25 +49,27 @@ namespace Frame.ECS
         /// </summary>
         public long predictedFrame = 0;
 
-        /// <summary>
-        /// 当前游戏状态（ECS版本）
-        /// </summary>
-        public ECSGameState currentGameState;
 
         public bool enableLog;
         StringBuilder sb = new StringBuilder();
         StringBuilder sb1 = new StringBuilder();
 
         /// <summary>
-        /// 保存当前帧的状态快照   World + frameNumber    ->  ECSGameState
+        /// 保存当前帧的状态快照
+        /// 
+        /// 优化：直接使用World作为快照，避免转换开销
+        /// 
+        /// 性能对比：
+        /// - World.Clone(): O(n) 直接克隆，n是Component数量
+        /// - World -> ECSGameState -> World: O(n*m) 需要类型查找和转换，m是Component类型数量
         /// </summary>
         public void SaveSnapshot(long frameNumber)
         {
             if (!enablePredictionRollback)
                 return;
 
-            // 从World创建快照
-            var snapshot = ECSGameState.CreateSnapshot(world, frameNumber);
+            // 直接克隆World（性能更好，避免转换）
+            var snapshot = currentWorld.Clone();
             snapshotHistory[frameNumber] = snapshot;
 
             // 清理旧的快照
@@ -91,17 +94,19 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 加载指定帧的状态快照     frameNumber ->  ECSGameState
+        /// 加载指定帧的状态快照
+        /// 
+        /// 优化：直接返回World，避免转换
         /// </summary>
-        public ECSGameState LoadSnapshot(long frameNumber)
+        public World LoadSnapshot(long frameNumber)
         {
-            if (!snapshotHistory.ContainsKey(frameNumber))
+            if (!snapshotHistory.TryGetValue(frameNumber, out var snapshot))
             {
                 Debug.LogWarning($"Snapshot for frame {frameNumber} not found!");
                 return null;
             }
 
-            var snapshot = snapshotHistory[frameNumber];
+            // 返回World的克隆（避免修改原始快照）
             return snapshot.Clone();
         }
 
@@ -166,16 +171,16 @@ namespace Frame.ECS
             }
             else
             {
-                inputHistory[frameNumber] = new List<FrameData>() ;
+                inputHistory[frameNumber] = new List<FrameData>();
             }
-            
 
-            world = ECSStateMachine.Execute(world, inputHistory[frameNumber]);
+
+            currentWorld = ECSStateMachine.Execute(currentWorld, inputHistory[frameNumber]);
 
             // 保存预测后的状态快照
             SaveSnapshot(frameNumber);
 
-            predictedFrame = Math.Max(predictedFrame, frameNumber);
+            predictedFrame = frameNumber;
         }
 
         public enum NetState
@@ -279,7 +284,7 @@ namespace Frame.ECS
 
                     SaveInput(serverFrameNumber, serverFrame);
 
-                    world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
+                    currentWorld = ECSStateMachine.Execute(currentWorld, serverFrame.FrameDatas.ToList());
                     SaveSnapshot(serverFrameNumber);
                     confirmedServerFrame = Math.Max(confirmedServerFrame, serverFrameNumber);
                     //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
@@ -289,24 +294,23 @@ namespace Frame.ECS
                 case NetState.PredictAndSuccessAndInputOk:
                     Debug.Log("PredictAndSuccessAndInputOk " + serverFrame);
 
-                    currentGameState = LoadSnapshot(confirmedServerFrame);
-                    //为什么这个地方需要加载
-                    //如果预测多帧，那么现在会，比如预测到了4帧，然后2-4都是预测的，world也不对，2预测错，3预测对 现在已经到了第三帧，第三帧已经纠正过来了，world和预测时的world并不同
-                    //检测点1 world
-                    // sb1.AppendLine(serverFrameNumber.ToString()+" " + ECSGameState.CreateSnapshot(world, -1).ToString());
+             
+                    //currentWorld = LoadSnapshot(serverFrameNumber);
+                    var snapshotWorld = LoadSnapshot(confirmedServerFrame);
+                    
+                    if (snapshotWorld != null)
+                    {
+                        // 直接恢复World（比RestoreToWorld快很多）
+                        currentWorld.RestoreFrom(snapshotWorld);
+                    }
 
-                     currentGameState.RestoreToWorld(world); 
-                    world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
-                    //检测点2 world
-                    //sb1.AppendLine( ECSGameState.CreateSnapshot(world, -1).ToString());
-                    //sb1.AppendLine();
-                    SaveSnapshot(confirmedServerFrame + 1);
+                    // 执行服务器帧
+                    currentWorld = ECSStateMachine.Execute(currentWorld, serverFrame.FrameDatas.ToList());
+                    SaveSnapshot(serverFrameNumber);
 
-                    confirmedServerFrame =  serverFrameNumber;
-                    //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
+
+                    confirmedServerFrame = serverFrameNumber;
                     predictedFrameIndex = 1;
-
-
                     break;
 
                 case NetState.PredictAndSuccessAndInputFail:
@@ -315,25 +319,16 @@ namespace Frame.ECS
                     // 先保存服务器输入（必须在回滚前保存，确保GetInputs能获取到正确的输入）
                     SaveInput(serverFrameNumber, serverFrame);
 
+                    // 优化：直接使用World作为快照，避免转换
+                    var rollbackWorld = LoadSnapshot(confirmedServerFrame);
 
-                    currentGameState = LoadSnapshot(confirmedServerFrame);
-
-                    currentGameState.RestoreToWorld(world);
-                    // // 没必要，只用执行一帧
-                    // // 重新执行从 rollbackToFrame+1 到 predictedFrame 的所有帧
-                    // // 使用服务器的输入（已经在上面保存了）
-                    // for (long frame = confirmedServerFrame + 1; frame <=predictedFrame; frame++)
-                    // {
-                    //     var newInputs = GetInputs(frame);
-                    //     world = ECSStateMachine.Execute(world, newInputs);
-                    //     SaveSnapshot(frame);
-                    // }
-                    world = ECSStateMachine.Execute(world, serverFrame.FrameDatas.ToList());
+                    currentWorld.RestoreFrom(rollbackWorld);
+                    
+                    // 执行服务器帧
+                    currentWorld = ECSStateMachine.Execute(currentWorld, serverFrame.FrameDatas.ToList());
                     SaveSnapshot(serverFrameNumber);
 
-
                     confirmedServerFrame = serverFrameNumber;
-                    //predictedFrameIndex = Math.Max(1, predictedFrame - confirmedServerFrame + 1);
                     predictedFrameIndex = 1;
                     break;
             }
@@ -343,7 +338,7 @@ namespace Frame.ECS
             var confirmedSnapshot = LoadSnapshot(confirmedServerFrame);
             if (confirmedSnapshot != null)
             {
-                sb.AppendLine($"ConfirmedState: {confirmedSnapshot}");
+                sb.AppendLine($"ConfirmedState: World with {confirmedSnapshot.GetEntityCount()} entities");
             }
             else
             {
@@ -382,7 +377,7 @@ namespace Frame.ECS
             inputHistory.Clear();
             confirmedServerFrame = -1;
             predictedFrame = 0;
-            world.Clear();
+            currentWorld.Clear();
         }
     }
 }

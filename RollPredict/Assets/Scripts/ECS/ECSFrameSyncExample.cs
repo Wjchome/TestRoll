@@ -118,7 +118,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         }
 
         // 4. 同步ECS World状态到Unity对象（视图层）
-        ECSSyncHelper.SyncFromWorldToUnity(ecsPredictionManager.world);
+        ECSSyncHelper.SyncFromWorldToUnity(ecsPredictionManager.currentWorld);
 
         // 5. 更新UI调试信息
         UpdateDebugUI();
@@ -227,7 +227,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
             // 3. 注册玩家到ECS系统
             var entity = ECSSyncHelper.RegisterPlayer(
-                ecsPredictionManager.world,
+                ecsPredictionManager.currentWorld,
                 playerId,
                 player,
                 startPos,
@@ -278,8 +278,8 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         else
         {
             // 使用统一的状态机执行
-            ecsPredictionManager.world = ECSStateMachine.Execute(
-                ecsPredictionManager.world, serverFrame.FrameDatas.ToList());
+            ecsPredictionManager.currentWorld = ECSStateMachine.Execute(
+                ecsPredictionManager.currentWorld, serverFrame.FrameDatas.ToList());
         }
     }
 

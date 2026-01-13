@@ -43,6 +43,10 @@ namespace Frame.ECS
         /// </summary>
         IEnumerable<Entity> GetAllEntities();
         
+        /// <summary>
+        /// 深拷贝ComponentStorage（用于快照）
+        /// </summary>
+        IComponentStorage Clone();
     }
 }
 

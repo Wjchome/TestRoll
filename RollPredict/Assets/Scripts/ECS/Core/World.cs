@@ -368,6 +368,69 @@ namespace Frame.ECS
         }
 
         /// <summary>
+        /// 深拷贝World（用于快照存储）
+        /// 
+        /// 性能优化：
+        /// - 直接克隆World，避免World -> ECSGameState -> World的转换
+        /// - 所有ComponentStorage都实现Clone，性能优秀
+        /// - 内存占用：存储完整的World对象，但避免了转换开销
+        /// 
+        /// 使用场景：
+        /// - 快照存储：直接存储World的克隆
+        /// - 回滚恢复：直接使用克隆的World替换当前World
+        /// 
+        /// 性能对比：
+        /// - World.Clone(): 直接克隆，O(n)其中n是Component数量
+        /// - World -> ECSGameState -> World: 需要类型查找、反射调用，O(n*m)其中m是Component类型数量
+        /// </summary>
+        public World Clone()
+        {
+            var cloned = new World();
+            
+            // 拷贝元数据
+            cloned._nextEntityId = this._nextEntityId;
+            cloned._entities = new OrderedHashSet<Entity>(this._entities);
+            
+            // 深拷贝所有ComponentStorage
+            cloned._componentStorages = new OrderedDictionary<Type, IComponentStorage>();
+            foreach (var (type, storage) in this._componentStorages)
+            {
+                // 使用接口的Clone方法
+                cloned._componentStorages[type] = storage.Clone();
+            }
+            
+            // 拷贝单例组件缓存（浅拷贝即可，因为Entity是值类型）
+            cloned._singletonComponents = new Dictionary<Type, Entity>(this._singletonComponents);
+            
+            return cloned;
+        }
+        
+        /// <summary>
+        /// 从另一个World恢复状态（用于回滚）
+        /// 
+        /// 性能优化：
+        /// - 直接替换内部数据结构，避免逐个恢复Component
+        /// - 比RestoreToWorld快很多，因为不需要类型查找和反射
+        /// - 时间复杂度：O(n)其中n是Component类型数量
+        /// </summary>
+        public void RestoreFrom(World other)
+        {
+            // 直接替换所有内部数据结构
+            this._nextEntityId = other._nextEntityId;
+            this._entities = new OrderedHashSet<Entity>(other._entities);
+            this._componentStorages = new OrderedDictionary<Type, IComponentStorage>();
+            
+            // 深拷贝所有ComponentStorage
+            foreach (var (type, storage) in other._componentStorages)
+            {
+                this._componentStorages[type] = storage.Clone();
+            }
+            
+            // 拷贝单例组件缓存
+            this._singletonComponents = new Dictionary<Type, Entity>(other._singletonComponents);
+        }
+
+        /// <summary>
         /// 获取或创建单例组件
         /// 
         /// 单例组件：每种Component类型只有一个实例，用于存储全局/共享数据

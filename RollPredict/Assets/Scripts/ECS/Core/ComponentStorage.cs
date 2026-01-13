@@ -214,6 +214,35 @@ namespace Frame.ECS
         {
             Clear();
         }
+        
+        /// <summary>
+        /// 深拷贝ComponentStorage（接口实现）
+        /// </summary>
+        IComponentStorage IComponentStorage.Clone()
+        {
+            return Clone();
+        }
+        
+        /// <summary>
+        /// 深拷贝ComponentStorage（用于快照）
+        /// 
+        /// 性能优化：
+        /// - 直接克隆内部数据结构，避免类型转换
+        /// - 所有Component都是值类型，直接拷贝即可
+        /// </summary>
+        public ComponentStorage<TComponent> Clone()
+        {
+            var cloned = new ComponentStorage<TComponent>();
+            
+            // 深拷贝所有Component（值类型，直接拷贝）
+            cloned._components = new List<TComponent>(this._components);
+            
+            // 深拷贝映射字典
+            cloned._entityToIndex = new Dictionary<Entity, int>(this._entityToIndex);
+            cloned._indexToEntity = new List<Entity>(this._indexToEntity);
+            
+            return cloned;
+        }
     }
 }
 
