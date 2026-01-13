@@ -32,6 +32,8 @@ func configureKCP(conn *kcp.UDPSession) {
 func (s *Server) StartKCP() {
 	// 启动定期清理任务
 	go s.cleanupEmptyRooms()
+	// 启动心跳超时检测
+	go s.checkHeartbeatTimeout()
 
 	// 监听UDP端口（使用ListenWithOptions获取*Listener类型，支持AcceptKCP）
 	// 参数：laddr, block(加密，nil表示不加密), dataShards, parityShards(前向纠错，0表示不使用)
@@ -61,8 +63,9 @@ func (s *Server) StartKCP() {
 func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 	defer conn.Close()
 
-	// 设置读取超时（30秒无数据则断开）
-	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	// 设置读取超时（5分钟，避免因为读取超时而断开连接）
+	// 连接状态通过心跳超时检测来判断，不会主动断开
+	conn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 	clientID := int32(clientCounter)
 	clientCounter++
@@ -85,8 +88,9 @@ func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 
 	reader := bufio.NewReader(conn)
 	for {
-		// 更新读取超时
-		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		// 更新读取超时（5分钟，避免因为读取超时而断开连接）
+		// 连接状态通过心跳超时检测来判断，不会主动断开
+		conn.SetReadDeadline(time.Now().Add(5 * time.Minute))
 
 		// 读取消息长度 (4 bytes)
 		lengthBytes := make([]byte, 4)
@@ -119,7 +123,7 @@ func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 			break
 		}
 
-		// 更新最后活跃时间
+		// 更新最后活跃时间（任何消息都会更新心跳时间，包括帧数据、心跳、丢帧请求等）
 		client.LastSeen = time.Now()
 
 		// 根据消息类型处理
@@ -134,6 +138,8 @@ func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 			s.handleDisconnect(client, data)
 		case myproto.MessageType_MESSAGE_FRAME_LOSS:
 			s.handleFrameLoss(client, data)
+		case myproto.MessageType_MESSAGE_HEARTBEAT:
+			// 心跳消息，LastSeen 已经在上面更新，这里不需要额外操作
 		default:
 			log.Printf("KCP Client %d: Unknown message type: %d\n", client.ID, messageType)
 		}
@@ -175,6 +181,8 @@ func (s *Server) sendKCPMessage(conn *kcp.UDPSession, messageType myproto.Messag
 func (s *Server) StartBoth() {
 	// 启动定期清理任务
 	go s.cleanupEmptyRooms()
+	// 启动心跳超时检测（只需要启动一次）
+	go s.checkHeartbeatTimeout()
 
 	// 启动TCP服务器（兼容旧客户端）
 	go func() {

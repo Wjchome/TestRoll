@@ -15,6 +15,7 @@ enum MessageType {
   
   MESSAGE_FRAME_LOSS = 6;     // 缺失帧
   MESSAGE_FRAME_NEED = 7;     // 补发帧
+  MESSAGE_HEARTBEAT = 8;      // 心跳（C->S）
 }
 
 // 输入方向（8个方向）
@@ -75,4 +76,8 @@ message GetLossFrame{
 }
 message SendAllFrame{
   repeated ServerFrame all_need_frame = 1;
+}
+
+// 心跳消息（空消息体）
+message Heartbeat {
 }

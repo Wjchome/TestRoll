@@ -36,17 +36,18 @@ namespace Proto {
             "Cgdyb29tX2lkGAEgASgJEhMKC3JhbmRvbV9zZWVkGAIgASgDEhIKCnBsYXll",
             "cl9pZHMYAyADKAUiKQoMR2V0TG9zc0ZyYW1lEhkKEWxhc3RfZnJhbWVfbnVt",
             "YmVyGAEgASgDIjoKDFNlbmRBbGxGcmFtZRIqCg5hbGxfbmVlZF9mcmFtZRgB",
-            "IAMoCzISLnByb3RvLlNlcnZlckZyYW1lKskBCgtNZXNzYWdlVHlwZRITCg9N",
-            "RVNTQUdFX1VOS05PV04QABITCg9NRVNTQUdFX0NPTk5FQ1QQARIWChJNRVNT",
-            "QUdFX0ZSQU1FX0RBVEEQAhIYChRNRVNTQUdFX1NFUlZFUl9GUkFNRRADEhYK",
-            "Ek1FU1NBR0VfRElTQ09OTkVDVBAEEhYKEk1FU1NBR0VfR0FNRV9TVEFSVBAF",
-            "EhYKEk1FU1NBR0VfRlJBTUVfTE9TUxAGEhYKEk1FU1NBR0VfRlJBTUVfTkVF",
-            "RBAHKtUBCg5JbnB1dERpcmVjdGlvbhISCg5ESVJFQ1RJT05fTk9ORRAAEhAK",
-            "DERJUkVDVElPTl9VUBABEhIKDkRJUkVDVElPTl9ET1dOEAISEgoORElSRUNU",
-            "SU9OX0xFRlQQAxITCg9ESVJFQ1RJT05fUklHSFQQBBIVChFESVJFQ1RJT05f",
-            "VVBfTEVGVBAFEhYKEkRJUkVDVElPTl9VUF9SSUdIVBAGEhcKE0RJUkVDVElP",
-            "Tl9ET1dOX0xFRlQQBxIYChRESVJFQ1RJT05fRE9XTl9SSUdIVBAIQiJaIGdp",
-            "dGh1Yi5jb20vV2pjSG9tZS9nb2hlbGxvL3Byb3RvYgZwcm90bzM="));
+            "IAMoCzISLnByb3RvLlNlcnZlckZyYW1lIgsKCUhlYXJ0YmVhdCrgAQoLTWVz",
+            "c2FnZVR5cGUSEwoPTUVTU0FHRV9VTktOT1dOEAASEwoPTUVTU0FHRV9DT05O",
+            "RUNUEAESFgoSTUVTU0FHRV9GUkFNRV9EQVRBEAISGAoUTUVTU0FHRV9TRVJW",
+            "RVJfRlJBTUUQAxIWChJNRVNTQUdFX0RJU0NPTk5FQ1QQBBIWChJNRVNTQUdF",
+            "X0dBTUVfU1RBUlQQBRIWChJNRVNTQUdFX0ZSQU1FX0xPU1MQBhIWChJNRVNT",
+            "QUdFX0ZSQU1FX05FRUQQBxIVChFNRVNTQUdFX0hFQVJUQkVBVBAIKtUBCg5J",
+            "bnB1dERpcmVjdGlvbhISCg5ESVJFQ1RJT05fTk9ORRAAEhAKDERJUkVDVElP",
+            "Tl9VUBABEhIKDkRJUkVDVElPTl9ET1dOEAISEgoORElSRUNUSU9OX0xFRlQQ",
+            "AxITCg9ESVJFQ1RJT05fUklHSFQQBBIVChFESVJFQ1RJT05fVVBfTEVGVBAF",
+            "EhYKEkRJUkVDVElPTl9VUF9SSUdIVBAGEhcKE0RJUkVDVElPTl9ET1dOX0xF",
+            "RlQQBxIYChRESVJFQ1RJT05fRE9XTl9SSUdIVBAIQiJaIGdpdGh1Yi5jb20v",
+            "V2pjSG9tZS9nb2hlbGxvL3Byb3RvYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Proto.MessageType), typeof(global::Proto.InputDirection), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -56,7 +57,8 @@ namespace Proto {
             new pbr::GeneratedClrTypeInfo(typeof(global::Proto.DisconnectMessage), global::Proto.DisconnectMessage.Parser, new[]{ "PlayerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proto.GameStart), global::Proto.GameStart.Parser, new[]{ "RoomId", "RandomSeed", "PlayerIds" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Proto.GetLossFrame), global::Proto.GetLossFrame.Parser, new[]{ "LastFrameNumber" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.SendAllFrame), global::Proto.SendAllFrame.Parser, new[]{ "AllNeedFrame" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.SendAllFrame), global::Proto.SendAllFrame.Parser, new[]{ "AllNeedFrame" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Proto.Heartbeat), global::Proto.Heartbeat.Parser, null, null, null, null, null)
           }));
     }
     #endregion
@@ -96,6 +98,10 @@ namespace Proto {
     /// 补发帧
     /// </summary>
     [pbr::OriginalName("MESSAGE_FRAME_NEED")] MessageFrameNeed = 7,
+    /// <summary>
+    /// 心跳（C->S）
+    /// </summary>
+    [pbr::OriginalName("MESSAGE_HEARTBEAT")] MessageHeartbeat = 8,
   }
 
   /// <summary>
@@ -1929,6 +1935,170 @@ namespace Proto {
             allNeedFrame_.AddEntriesFrom(ref input, _repeated_allNeedFrame_codec);
             break;
           }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// 心跳消息（空消息体）
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class Heartbeat : pb::IMessage<Heartbeat>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<Heartbeat> _parser = new pb::MessageParser<Heartbeat>(() => new Heartbeat());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<Heartbeat> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Proto.GameReflection.Descriptor.MessageTypes[7]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Heartbeat() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Heartbeat(Heartbeat other) : this() {
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public Heartbeat Clone() {
+      return new Heartbeat(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as Heartbeat);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(Heartbeat other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(Heartbeat other) {
+      if (other == null) {
+        return;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
         }
       }
     }

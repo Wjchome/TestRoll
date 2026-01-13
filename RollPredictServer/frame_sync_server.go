@@ -15,9 +15,9 @@ import (
 )
 
 const (
-	FRAME_INTERVAL = 50 * time.Millisecond // 20帧每秒
+	FRAME_INTERVAL = 100 * time.Millisecond // 20帧每秒
 	PORT           = ":8088"
-	MAX_PLAYERS    = 1 // 每个房间最大玩家数
+	MAX_PLAYERS    = 2 // 每个房间最大玩家数
 )
 
 // 全局客户端计数器
@@ -64,6 +64,8 @@ func NewServer() *Server {
 func (s *Server) Start() {
 	// 启动定期清理任务
 	go s.cleanupEmptyRooms()
+	// 启动心跳超时检测
+	go s.checkHeartbeatTimeout()
 
 	ln, err := net.Listen("tcp", PORT)
 	if err != nil {
@@ -144,7 +146,7 @@ func (s *Server) handleClient(conn net.Conn) {
 			break
 		}
 
-		// 更新最后活跃时间
+		// 更新最后活跃时间（任何消息都会更新心跳时间，包括帧数据、心跳、丢帧请求等）
 		client.LastSeen = time.Now()
 
 		// 根据消息类型处理
@@ -155,6 +157,8 @@ func (s *Server) handleClient(conn net.Conn) {
 			s.handleDisconnect(client, data)
 		case myproto.MessageType_MESSAGE_FRAME_LOSS:
 			s.handleFrameLoss(client, data)
+		case myproto.MessageType_MESSAGE_HEARTBEAT:
+			// 心跳消息，LastSeen 已经在上面更新，这里不需要额外操作
 		default:
 			log.Printf("Client %d: Unknown message type: %d\n", client.ID, messageType)
 		}
@@ -610,6 +614,33 @@ func (s *Server) cleanupEmptyRooms() {
 		for _, roomID := range roomsToDelete {
 			delete(s.Rooms, roomID)
 			fmt.Printf("Room %s deleted by cleanup task\n", roomID)
+		}
+		s.Mutex.Unlock()
+	}
+}
+
+// 心跳超时检测（10秒没有收到心跳则判断连接失败，但不做任何操作）
+const HEARTBEAT_TIMEOUT = 10 * time.Second
+
+func (s *Server) checkHeartbeatTimeout() {
+	ticker := time.NewTicker(4 * time.Second) // 每4秒检查一次
+	defer ticker.Stop()
+
+	for range ticker.C {
+		s.Mutex.Lock()
+		now := time.Now()
+
+		for _, room := range s.Rooms {
+			room.Mutex.Lock()
+			for _, client := range room.Clients {
+				timeSinceLastSeen := now.Sub(client.LastSeen)
+				if timeSinceLastSeen > HEARTBEAT_TIMEOUT {
+					// 判断连接失败，但不做任何操作（因为现在没有任何重连）
+					log.Printf("Client %d: Heartbeat timeout (last seen %v ago), connection considered failed\n",
+						client.ID, timeSinceLastSeen)
+				}
+			}
+			room.Mutex.Unlock()
 		}
 		s.Mutex.Unlock()
 	}

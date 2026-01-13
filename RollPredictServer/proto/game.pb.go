@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.32.1
-// source: proto/game.proto
+// source: game.proto
 
 package proto
 
@@ -33,6 +33,7 @@ const (
 	MessageType_MESSAGE_GAME_START   MessageType = 5 // 游戏开始
 	MessageType_MESSAGE_FRAME_LOSS   MessageType = 6 // 缺失帧
 	MessageType_MESSAGE_FRAME_NEED   MessageType = 7 // 补发帧
+	MessageType_MESSAGE_HEARTBEAT    MessageType = 8 // 心跳（C->S）
 )
 
 // Enum value maps for MessageType.
@@ -46,6 +47,7 @@ var (
 		5: "MESSAGE_GAME_START",
 		6: "MESSAGE_FRAME_LOSS",
 		7: "MESSAGE_FRAME_NEED",
+		8: "MESSAGE_HEARTBEAT",
 	}
 	MessageType_value = map[string]int32{
 		"MESSAGE_UNKNOWN":      0,
@@ -56,6 +58,7 @@ var (
 		"MESSAGE_GAME_START":   5,
 		"MESSAGE_FRAME_LOSS":   6,
 		"MESSAGE_FRAME_NEED":   7,
+		"MESSAGE_HEARTBEAT":    8,
 	}
 )
 
@@ -70,11 +73,11 @@ func (x MessageType) String() string {
 }
 
 func (MessageType) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_game_proto_enumTypes[0].Descriptor()
+	return file_game_proto_enumTypes[0].Descriptor()
 }
 
 func (MessageType) Type() protoreflect.EnumType {
-	return &file_proto_game_proto_enumTypes[0]
+	return &file_game_proto_enumTypes[0]
 }
 
 func (x MessageType) Number() protoreflect.EnumNumber {
@@ -83,7 +86,7 @@ func (x MessageType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MessageType.Descriptor instead.
 func (MessageType) EnumDescriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{0}
+	return file_game_proto_rawDescGZIP(), []int{0}
 }
 
 // 输入方向（8个方向）
@@ -138,11 +141,11 @@ func (x InputDirection) String() string {
 }
 
 func (InputDirection) Descriptor() protoreflect.EnumDescriptor {
-	return file_proto_game_proto_enumTypes[1].Descriptor()
+	return file_game_proto_enumTypes[1].Descriptor()
 }
 
 func (InputDirection) Type() protoreflect.EnumType {
-	return &file_proto_game_proto_enumTypes[1]
+	return &file_game_proto_enumTypes[1]
 }
 
 func (x InputDirection) Number() protoreflect.EnumNumber {
@@ -151,7 +154,7 @@ func (x InputDirection) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use InputDirection.Descriptor instead.
 func (InputDirection) EnumDescriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{1}
+	return file_game_proto_rawDescGZIP(), []int{1}
 }
 
 // 客户端帧数据（包含8个方向）
@@ -169,7 +172,7 @@ type FrameData struct {
 
 func (x *FrameData) Reset() {
 	*x = FrameData{}
-	mi := &file_proto_game_proto_msgTypes[0]
+	mi := &file_game_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -181,7 +184,7 @@ func (x *FrameData) String() string {
 func (*FrameData) ProtoMessage() {}
 
 func (x *FrameData) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[0]
+	mi := &file_game_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -194,7 +197,7 @@ func (x *FrameData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FrameData.ProtoReflect.Descriptor instead.
 func (*FrameData) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{0}
+	return file_game_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *FrameData) GetPlayerId() int32 {
@@ -251,7 +254,7 @@ type ServerFrame struct {
 
 func (x *ServerFrame) Reset() {
 	*x = ServerFrame{}
-	mi := &file_proto_game_proto_msgTypes[1]
+	mi := &file_game_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -263,7 +266,7 @@ func (x *ServerFrame) String() string {
 func (*ServerFrame) ProtoMessage() {}
 
 func (x *ServerFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[1]
+	mi := &file_game_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -276,7 +279,7 @@ func (x *ServerFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerFrame.ProtoReflect.Descriptor instead.
 func (*ServerFrame) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{1}
+	return file_game_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ServerFrame) GetFrameNumber() int64 {
@@ -311,7 +314,7 @@ type ConnectMessage struct {
 
 func (x *ConnectMessage) Reset() {
 	*x = ConnectMessage{}
-	mi := &file_proto_game_proto_msgTypes[2]
+	mi := &file_game_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -323,7 +326,7 @@ func (x *ConnectMessage) String() string {
 func (*ConnectMessage) ProtoMessage() {}
 
 func (x *ConnectMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[2]
+	mi := &file_game_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -336,7 +339,7 @@ func (x *ConnectMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectMessage.ProtoReflect.Descriptor instead.
 func (*ConnectMessage) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{2}
+	return file_game_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ConnectMessage) GetPlayerId() int32 {
@@ -363,7 +366,7 @@ type DisconnectMessage struct {
 
 func (x *DisconnectMessage) Reset() {
 	*x = DisconnectMessage{}
-	mi := &file_proto_game_proto_msgTypes[3]
+	mi := &file_game_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -375,7 +378,7 @@ func (x *DisconnectMessage) String() string {
 func (*DisconnectMessage) ProtoMessage() {}
 
 func (x *DisconnectMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[3]
+	mi := &file_game_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -388,7 +391,7 @@ func (x *DisconnectMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisconnectMessage.ProtoReflect.Descriptor instead.
 func (*DisconnectMessage) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{3}
+	return file_game_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DisconnectMessage) GetPlayerId() int32 {
@@ -410,7 +413,7 @@ type GameStart struct {
 
 func (x *GameStart) Reset() {
 	*x = GameStart{}
-	mi := &file_proto_game_proto_msgTypes[4]
+	mi := &file_game_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -422,7 +425,7 @@ func (x *GameStart) String() string {
 func (*GameStart) ProtoMessage() {}
 
 func (x *GameStart) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[4]
+	mi := &file_game_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -435,7 +438,7 @@ func (x *GameStart) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GameStart.ProtoReflect.Descriptor instead.
 func (*GameStart) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{4}
+	return file_game_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GameStart) GetRoomId() string {
@@ -468,7 +471,7 @@ type GetLossFrame struct {
 
 func (x *GetLossFrame) Reset() {
 	*x = GetLossFrame{}
-	mi := &file_proto_game_proto_msgTypes[5]
+	mi := &file_game_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -480,7 +483,7 @@ func (x *GetLossFrame) String() string {
 func (*GetLossFrame) ProtoMessage() {}
 
 func (x *GetLossFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[5]
+	mi := &file_game_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -493,7 +496,7 @@ func (x *GetLossFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLossFrame.ProtoReflect.Descriptor instead.
 func (*GetLossFrame) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{5}
+	return file_game_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetLossFrame) GetLastFrameNumber() int64 {
@@ -512,7 +515,7 @@ type SendAllFrame struct {
 
 func (x *SendAllFrame) Reset() {
 	*x = SendAllFrame{}
-	mi := &file_proto_game_proto_msgTypes[6]
+	mi := &file_game_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -524,7 +527,7 @@ func (x *SendAllFrame) String() string {
 func (*SendAllFrame) ProtoMessage() {}
 
 func (x *SendAllFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_game_proto_msgTypes[6]
+	mi := &file_game_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +540,7 @@ func (x *SendAllFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SendAllFrame.ProtoReflect.Descriptor instead.
 func (*SendAllFrame) Descriptor() ([]byte, []int) {
-	return file_proto_game_proto_rawDescGZIP(), []int{6}
+	return file_game_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SendAllFrame) GetAllNeedFrame() []*ServerFrame {
@@ -547,11 +550,49 @@ func (x *SendAllFrame) GetAllNeedFrame() []*ServerFrame {
 	return nil
 }
 
-var File_proto_game_proto protoreflect.FileDescriptor
+// 心跳消息（空消息体）
+type Heartbeat struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
 
-const file_proto_game_proto_rawDesc = "" +
+func (x *Heartbeat) Reset() {
+	*x = Heartbeat{}
+	mi := &file_game_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Heartbeat) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Heartbeat) ProtoMessage() {}
+
+func (x *Heartbeat) ProtoReflect() protoreflect.Message {
+	mi := &file_game_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Heartbeat.ProtoReflect.Descriptor instead.
+func (*Heartbeat) Descriptor() ([]byte, []int) {
+	return file_game_proto_rawDescGZIP(), []int{7}
+}
+
+var File_game_proto protoreflect.FileDescriptor
+
+const file_game_proto_rawDesc = "" +
 	"\n" +
-	"\x10proto/game.proto\x12\x05proto\"\xe7\x01\n" +
+	"\n" +
+	"game.proto\x12\x05proto\"\xe7\x01\n" +
 	"\tFrameData\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x05R\bplayerId\x123\n" +
 	"\tdirection\x18\x02 \x01(\x0e2\x15.proto.InputDirectionR\tdirection\x12!\n" +
@@ -581,7 +622,8 @@ const file_proto_game_proto_rawDesc = "" +
 	"\fGetLossFrame\x12*\n" +
 	"\x11last_frame_number\x18\x01 \x01(\x03R\x0flastFrameNumber\"H\n" +
 	"\fSendAllFrame\x128\n" +
-	"\x0eall_need_frame\x18\x01 \x03(\v2\x12.proto.ServerFrameR\fallNeedFrame*\xc9\x01\n" +
+	"\x0eall_need_frame\x18\x01 \x03(\v2\x12.proto.ServerFrameR\fallNeedFrame\"\v\n" +
+	"\tHeartbeat*\xe0\x01\n" +
 	"\vMessageType\x12\x13\n" +
 	"\x0fMESSAGE_UNKNOWN\x10\x00\x12\x13\n" +
 	"\x0fMESSAGE_CONNECT\x10\x01\x12\x16\n" +
@@ -590,7 +632,8 @@ const file_proto_game_proto_rawDesc = "" +
 	"\x12MESSAGE_DISCONNECT\x10\x04\x12\x16\n" +
 	"\x12MESSAGE_GAME_START\x10\x05\x12\x16\n" +
 	"\x12MESSAGE_FRAME_LOSS\x10\x06\x12\x16\n" +
-	"\x12MESSAGE_FRAME_NEED\x10\a*\xd5\x01\n" +
+	"\x12MESSAGE_FRAME_NEED\x10\a\x12\x15\n" +
+	"\x11MESSAGE_HEARTBEAT\x10\b*\xd5\x01\n" +
 	"\x0eInputDirection\x12\x12\n" +
 	"\x0eDIRECTION_NONE\x10\x00\x12\x10\n" +
 	"\fDIRECTION_UP\x10\x01\x12\x12\n" +
@@ -603,20 +646,20 @@ const file_proto_game_proto_rawDesc = "" +
 	"\x14DIRECTION_DOWN_RIGHT\x10\bB\"Z github.com/WjcHome/gohello/protob\x06proto3"
 
 var (
-	file_proto_game_proto_rawDescOnce sync.Once
-	file_proto_game_proto_rawDescData []byte
+	file_game_proto_rawDescOnce sync.Once
+	file_game_proto_rawDescData []byte
 )
 
-func file_proto_game_proto_rawDescGZIP() []byte {
-	file_proto_game_proto_rawDescOnce.Do(func() {
-		file_proto_game_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_game_proto_rawDesc), len(file_proto_game_proto_rawDesc)))
+func file_game_proto_rawDescGZIP() []byte {
+	file_game_proto_rawDescOnce.Do(func() {
+		file_game_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_game_proto_rawDesc), len(file_game_proto_rawDesc)))
 	})
-	return file_proto_game_proto_rawDescData
+	return file_game_proto_rawDescData
 }
 
-var file_proto_game_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_game_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_proto_game_proto_goTypes = []any{
+var file_game_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_game_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_game_proto_goTypes = []any{
 	(MessageType)(0),          // 0: proto.MessageType
 	(InputDirection)(0),       // 1: proto.InputDirection
 	(*FrameData)(nil),         // 2: proto.FrameData
@@ -626,8 +669,9 @@ var file_proto_game_proto_goTypes = []any{
 	(*GameStart)(nil),         // 6: proto.GameStart
 	(*GetLossFrame)(nil),      // 7: proto.GetLossFrame
 	(*SendAllFrame)(nil),      // 8: proto.SendAllFrame
+	(*Heartbeat)(nil),         // 9: proto.Heartbeat
 }
-var file_proto_game_proto_depIdxs = []int32{
+var file_game_proto_depIdxs = []int32{
 	1, // 0: proto.FrameData.direction:type_name -> proto.InputDirection
 	2, // 1: proto.ServerFrame.frame_datas:type_name -> proto.FrameData
 	3, // 2: proto.SendAllFrame.all_need_frame:type_name -> proto.ServerFrame
@@ -638,28 +682,28 @@ var file_proto_game_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_proto_game_proto_init() }
-func file_proto_game_proto_init() {
-	if File_proto_game_proto != nil {
+func init() { file_game_proto_init() }
+func file_game_proto_init() {
+	if File_game_proto != nil {
 		return
 	}
-	file_proto_game_proto_msgTypes[0].OneofWrappers = []any{}
+	file_game_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_game_proto_rawDesc), len(file_proto_game_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_game_proto_rawDesc), len(file_game_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_proto_game_proto_goTypes,
-		DependencyIndexes: file_proto_game_proto_depIdxs,
-		EnumInfos:         file_proto_game_proto_enumTypes,
-		MessageInfos:      file_proto_game_proto_msgTypes,
+		GoTypes:           file_game_proto_goTypes,
+		DependencyIndexes: file_game_proto_depIdxs,
+		EnumInfos:         file_game_proto_enumTypes,
+		MessageInfos:      file_game_proto_msgTypes,
 	}.Build()
-	File_proto_game_proto = out.File
-	file_proto_game_proto_goTypes = nil
-	file_proto_game_proto_depIdxs = nil
+	File_game_proto = out.File
+	file_game_proto_goTypes = nil
+	file_game_proto_depIdxs = nil
 }
