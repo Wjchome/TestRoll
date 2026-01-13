@@ -464,8 +464,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f7b18c7882e74471841cb4d9308c662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSnapshots: 100
+  maxSnapshots: 10
+  maxInputshots: 100
   enablePredictionRollback: 1
+  keyframeInterval: 10
   confirmedServerFrame: 0
   predictedFrame: 0
   enableLog: 0
