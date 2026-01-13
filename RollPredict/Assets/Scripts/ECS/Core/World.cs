@@ -92,7 +92,7 @@ namespace Frame.ECS
         /// <summary>
         /// 获取Component存储（如果不存在则创建）
         /// </summary>
-        private ComponentStorage<TComponent> GetOrCreateStorage<TComponent>() where TComponent : IComponent
+        private ComponentStorage<TComponent> GetOrCreateStorage<TComponent>() where TComponent : struct,IComponent
         {
             var type = typeof(TComponent);
             if (!_componentStorages.TryGetValue(type, out var storage))
@@ -106,7 +106,7 @@ namespace Frame.ECS
         /// <summary>
         /// 添加Component
         /// </summary>
-        public void AddComponent<TComponent>(Entity entity, TComponent component) where TComponent : IComponent
+        public void AddComponent<TComponent>(Entity entity, TComponent component) where TComponent : struct,IComponent
         {
             var storage = GetOrCreateStorage<TComponent>();
             storage.Set(entity, component);
@@ -115,7 +115,7 @@ namespace Frame.ECS
         /// <summary>
         /// 获取Component
         /// </summary>
-        public bool TryGetComponent<TComponent>(Entity entity, out TComponent component) where TComponent : IComponent
+        public bool TryGetComponent<TComponent>(Entity entity, out TComponent component) where TComponent :struct, IComponent
         {
             var type = typeof(TComponent);
             if (_componentStorages.TryGetValue(type, out var storage))
@@ -130,7 +130,7 @@ namespace Frame.ECS
         /// <summary>
         /// 获取Component（如果不存在返回默认值）
         /// </summary>
-        public TComponent GetComponent<TComponent>(Entity entity) where TComponent : IComponent
+        public TComponent GetComponent<TComponent>(Entity entity) where TComponent : struct,IComponent
         {
             if (TryGetComponent(entity, out TComponent component))
             {
@@ -142,7 +142,7 @@ namespace Frame.ECS
         /// <summary>
         /// 移除Component
         /// </summary>
-        public bool RemoveComponent<TComponent>(Entity entity) where TComponent : IComponent
+        public bool RemoveComponent<TComponent>(Entity entity) where TComponent : struct,IComponent
         {
             var type = typeof(TComponent);
             if (_componentStorages.TryGetValue(type, out var storage))
@@ -156,7 +156,7 @@ namespace Frame.ECS
         /// <summary>
         /// 检查Entity是否有Component
         /// </summary>
-        public bool HasComponent<TComponent>(Entity entity) where TComponent : IComponent
+        public bool HasComponent<TComponent>(Entity entity) where TComponent :struct, IComponent
         {
             var type = typeof(TComponent);
             if (_componentStorages.TryGetValue(type, out var storage))
@@ -186,7 +186,7 @@ namespace Frame.ECS
         /// <summary>
         /// 获取所有有指定Component的Entity（用于System遍历）
         /// </summary>
-        public IEnumerable<Entity> GetEntitiesWithComponent<TComponent>() where TComponent : IComponent
+        public IEnumerable<Entity> GetEntitiesWithComponent<TComponent>() where TComponent : struct,IComponent
         {
             var type = typeof(TComponent);
             if (_componentStorages.TryGetValue(type, out var storage))
@@ -217,7 +217,7 @@ namespace Frame.ECS
         /// }
         /// </summary>
         public IEnumerable<(Entity entity, T1 component1)> GetEntitiesWithComponents<T1>() 
-            where T1 : IComponent
+            where T1 : struct,IComponent
         {
             var storage1 = GetOrCreateStorage<T1>();
             foreach (var entity in storage1.GetAllEntities())
@@ -233,8 +233,8 @@ namespace Frame.ECS
         /// 批量获取组件（2个组件）
         /// </summary>
         public IEnumerable<(Entity entity, T1 component1, T2 component2)> GetEntitiesWithComponents<T1, T2>() 
-            where T1 : IComponent 
-            where T2 : IComponent
+            where T1 : struct,IComponent 
+            where T2 :struct, IComponent
         {
             ComponentStorage<T1> storage1 = GetOrCreateStorage<T1>();
             ComponentStorage<T2>  storage2 = GetOrCreateStorage<T2>();
@@ -255,9 +255,9 @@ namespace Frame.ECS
         /// 批量获取组件（3个组件）
         /// </summary>
         public IEnumerable<(Entity entity, T1 component1, T2 component2, T3 component3)> GetEntitiesWithComponents<T1, T2, T3>() 
-            where T1 : IComponent 
-            where T2 : IComponent 
-            where T3 : IComponent
+            where T1 : struct, IComponent 
+            where T2 : struct,IComponent 
+            where T3 : struct,IComponent
         {
             ComponentStorage<T1>  storage1 = GetOrCreateStorage<T1>();
             ComponentStorage<T2>  storage2 = GetOrCreateStorage<T2>();
@@ -290,10 +290,10 @@ namespace Frame.ECS
         /// 批量获取组件（4个组件）
         /// </summary>
         public IEnumerable<(Entity entity, T1 component1, T2 component2, T3 component3, T4 component4)> GetEntitiesWithComponents<T1, T2, T3, T4>() 
-            where T1 : IComponent 
-            where T2 : IComponent 
-            where T3 : IComponent
-            where T4 : IComponent
+            where T1 : struct,IComponent 
+            where T2 : struct,IComponent 
+            where T3 :struct, IComponent
+            where T4 : struct,IComponent
         {
             var storage1 = GetOrCreateStorage<T1>();
             var storage2 = GetOrCreateStorage<T2>();

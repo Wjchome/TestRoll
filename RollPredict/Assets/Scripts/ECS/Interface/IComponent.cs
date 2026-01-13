@@ -15,7 +15,7 @@ namespace Frame.ECS
     /// - 状态快照就是Component的快照
     /// - 回滚时直接替换Component数据即可
     /// </summary>
-    public interface IComponent:ICloneable
+    public interface IComponent: ICloneable
     {
 
     }

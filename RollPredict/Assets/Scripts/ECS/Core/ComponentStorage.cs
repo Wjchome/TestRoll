@@ -18,8 +18,9 @@ namespace Frame.ECS
     /// 2. 批量处理高效：可以顺序遍历数组，性能更好
     /// 3. 复杂度不变：所有操作的时间复杂度与之前相同
     /// </summary>
-    public class ComponentStorage<TComponent> : IComponentStorage where TComponent : IComponent
+    public class ComponentStorage<TComponent> : IComponentStorage where TComponent :struct,IComponent
     {
+      //   
         // 紧密排列的组件数组
         private List<TComponent> _components = new List<TComponent>();
         
