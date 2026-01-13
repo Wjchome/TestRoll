@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	FRAME_INTERVAL = 100 * time.Millisecond // 20帧每秒
+	FRAME_INTERVAL = 50 * time.Millisecond // 20帧每秒
 	PORT           = ":8088"
 	MAX_PLAYERS    = 2 // 每个房间最大玩家数
 )
@@ -87,11 +87,20 @@ func (s *Server) Start() {
 
 // 处理客户端连接
 func (s *Server) handleClient(conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		// 优雅关闭连接
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			tcpConn.CloseWrite() // 关闭写入端，允许读取剩余数据
+		}
+		conn.Close()
+	}()
 
 	// 禁用Nagle算法，减少网络延迟
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		tcpConn.SetNoDelay(true)
+		// 设置KeepAlive，检测死连接
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(30 * time.Second)
 	}
 
 	clientID := int32(clientCounter)
@@ -113,21 +122,50 @@ func (s *Server) handleClient(conn net.Conn) {
 
 	s.autoAssignRoom(client)
 
+	// 设置读取超时（30秒，避免长时间阻塞）
+	// 注意：超时后不会断开连接，只是跳过本次读取
+	if tcpConn, ok := conn.(*net.TCPConn); ok {
+		tcpConn.SetReadDeadline(time.Time{}) // 先清除之前的超时设置
+	}
+
 	reader := bufio.NewReader(conn)
 	for {
+		// 设置读取超时（30秒，避免长时间阻塞）
+		// 超时后不会断开连接，只是跳过本次读取，继续等待下次消息
+		if tcpConn, ok := conn.(*net.TCPConn); ok {
+			tcpConn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		}
+
 		// 读取消息长度 (4 bytes)
 		lengthBytes := make([]byte, 4)
 		_, err := reader.Read(lengthBytes)
 		if err != nil {
+			// 检查是否是超时错误（可以继续等待）
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				// 超时不是致命错误，继续循环等待
+				log.Printf("Client %d: Read timeout, continuing...\n", client.ID)
+				continue
+			}
+			// 其他错误（如EOF、连接关闭）才断开
 			log.Printf("Client %d: Read length error: %v\n", client.ID, err)
 			break
 		}
 		length := binary.BigEndian.Uint32(lengthBytes)
 
+		// 验证消息长度（防止恶意或错误数据）
+		if length > 1024*1024 { // 最大1MB
+			log.Printf("Client %d: Message too large: %d bytes\n", client.ID, length)
+			break
+		}
+
 		// 读取消息类型 (1 byte)
 		messageTypeBytes := make([]byte, 1)
 		_, err = reader.Read(messageTypeBytes)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				log.Printf("Client %d: Read message type timeout, continuing...\n", client.ID)
+				continue
+			}
 			log.Printf("Client %d: Read message type error: %v\n", client.ID, err)
 			break
 		}
@@ -136,12 +174,16 @@ func (s *Server) handleClient(conn net.Conn) {
 		// 读取数据部分 (length - 1 byte for messageType)
 		dataLength := int(length) - 1
 		if dataLength < 0 {
-			log.Printf("Client %d: Invalid message length\n", client.ID)
+			log.Printf("Client %d: Invalid message length: %d\n", client.ID, length)
 			break
 		}
 		data := make([]byte, dataLength)
 		_, err = reader.Read(data)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				log.Printf("Client %d: Read data timeout, continuing...\n", client.ID)
+				continue
+			}
 			log.Printf("Client %d: Read data error: %v\n", client.ID, err)
 			break
 		}

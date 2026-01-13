@@ -61,11 +61,12 @@ func (s *Server) StartKCP() {
 
 // 处理KCP客户端连接
 func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
-	defer conn.Close()
+	defer func() {
+		// 优雅关闭KCP连接
+		conn.Close()
+	}()
 
-	// 设置读取超时（5分钟，避免因为读取超时而断开连接）
-	// 连接状态通过心跳超时检测来判断，不会主动断开
-	conn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+	// KCP连接不需要初始设置读取超时，在循环中动态设置
 
 	clientID := int32(clientCounter)
 	clientCounter++
@@ -88,23 +89,41 @@ func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 
 	reader := bufio.NewReader(conn)
 	for {
-		// 更新读取超时（5分钟，避免因为读取超时而断开连接）
-		// 连接状态通过心跳超时检测来判断，不会主动断开
-		conn.SetReadDeadline(time.Now().Add(5 * time.Minute))
+		// 设置读取超时（30秒，避免长时间阻塞）
+		// 超时后不会断开连接，只是跳过本次读取，继续等待下次消息
+		conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 
 		// 读取消息长度 (4 bytes)
 		lengthBytes := make([]byte, 4)
 		_, err := reader.Read(lengthBytes)
 		if err != nil {
+			// 检查是否是超时错误（可以继续等待）
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				// 超时不是致命错误，继续循环等待
+				// KCP连接可能暂时没有数据，但连接仍然有效
+				log.Printf("KCP Client %d: Read timeout, continuing...\n", client.ID)
+				continue
+			}
+			// 其他错误（如EOF、连接关闭）才断开
 			log.Printf("KCP Client %d: Read length error: %v\n", client.ID, err)
 			break
 		}
 		length := binary.BigEndian.Uint32(lengthBytes)
 
+		// 验证消息长度（防止恶意或错误数据）
+		if length > 1024*1024 { // 最大1MB
+			log.Printf("KCP Client %d: Message too large: %d bytes\n", client.ID, length)
+			break
+		}
+
 		// 读取消息类型 (1 byte)
 		messageTypeBytes := make([]byte, 1)
 		_, err = reader.Read(messageTypeBytes)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				log.Printf("KCP Client %d: Read message type timeout, continuing...\n", client.ID)
+				continue
+			}
 			log.Printf("KCP Client %d: Read message type error: %v\n", client.ID, err)
 			break
 		}
@@ -113,12 +132,16 @@ func (s *Server) handleKCPClient(conn *kcp.UDPSession) {
 		// 读取数据部分 (length - 1 byte for messageType)
 		dataLength := int(length) - 1
 		if dataLength < 0 {
-			log.Printf("KCP Client %d: Invalid message length\n", client.ID)
+			log.Printf("KCP Client %d: Invalid message length: %d\n", client.ID, length)
 			break
 		}
 		data := make([]byte, dataLength)
 		_, err = reader.Read(data)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				log.Printf("KCP Client %d: Read data timeout, continuing...\n", client.ID)
+				continue
+			}
 			log.Printf("KCP Client %d: Read data error: %v\n", client.ID, err)
 			break
 		}

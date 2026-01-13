@@ -417,8 +417,8 @@ MonoBehaviour:
   smoothNum: 5
   timer: 0
   timer1: 0
-  sendInterval: 0.1
-  predictInterval: 0.1
+  sendInterval: 0.05
+  predictInterval: 0.05
 --- !u!114 &996293668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -464,7 +464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f7b18c7882e74471841cb4d9308c662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxSnapshots: 1000
+  maxSnapshots: 100
   enablePredictionRollback: 1
   confirmedServerFrame: 0
   predictedFrame: 0

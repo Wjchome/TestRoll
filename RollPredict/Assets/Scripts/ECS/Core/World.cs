@@ -404,6 +404,8 @@ namespace Frame.ECS
             
             return cloned;
         }
+
+
         
         /// <summary>
         /// 从另一个World恢复状态（用于回滚）
