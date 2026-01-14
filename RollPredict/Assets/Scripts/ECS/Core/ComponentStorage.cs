@@ -168,30 +168,7 @@ namespace Frame.ECS
             return Remove(entity);
         }
 
-        /// <summary>
-        /// 获取所有Component的快照（接口实现，返回IComponent类型）
-        /// </summary>
-        OrderedDictionary<Entity, IComponent> IComponentStorage.GetAllComponentsAsIComponent()
-        {
-            var result = new OrderedDictionary<Entity, IComponent>();
-            for (int i = 0; i < _components.Count; i++)
-            {
-                Entity entity = _indexToEntity[i];
-                TComponent component = _components[i];
-
-                if (component is ICloneable cloneable)
-                {
-                    result.Add(entity, (IComponent)cloneable.Clone());
-                }
-                else
-                {
-                    // 对于值类型（浅拷贝）或引用类型（非常不建议）
-                    result.Add(entity, component);
-                }
-            }
-
-            return result;
-        }
+     
 
         /// <summary>
         /// 批量设置Component（接口实现，从IComponent类型恢复）
@@ -224,31 +201,57 @@ namespace Frame.ECS
             return Clone();
         }
 
+        // 静态缓存：标记哪些组件类型需要深拷贝（包含引用类型字段）
+        // 性能优化：避免每次克隆都进行类型检查，避免纯值类型组件的装箱/拆箱
+        private static readonly HashSet<Type> _componentsNeedingDeepClone = new HashSet<Type>
+        {
+            typeof(GridMapComponent),      // 包含 OrderedHashSet<GridNode>
+            typeof(ZombieAIComponent)      // 包含 List<FixVector2>
+        };
+
         /// <summary>
         /// 深拷贝ComponentStorage（用于快照）
         /// 
         /// 关键：即使Component是struct（值类型），如果它包含引用类型字段（如List、OrderedHashSet等），
         /// 直接拷贝struct只会浅拷贝引用字段，导致多个组件共享同一个引用对象。
         /// 
-        /// 解决方案：调用每个组件的Clone()方法，确保引用类型字段被深拷贝。
+        /// 解决方案：
+        /// - 对于纯值类型组件：直接拷贝（避免装箱/拆箱，性能最优）
+        /// - 对于包含引用类型的组件：调用Clone()方法进行深拷贝
         /// 
         /// 性能优化：
-        /// - 对于纯值类型组件（无引用字段），Clone()通常只是返回自身，开销很小
-        /// - 对于包含引用字段的组件（如GridMapComponent、ZombieAIComponent），必须深拷贝
+        /// - 使用静态缓存标记需要深拷贝的组件类型，避免反射检查
+        /// - 纯值类型组件直接拷贝（O(1)，无装箱/拆箱开销）
+        /// - 只有2个组件类型需要深拷贝：GridMapComponent、ZombieAIComponent
         /// </summary>
         public ComponentStorage<TComponent> Clone()
         {
             var cloned = new ComponentStorage<TComponent>();
 
-            // 深拷贝所有Component
-            // 关键：必须调用每个组件的Clone()方法，确保引用类型字段被深拷贝
-            cloned._components = new List<TComponent>(this._components.Count);
-            for (int i = 0; i < this._components.Count; i++)
-            {
-                var component = this._components[i];
-                // 调用ICloneable.Clone()，确保引用类型字段被深拷贝
+            // 检查组件类型是否需要深拷贝
+            Type componentType = typeof(TComponent);
+            bool needsDeepClone = _componentsNeedingDeepClone.Contains(componentType);
 
-                cloned._components.Add((TComponent)component.Clone());
+            // 深拷贝所有Component
+            cloned._components = new List<TComponent>(this._components.Count);
+            
+            if (needsDeepClone)
+            {
+                // 包含引用类型字段，必须调用Clone()进行深拷贝
+                for (int i = 0; i < this._components.Count; i++)
+                {
+                    var component = this._components[i];
+                    // 调用Clone()，会深拷贝引用类型字段（如OrderedHashSet、List）
+                    cloned._components.Add((TComponent)component.Clone());
+                }
+            }
+            else
+            {
+                // 纯值类型组件，直接拷贝（避免装箱/拆箱，性能最优）
+                for (int i = 0; i < this._components.Count; i++)
+                {
+                    cloned._components.Add(this._components[i]);
+                }
             }
 
             // 深拷贝映射字典

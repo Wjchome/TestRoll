@@ -17,11 +17,7 @@ namespace Frame.ECS
         /// 检查Entity是否有Component
         /// </summary>
         bool Has(Entity entity);
-
-        /// <summary>
-        /// 获取所有Component的快照（返回IComponent类型，用于序列化）
-        /// </summary>
-        OrderedDictionary<Entity, IComponent> GetAllComponentsAsIComponent();
+        
 
         /// <summary>
         /// 批量设置Component（从IComponent类型恢复）

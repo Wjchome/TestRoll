@@ -330,22 +330,7 @@ namespace Frame.ECS
             }
         }
 
-        /// <summary>
-        /// 获取所有Component的快照（用于状态保存）
-        /// 返回 OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>>
-        /// 使用接口，避免反射
-        /// </summary>
-        public OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>> GetAllComponentSnapshots()
-        {
-            var snapshots = new OrderedDictionary<Type, OrderedDictionary<Entity, IComponent>>();
-            foreach (var (type,storage) in _componentStorages)
-            {
-                // 使用接口方法，避免反射
-                var snapshot = storage.GetAllComponentsAsIComponent();
-                snapshots[type] = snapshot;
-            }
-            return snapshots;
-        }
+   
         
 
         /// <summary>
