@@ -148,7 +148,6 @@ namespace Frame.ECS
             // 从关键帧+1开始，执行到目标帧
             for (long frame = keyframe + 1; frame <= frameNumber; frame++)
             {
-                Debug.LogError("a");
                 var inputs = GetInputs(frame);
                 world = ECSStateMachine.Execute(world, inputs);
             }

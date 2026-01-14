@@ -29,68 +29,50 @@ namespace Frame.ECS
 
         public void Execute(World world, List<FrameData> inputs)
         {
-            // 1. 收集所有有物理体的Entity
-            var physicsEntities = CollectPhysicsEntities(world);
 
-            if (physicsEntities.Count == 0)
-                return;
-            
-            // 3. 子步迭代
             Fix64 deltaTime = Fix64.One;
             Fix64 subStepDeltaTime = deltaTime / (Fix64)subSteps;
-
+        
+            ClearCollisionInfo(world);
+            
             for (int subStep = 0; subStep < subSteps; subStep++)
             {
-                UpdateSingleStep(world, physicsEntities, subStepDeltaTime);
+                UpdateSingleStep(world,  subStepDeltaTime);
             }
         }
 
-        private void UpdateSingleStep(World world, List<Entity> entities, Fix64 deltaTime)
+        private void UpdateSingleStep(World world,  Fix64 deltaTime)
         {
             // 1. 收集力（重力等）
-            CollectForces(world, entities);
+            CollectForces(world);
 
             // 2. 更新位置和速度
-            UpdatePositions(world, entities, deltaTime);
+            UpdatePositions(world, deltaTime);
 
             // 3. 更新四叉树
-            UpdateQuadTree(world, entities);
+            UpdateQuadTree(world);
 
             // 4. 碰撞检测和响应（迭代多次）
             for (int i = 0; i < iterations; i++)
             {
-                ResolveCollisions(world, entities);
+                ResolveCollisions(world);
             }
 
             // 5. 清除力累加器
             ClearForces();
         }
 
-        /// <summary>
-        /// 收集所有有物理体的Entity
-        /// </summary>
-        private List<Entity> CollectPhysicsEntities(World world)
-        {
-            var entities = new List<Entity>();
-            foreach (var (entity,_,_,_,_) in world.GetEntitiesWithComponents<PhysicsBodyComponent,Transform2DComponent,CollisionShapeComponent,VelocityComponent>())
-            {
-                entities.Add(entity);
-            }
-            return entities;
-        }
+
 
 
 
         /// <summary>
         /// 收集所有力（重力、用户施加的力等）
         /// </summary>
-        private void CollectForces(World world, List<Entity> entities)
+        private void CollectForces(World world)
         {
-            foreach (var entity in entities)
+            foreach (var (entity,body) in world.GetEntitiesWithComponents<PhysicsBodyComponent>())
             {
-                if (!world.TryGetComponent<PhysicsBodyComponent>(entity, out var body))
-                    continue;
-
                 if (body.IsDynamic && body.useGravity)
                 {
                     // 重力 = 质量 * 重力加速度
@@ -121,21 +103,14 @@ namespace Frame.ECS
         /// <summary>
         /// 更新位置和速度
         /// </summary>
-        private void UpdatePositions(World world, List<Entity> entities, Fix64 deltaTime)
+        private void UpdatePositions(World world,  Fix64 deltaTime)
         {
-            foreach (var entity in entities)
+            foreach (var (entity,body,transform,velocity) in world.GetEntitiesWithComponents<PhysicsBodyComponent,Transform2DComponent,VelocityComponent>())
             {
-                if (!world.TryGetComponent<PhysicsBodyComponent>(entity, out var body))
-                    continue;
-
+                
                 if (!body.IsDynamic)
                     continue;
-
-                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform))
-                    continue;
-
-                if (!world.TryGetComponent<VelocityComponent>(entity, out var velocity))
-                    continue;
+                
 
                 // 计算加速度：a = F/m
                 FixVector2 acceleration = FixVector2.Zero;
@@ -145,46 +120,41 @@ namespace Frame.ECS
                 }
 
                 // 更新速度：v = v + a*dt
-                velocity.velocity += acceleration * deltaTime;
+                var newVelocity = velocity;
+                newVelocity.velocity += acceleration * deltaTime;
 
                 // 更新位置：x = x + v * dt
-                FixVector2 oldPosition = transform.position;
-                transform.position += velocity.velocity * deltaTime;
+                var newTransform = transform;
+                newTransform.position += velocity.velocity * deltaTime;
 
                 // 应用线性阻尼
                 if (body.linearDamping > Fix64.Zero)
                 {
                     Fix64 dampingFactor = Fix64.One - Fix64.Clamp(body.linearDamping * deltaTime, Fix64.Zero, Fix64.One);
-                    velocity.velocity *= dampingFactor;
+                    newVelocity.velocity *= dampingFactor;
                 }
 
                 // 更新Component
-                world.AddComponent(entity, transform);
-                world.AddComponent(entity, velocity);
+                world.AddComponent(entity, newTransform);
+                world.AddComponent(entity, newVelocity);
             }
         }
 
         /// <summary>
         /// 更新四叉树
         /// </summary>
-        private void UpdateQuadTree(World world, List<Entity> entities)
+        private void UpdateQuadTree(World world)
         {
             // 检查是否需要扩容
             var allBounds = new List<(Entity entity, FixRect bounds)>();
             FixRect quadTreeBound = new FixRect(Fix64.Zero,Fix64.Zero, Fix64.Zero, Fix64.Zero);
-            foreach (var entity in entities)
+            foreach (var (entity,transform,shape) in world.GetEntitiesWithComponents<Transform2DComponent,CollisionShapeComponent>())
             {
-                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform))
-                    continue;
-                if (!world.TryGetComponent<CollisionShapeComponent>(entity, out var shape))
-                    continue;
-        
                 FixRect bounds = shape.GetBounds(transform.position);
                 allBounds.Add((entity, bounds));
                 quadTreeBound.Union(bounds);
             }
             quadTree.Init(quadTreeBound);
-            
             foreach (var (entity, bounds) in allBounds)
             {
                 quadTree.Add(entity, bounds);
@@ -194,31 +164,15 @@ namespace Frame.ECS
         /// <summary>
         /// 碰撞检测和响应
         /// </summary>
-        private void ResolveCollisions(World world, List<Entity> entities)
+        private void ResolveCollisions(World world)
         {
             var checkedPairs = new HashSet<(Entity, Entity)>();
+            
 
-            // 每帧开始时，清空所有Entity的碰撞信息
-            if (checkedPairs.Count == 0) // 只在第一次迭代时清空
+            foreach (var (entityA,bodyA,transformA,shapeA) in world.GetEntitiesWithComponents<PhysicsBodyComponent,Transform2DComponent,CollisionShapeComponent>())
             {
-                ClearCollisionInfo(world, entities);
-            }
-
-            for (int i = 0; i < entities.Count; i++)
-            {
-                Entity entityA = entities[i];
-
-                if (!world.TryGetComponent<PhysicsBodyComponent>(entityA, out var bodyA))
-                    continue;
-
                 // 只处理动态物体
                 if (bodyA.isStatic)
-                    continue;
-
-                if (!world.TryGetComponent<Transform2DComponent>(entityA, out var transformA))
-                    continue;
-
-                if (!world.TryGetComponent<CollisionShapeComponent>(entityA, out var shapeA))
                     continue;
 
                 // 宽相位：使用四叉树查询
@@ -295,9 +249,9 @@ namespace Frame.ECS
         /// <summary>
         /// 清空所有Entity的碰撞信息（每帧开始时调用）
         /// </summary>
-        private void ClearCollisionInfo(World world, List<Entity> entities)
+        private void ClearCollisionInfo(World world)
         {
-            foreach (var entity in entities)
+            foreach (var (entity,_) in world.GetEntitiesWithComponents<PhysicsBodyComponent>())
             {
                 if (world.TryGetComponent<CollisionComponent>(entity, out var collision))
                 {
