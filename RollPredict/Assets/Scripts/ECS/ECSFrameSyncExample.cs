@@ -93,17 +93,16 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
         // 1. 检测输入（分离输入检测和预测执行）
         InputDirection newDirection = DetectMovementInput();
-        bool fire;
+        bool fire,isToggle ;
         long fireX, fireY;
-        DetectFireInput(out fire, out fireX, out fireY);
-
+        DetectFireInput(out isToggle, out fire, out fireX, out fireY);
         // 2. 发送输入到服务器（有输入时才发送）
-        if ((newDirection != InputDirection.DirectionNone || fire) && timer > sendInterval)
+        if ((newDirection != InputDirection.DirectionNone || fire||isToggle) && timer > sendInterval)
         {
             timer = 0;
             if (isKCP)
             {
-                networkManagerKCP.SendFrameData(newDirection, fire, fireX, fireY);
+                networkManagerKCP.SendFrameData(newDirection, fire, fireX, fireY,isToggle);
             }
             else
             {
@@ -116,7 +115,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         if (timer1 > predictInterval)
         {
             timer1 = 0;
-            UpdateInputStatePredict(newDirection, fire, fireX, fireY);
+            UpdateInputStatePredict(newDirection, fire, fireX, fireY,isToggle);
         }
 
         // 4. 同步ECS World状态到Unity对象（视图层）
@@ -154,9 +153,10 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     /// <summary>
     /// 检测发射输入
     /// </summary>
-    private void DetectFireInput(out bool fire, out long fireX, out long fireY)
+    private void DetectFireInput(out bool isToggle,out bool fire, out long fireX, out long fireY)
     {
         fire = Input.GetMouseButton(0);
+        isToggle = Input.GetMouseButtonDown(1);
         fireX = 0;
         fireY = 0;
 
@@ -288,14 +288,14 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     /// <summary>
     /// 客户端预测：立即执行输入
     /// </summary>
-    void UpdateInputStatePredict(InputDirection currentDirection, bool fire, long fireX = 0, long fireY = 0)
+    void UpdateInputStatePredict(InputDirection currentDirection, bool fire, long fireX = 0, long fireY = 0,bool isToggle = false)
     {
         if (ecsPredictionManager.enablePredictionRollback)
         {
             // 先预测，让玩家立即看到效果
             if (isKCP)
             {
-                ecsPredictionManager.PredictInput(networkManagerKCP.myPlayerID, currentDirection, fire, fireX, fireY);
+                ecsPredictionManager.PredictInput(networkManagerKCP.myPlayerID, currentDirection, fire, fireX, fireY, isToggle);
             }
             else
             {

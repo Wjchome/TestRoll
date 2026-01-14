@@ -21,10 +21,15 @@ namespace Frame.ECS
         /// </summary>
         public int hp;
 
-        public PlayerComponent(int playerId, int hp)
+        public int currentIndex;
+        public int sumIndex;
+
+        public PlayerComponent(int playerId, int hp,  int sumIndex)
         {
             this.playerId = playerId;
             this.hp = hp;
+            currentIndex = 0;
+            this.sumIndex = sumIndex;
         }
 
         public object Clone()

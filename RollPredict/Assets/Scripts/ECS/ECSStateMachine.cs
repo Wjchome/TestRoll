@@ -119,6 +119,7 @@ namespace Frame.ECS
             ClearSystems();
 
 
+            RegisterSystem(new PlayerToggleSystem());
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new BulletCheckSystem());

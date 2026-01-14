@@ -57,7 +57,7 @@ namespace Frame.ECS
             Entity entity = world.CreateEntity();
 
             // 添加PlayerComponent
-            var playerComponent = new PlayerComponent(playerId, initialHp);
+            var playerComponent = new PlayerComponent(playerId, initialHp,2);
             var transform2DComponent = new Transform2DComponent(initialPosition);
             var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, false, Fix64.Zero,
                 Fix64.Zero, (Fix64)0.5);

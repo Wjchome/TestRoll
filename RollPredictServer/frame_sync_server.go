@@ -248,7 +248,13 @@ func (s *Server) handleFrameData(client *Client, data []byte) {
 
 	room.Mutex.Lock()
 	// 将客户端的帧数据添加到房间的缓冲区
-	log.Printf("Client %d: frame data\n", client.ID)
+	// 记录帧数据信息（包括切换指令）
+	if frameData.IsToggle {
+		log.Printf("Client %d: frame data (toggle mode)\n", client.ID)
+	} else {
+		log.Printf("Client %d: frame data (direction=%v, fire=%v)\n",
+			client.ID, frameData.Direction, frameData.IsFire)
+	}
 
 	room.FrameDataBuffer = append(room.FrameDataBuffer, &frameData)
 	room.Mutex.Unlock()

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Frame.FixMath;
 using Proto;
+using UnityEngine;
 
 namespace Frame.ECS
 {
@@ -24,6 +25,13 @@ namespace Frame.ECS
                 Entity? playerEntity = FindPlayerEntity(world, playerId);
                 if (!playerEntity.HasValue)
                     continue;
+                if (world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var p))
+                {
+                    if (p.currentIndex == 1)
+                    {
+                        continue;
+                    }
+                }
 
                 // 获取PlayerComponent
                 if (!world.TryGetComponent<Transform2DComponent>(playerEntity.Value, out var playerTransform2DComponent))

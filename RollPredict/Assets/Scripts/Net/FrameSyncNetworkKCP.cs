@@ -349,7 +349,7 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     /// <summary>
     /// 发送帧数据
     /// </summary>
-    public void SendFrameData(InputDirection direction, bool isFire = false, long fireX = 0, long fireY = 0)
+    public void SendFrameData(InputDirection direction, bool isFire = false, long fireX = 0, long fireY = 0,bool isToggle = false)
     {
         if (!isConnected)
         {
@@ -363,7 +363,8 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
             PlayerId = myPlayerID,
             Direction = direction,
             FrameNumber = ECSPredictionRollbackManager.Instance.confirmedServerFrame,
-            IsFire = isFire
+            IsFire = isFire,
+            IsToggle = isToggle
         };
 
         // 如果发射，设置目标位置
