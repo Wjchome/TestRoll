@@ -9,12 +9,10 @@ namespace Frame.ECS
     /// </summary>
     public enum ZombieState : byte
     {
-        Idle = 0,           // 空闲（未找到目标）
-        Chase = 1,          // 追逐（寻路移动）
-        AttackWindup = 2,   // 攻击前摇
-        Attack = 3,         // 攻击中（伤害判定帧）
-        AttackCooldown = 4 , // 攻击后摇
-        StraightChase = 5, //直线追逐（找不到目标时直线行走）
+        Chase ,          // 追逐（寻路移动）
+        AttackWindup ,   // 攻击前摇
+        Attack ,         // 攻击中（伤害判定帧）
+        AttackCooldown , // 攻击后摇
     }
 
     /// <summary>
@@ -67,7 +65,42 @@ namespace Frame.ECS
         /// 攻击后摇计时器（帧数）
         /// </summary>
         public int attackCooldownTimer;
-
+        
+        /// <summary>
+        /// 攻击检测冷却（每N帧检测一次攻击范围）
+        /// </summary>
+        public int attackDetectionCooldown;
+        
+        /// <summary>
+        /// 攻击范围（圆形半径）
+        /// </summary>
+        public Fix64 attackRange;
+        
+        
+        /// <summary>
+        /// 攻击伤害
+        /// </summary>
+        public int attackDamage;
+        
+        /// <summary>
+        /// 攻击前摇时间（帧数）
+        /// </summary>
+        public int attackWindupFrames;
+        
+        /// <summary>
+        /// 攻击后摇时间（帧数）
+        /// </summary>
+        public int attackCooldownFrames;
+        
+        /// <summary>
+        /// 攻击伤害判定距离（前方扇形/矩形的距离）
+        /// </summary>
+        public Fix64 attackDamageRange;
+        
+        /// <summary>
+        /// 攻击伤害判定角度（扇形角度，弧度制）
+        /// </summary>
+        public Fix64 attackDamageAngle;
         
         public ZombieAIComponent(FixVector2 targetPosition, Fix64 moveSpeed)
         {
@@ -76,10 +109,17 @@ namespace Frame.ECS
             this.currentPath = new List<FixVector2>();
             this.currentPathIndex = 0;
             this.pathfindingCooldown = 0;
-            this.state = ZombieState.Idle;
+            this.state = ZombieState.Chase;
             this.attackDirection = FixVector2.Zero;
             this.attackWindupTimer = 0;
             this.attackCooldownTimer = 0;
+            this.attackDetectionCooldown = 0;
+            this.attackRange = (Fix64)2.0f;
+            this.attackDamage = 10;
+            this.attackWindupFrames = 10;
+            this.attackCooldownFrames = 20;
+            this.attackDamageRange = (Fix64)1.5f;
+            this.attackDamageAngle = (Fix64)(60.0 * System.Math.PI / 180.0); // 60度
         }
         
         public object Clone()
@@ -95,6 +135,13 @@ namespace Frame.ECS
                 attackDirection = this.attackDirection,
                 attackWindupTimer = this.attackWindupTimer,
                 attackCooldownTimer = this.attackCooldownTimer,
+                attackDetectionCooldown = this.attackDetectionCooldown,
+                attackRange = this.attackRange,
+                attackDamage = this.attackDamage,
+                attackWindupFrames = this.attackWindupFrames,
+                attackCooldownFrames = this.attackCooldownFrames,
+                attackDamageRange = this.attackDamageRange,
+                attackDamageAngle = this.attackDamageAngle
             };
         }
         

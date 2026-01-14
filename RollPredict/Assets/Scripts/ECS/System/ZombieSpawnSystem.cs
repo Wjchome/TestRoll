@@ -38,9 +38,25 @@ namespace Frame.ECS
 
                 // 添加必要的组件
                 var transformZ = new Transform2DComponent(zombiePosition);
-                var zombieAI = new ZombieAIComponent(nearestPosition, zombieMoveSpeed); // 移动速度0.5
-                var physicsBody = new PhysicsBodyComponent(Fix64.One, false, false, false,Fix64.Zero
-                    , Fix64.Zero, (Fix64)0.2);
+                var zombieAI = new ZombieAIComponent(nearestPosition, zombieMoveSpeed);
+                // 配置攻击参数
+                zombieAI.attackRange = (Fix64)2.0f;                    // 攻击范围：2.0单位
+                zombieAI.attackDamage = 10;                            // 伤害：10点
+                zombieAI.attackWindupFrames = 10;                      // 前摇：10帧
+                zombieAI.attackCooldownFrames = 20;                    // 后摇：20帧
+                zombieAI.attackDamageRange = (Fix64)1.5f;              // 伤害判定距离：1.5单位
+                zombieAI.attackDamageAngle = (Fix64)(60.0 * System.Math.PI / 180.0); // 伤害判定角度：60度
+                
+                var physicsBody = new PhysicsBodyComponent(
+                    Fix64.One, 
+                    false, 
+                    false, 
+                    false,
+                    Fix64.Zero,
+                    Fix64.Zero, 
+                    (Fix64)0.2,
+                    (int)PhysicsLayer.Zombie
+                );
                 var collisionShape = CollisionShapeComponent.CreateBox((Fix64)0.8, (Fix64)0.8);
                 var velocity = new VelocityComponent();
 

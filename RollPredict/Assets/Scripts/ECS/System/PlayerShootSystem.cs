@@ -64,7 +64,7 @@ namespace Frame.ECS
                     var bulletComponent = new BulletComponent( playerEntity.Value.Id );
                     var transform2DComponent = new Transform2DComponent(playerTransform2DComponent.position);
                     var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, true, Fix64.Zero
-                        , Fix64.Zero, Fix64.Zero);
+                        , Fix64.Zero, Fix64.Zero,(int)PhysicsLayer.Bullet);
                     var collisionShapeComponent = new CollisionShapeComponent(ShapeType.Circle,(Fix64)0.25,FixVector2.One);
                     var velocityComponent = new VelocityComponent(bulletVelocity);
                     

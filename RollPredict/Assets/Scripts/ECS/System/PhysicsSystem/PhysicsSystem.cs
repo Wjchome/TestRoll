@@ -6,6 +6,14 @@ using Proto;
 
 namespace Frame.ECS
 {
+    public enum PhysicsLayer : int
+    {
+        Player = 1,
+        Bullet = 2,
+        Zombie = 3,
+        Wall = 4,
+    }
+
     /// <summary>
     /// 物理系统：处理物理模拟和碰撞检测
     /// </summary>
@@ -13,8 +21,8 @@ namespace Frame.ECS
     {
         // 物理世界配置
         public FixVector2 gravity = FixVector2.Down;
-        public int iterations = 4;  // 碰撞分离迭代次数
-        public int subSteps = 2;    // 子步迭代次数
+        public const int iterations = 6; // 碰撞分离迭代次数
+        public const int subSteps = 2; // 子步迭代次数
 
         // 碰撞矩阵（Layer -> Layer -> 是否忽略）
         private Dictionary<(int, int), bool> collisionMatrix = new Dictionary<(int, int), bool>();
@@ -25,23 +33,21 @@ namespace Frame.ECS
         // 力累加器（Entity ID -> 力向量）
         private Dictionary<Entity, FixVector2> forceAccumulator = new Dictionary<Entity, FixVector2>();
 
-  
 
         public void Execute(World world, List<FrameData> inputs)
         {
-
             Fix64 deltaTime = Fix64.One;
             Fix64 subStepDeltaTime = deltaTime / (Fix64)subSteps;
-        
+
             ClearCollisionInfo(world);
-            
+
             for (int subStep = 0; subStep < subSteps; subStep++)
             {
-                UpdateSingleStep(world,  subStepDeltaTime);
+                UpdateSingleStep(world, subStepDeltaTime);
             }
         }
 
-        private void UpdateSingleStep(World world,  Fix64 deltaTime)
+        private void UpdateSingleStep(World world, Fix64 deltaTime)
         {
             // 1. 收集力（重力等）
             CollectForces(world);
@@ -63,15 +69,12 @@ namespace Frame.ECS
         }
 
 
-
-
-
         /// <summary>
         /// 收集所有力（重力、用户施加的力等）
         /// </summary>
         private void CollectForces(World world)
         {
-            foreach (var (entity,body) in world.GetEntitiesWithComponents<PhysicsBodyComponent>())
+            foreach (var (entity, body) in world.GetEntitiesWithComponents<PhysicsBodyComponent>())
             {
                 if (body.IsDynamic && body.useGravity)
                 {
@@ -103,14 +106,14 @@ namespace Frame.ECS
         /// <summary>
         /// 更新位置和速度
         /// </summary>
-        private void UpdatePositions(World world,  Fix64 deltaTime)
+        private void UpdatePositions(World world, Fix64 deltaTime)
         {
-            foreach (var (entity,body,transform,velocity) in world.GetEntitiesWithComponents<PhysicsBodyComponent,Transform2DComponent,VelocityComponent>())
+            foreach (var (entity, body, transform, velocity) in world
+                         .GetEntitiesWithComponents<PhysicsBodyComponent, Transform2DComponent, VelocityComponent>())
             {
-                
                 if (!body.IsDynamic)
                     continue;
-                
+
 
                 // 计算加速度：a = F/m
                 FixVector2 acceleration = FixVector2.Zero;
@@ -130,7 +133,8 @@ namespace Frame.ECS
                 // 应用线性阻尼
                 if (body.linearDamping > Fix64.Zero)
                 {
-                    Fix64 dampingFactor = Fix64.One - Fix64.Clamp(body.linearDamping * deltaTime, Fix64.Zero, Fix64.One);
+                    Fix64 dampingFactor =
+                        Fix64.One - Fix64.Clamp(body.linearDamping * deltaTime, Fix64.Zero, Fix64.One);
                     newVelocity.velocity *= dampingFactor;
                 }
 
@@ -147,13 +151,15 @@ namespace Frame.ECS
         {
             // 检查是否需要扩容
             var allBounds = new List<(Entity entity, FixRect bounds)>();
-            FixRect quadTreeBound = new FixRect(Fix64.Zero,Fix64.Zero, Fix64.Zero, Fix64.Zero);
-            foreach (var (entity,transform,shape) in world.GetEntitiesWithComponents<Transform2DComponent,CollisionShapeComponent>())
+            FixRect quadTreeBound = new FixRect(Fix64.Zero, Fix64.Zero, Fix64.Zero, Fix64.Zero);
+            foreach (var (entity, transform, shape) in world
+                         .GetEntitiesWithComponents<Transform2DComponent, CollisionShapeComponent>())
             {
                 FixRect bounds = shape.GetBounds(transform.position);
                 allBounds.Add((entity, bounds));
                 quadTreeBound.Union(bounds);
             }
+
             quadTree.Init(quadTreeBound);
             foreach (var (entity, bounds) in allBounds)
             {
@@ -167,9 +173,11 @@ namespace Frame.ECS
         private void ResolveCollisions(World world)
         {
             var checkedPairs = new HashSet<(Entity, Entity)>();
-            
 
-            foreach (var (entityA,bodyA,transformA,shapeA) in world.GetEntitiesWithComponents<PhysicsBodyComponent,Transform2DComponent,CollisionShapeComponent>())
+
+            foreach (var (entityA, bodyA, transformA, shapeA) in world
+                         .GetEntitiesWithComponents<PhysicsBodyComponent, Transform2DComponent,
+                             CollisionShapeComponent>())
             {
                 // 只处理动态物体
                 if (bodyA.isStatic)
@@ -185,7 +193,7 @@ namespace Frame.ECS
                         continue;
 
                     // 检查碰撞对是否已检测
-                    var pair = (entityA.Id < entityB.Id) ? (entityA, entityB) : ( entityB, entityA);
+                    var pair = (entityA.Id < entityB.Id) ? (entityA, entityB) : (entityB, entityA);
                     if (checkedPairs.Contains(pair))
                         continue;
                     checkedPairs.Add(pair);
@@ -251,7 +259,7 @@ namespace Frame.ECS
         /// </summary>
         private void ClearCollisionInfo(World world)
         {
-            foreach (var (entity,_) in world.GetEntitiesWithComponents<PhysicsBodyComponent>())
+            foreach (var (entity, _) in world.GetEntitiesWithComponents<PhysicsBodyComponent>())
             {
                 if (world.TryGetComponent<CollisionComponent>(entity, out var collision))
                 {
@@ -433,8 +441,66 @@ namespace Frame.ECS
             collisionMatrix.Remove(key2);
         }
 
+        /// <summary>
+        /// 查询指定圆形区域内的Entity（通过QuadTree）
+        /// 
+        /// 使用场景：
+        /// - 僵尸攻击范围检测
+        /// - 技能范围检测
+        /// - 区域查询
+        /// 
+        /// 性能优化：
+        /// - 使用QuadTree宽相位检测，只对候选Entity进行精确圆形检测
+        /// - 支持Layer筛选，减少不必要的检测
+        /// </summary>
+        /// <param name="world">World实例（用于获取Entity组件）</param>
+        /// <param name="center">圆心位置</param>
+        /// <param name="radius">半径</param>
+        /// <param name="layerMask">层掩码（只返回匹配的层，-1表示所有层）</param>
+        /// <returns>匹配的Entity列表</returns>
+        public List<Entity> QueryCircleRegion(World world, FixVector2 center, Fix64 radius, int layerMask = -1)
+        {
+            // 将圆形转换为AABB（用于QuadTree查询）
+            // AABB = 圆的外接矩形
+            FixRect aabb = new FixRect(
+                center.x - radius, // x (左下角)
+                center.y - radius, // y (左下角)
+                radius * Fix64.Two, // width
+                radius * Fix64.Two // height
+            );
 
+            // 查询AABB区域内的所有Entity（宽相位）
+            var candidates = quadTree.Query(aabb);
+
+            // 精确圆形检测 + Layer过滤（窄相位）
+            var result = new List<Entity>();
+            Fix64 radiusSqr = radius * radius;
+
+            foreach (var entity in candidates)
+            {
+                // 1. Layer筛选（如果指定了layerMask）
+                if (layerMask >= 0)
+                {
+                    if (!world.TryGetComponent<PhysicsBodyComponent>(entity, out var body))
+                        continue;
+                    if (body.layer != layerMask)
+                        continue;
+                }
+
+                // 2. 精确圆形检测
+                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform))
+                    continue;
+
+                FixVector2 diff = transform.position - center;
+                Fix64 distanceSqr = diff.x * diff.x + diff.y * diff.y;
+
+                if (distanceSqr <= radiusSqr)
+                {
+                    result.Add(entity);
+                }
+            }
+
+            return result;
+        }
     }
 }
-
-

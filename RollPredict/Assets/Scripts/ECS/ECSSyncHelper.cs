@@ -7,6 +7,8 @@ using Object = UnityEngine.Object;
 
 namespace Frame.ECS
 {
+    
+    
     /// <summary>
     /// ECS同步辅助类：在ECS World和Unity对象之间同步状态
     /// 用于视图层显示
@@ -59,8 +61,16 @@ namespace Frame.ECS
             // 添加PlayerComponent
             var playerComponent = new PlayerComponent(playerId, initialHp,2);
             var transform2DComponent = new Transform2DComponent(initialPosition);
-            var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, false, Fix64.Zero,
-                Fix64.Zero, (Fix64)0.5);
+            var physicsBodyComponent = new PhysicsBodyComponent(
+                Fix64.One, 
+                false, 
+                false, 
+                false, 
+                Fix64.Zero,
+                Fix64.Zero, 
+                (Fix64)0.5,
+               (int)PhysicsLayer.Player 
+            );
             var collisionShapeComponent = new CollisionShapeComponent(ShapeType.Box, Fix64.One, FixVector2.One);
             var velocityComponent = new VelocityComponent();
             world.AddComponent(entity, playerComponent);

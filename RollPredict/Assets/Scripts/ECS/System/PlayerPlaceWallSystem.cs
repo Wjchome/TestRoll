@@ -97,7 +97,8 @@ namespace Frame.ECS
                 isTrigger: false,
                 restitution: Fix64.Zero,
                 friction: Fix64.Zero,
-                linearDamping: Fix64.Zero
+                linearDamping: Fix64.Zero,
+                (int)PhysicsLayer.Wall
             );
 
             // 添加碰撞形状（方块，大小与网格相同）
