@@ -141,25 +141,61 @@ namespace Frame.ECS
             return null;
         }
         
-        /// <summary>
-        /// 获取节点的邻居 平滑
-        /// </summary>
         private static List<GridNode> GetNeighbors(GridNode node, GridMapComponent map)
         {
             var neighbors = new List<GridNode>();
-            
-            int[] dx = { -1, 0, 1, 0,1,1,-1,-1 };
-            int[] dy = { 0, -1, 0, 1,1,-1,1,-1};
-            
+    
+            // 8个方向的偏移量：前4个是正交方向（上下左右），后4个是斜向方向（右上、右下、左上、左下）
+            int[] dx = { -1, 0, 1, 0, 1, 1, -1, -1 };
+            int[] dy = { 0, -1, 0, 1, 1, -1, 1, -1 };
+    
+            // 斜向方向对应的两个正交方向索引（索引对应dx/dy数组）
+            // 索引4（右上）→ 正交方向2（右）、3（上）
+            // 索引5（右下）→ 正交方向2（右）、1（下）
+            // 索引6（左上）→ 正交方向0（左）、3（上）
+            // 索引7（左下）→ 正交方向0（左）、1（下）
+            var diagonalChecks = new Dictionary<int, (int ortho1, int ortho2)>
+            {
+                {4, (2, 3)},
+                {5, (2, 1)},
+                {6, (0, 3)},
+                {7, (0, 1)}
+            };
+
             for (int i = 0; i < dx.Length; i++)
             {
-                GridNode neighbor = new GridNode(node.x + dx[i], node.y + dy[i]);
-                if (map.IsWalkable(neighbor))
+                // 1. 计算当前方向的邻居节点
+                int newX = node.x + dx[i];
+                int newY = node.y + dy[i];
+                GridNode neighbor = new GridNode(newX, newY);
+
+                // 2. 先检查基础可走性（邻居节点本身是否可走）
+                if (!map.IsWalkable(neighbor))
                 {
-                    neighbors.Add(neighbor);
+                    continue;
                 }
-            }
+
+                // 3. 针对斜向方向，额外校验两个正交方向是否都可走
+                bool isDiagonal = diagonalChecks.ContainsKey(i);
+                if (isDiagonal)
+                {
+                    var (orthoIdx1, orthoIdx2) = diagonalChecks[i];
+                    // 计算第一个正交方向的节点（如右上的“右”方向）
+                    GridNode orthoNode1 = new GridNode(node.x + dx[orthoIdx1], node.y + dy[orthoIdx1]);
+                    // 计算第二个正交方向的节点（如右上的“上”方向）
+                    GridNode orthoNode2 = new GridNode(node.x + dx[orthoIdx2], node.y + dy[orthoIdx2]);
             
+                    // 如果任意一个正交方向不可走，当前斜向邻居就不合法
+                    if (!map.IsWalkable(orthoNode1) || !map.IsWalkable(orthoNode2))
+                    {
+                        continue;
+                    }
+                }
+
+                // 4. 所有校验通过，加入邻居列表
+                neighbors.Add(neighbor);
+            }
+    
             return neighbors;
         }
         

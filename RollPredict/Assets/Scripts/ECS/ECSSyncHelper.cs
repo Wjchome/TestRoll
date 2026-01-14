@@ -96,6 +96,9 @@ namespace Frame.ECS
 
             // 同步僵尸状态
             SyncEntities<ZombieAIComponent>(world, "Zombie", ECSFrameSyncExample.Instance.zombiePrefab, null);
+            
+            // 同步墙状态
+            SyncEntities<WallComponent>(world, "Wall", ECSFrameSyncExample.Instance.wallPrefab, null);
         }
 
         /// <summary>
@@ -258,6 +261,17 @@ namespace Frame.ECS
                     if (zombieRenderer != null)
                     {
                         zombieRenderer.material.color = Color.green;
+                    }
+
+                    break;
+
+                case "Wall":
+                    // 创建灰色方块（墙）
+                    gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    var wallRenderer = gameObject.GetComponent<Renderer>();
+                    if (wallRenderer != null)
+                    {
+                        wallRenderer.material.color = Color.gray;
                     }
 
                     break;

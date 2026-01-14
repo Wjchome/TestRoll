@@ -52,6 +52,13 @@ namespace Frame.ECS
                         // 碰到敌人，销毁
                         removedEntities.Add(entity);
                     }
+                    else if (world.TryGetComponent<WallComponent>(new Entity(entityId), out var wallComponent))
+                    {
+                       
+
+                        // 碰到敌人，销毁
+                        removedEntities.Add(entity);
+                    }
                 }
             }
 

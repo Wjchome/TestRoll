@@ -122,6 +122,7 @@ namespace Frame.ECS
             RegisterSystem(new PlayerToggleSystem());
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
+            RegisterSystem(new PlayerPlaceWallSystem());
             RegisterSystem(new BulletCheckSystem());
             RegisterSystem(new PhysicsSystem());
             RegisterSystem(new ZombieSpawnSystem());
