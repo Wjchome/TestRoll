@@ -40,6 +40,18 @@ namespace Frame.ECS
                         // 碰到敌人，销毁
                         removedEntities.Add(entity);
                     }
+                    else if (world.TryGetComponent<ZombieAIComponent>(new Entity(entityId), out var zombieAIComponent))
+                    {
+                        if (world.TryGetComponent<VelocityComponent>(new Entity(entityId),
+                                out var zombieVelocityComponent))
+                        {
+                            zombieVelocityComponent.velocity += velocityComponent.velocity;
+                            world.AddComponent(new Entity(entityId), zombieVelocityComponent);
+                        }
+
+                        // 碰到敌人，销毁
+                        removedEntities.Add(entity);
+                    }
                 }
             }
 

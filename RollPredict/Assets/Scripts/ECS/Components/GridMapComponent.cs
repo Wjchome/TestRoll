@@ -29,11 +29,14 @@ namespace Frame.ECS
         
         /// <summary>
         /// 检查节点是否可通行
+        /// 
+        /// 地图范围：(-width, -height) 到 (width, height)
+        /// 网格坐标范围：-width <= x < width, -height <= y < height
         /// </summary>
         public bool IsWalkable(GridNode node)
         {
-            // 检查边界
-            if (node.x < 0 || node.x >= width || node.y < 0 || node.y >= height)
+            // 检查边界：支持负数坐标，范围从 -width 到 width-1
+            if (node.x < -width || node.x >= width || node.y < -height || node.y >= height)
                 return false;
             
             // 检查障碍物
@@ -42,11 +45,15 @@ namespace Frame.ECS
         
         /// <summary>
         /// 世界坐标转网格坐标
+        /// 
+        /// 使用向下取整（Floor），确保负数坐标正确处理
+        /// 例如：worldPos.x = -10.5, cellSize = 1 → gridX = -11（向下取整）
         /// </summary>
         public GridNode WorldToGrid(FixVector2 worldPos)
         {
-            int x = (int)(worldPos.x / cellSize);
-            int y = (int)(worldPos.y / cellSize);
+            // 使用向下取整，确保负数坐标正确处理
+            int x = (int)Fix64.Floor(worldPos.x / cellSize);
+            int y = (int)Fix64.Floor(worldPos.y / cellSize);
             return new GridNode(x, y);
         }
         

@@ -10,7 +10,7 @@ namespace Frame.ECS
     /// </summary>
     public class ZombieSpawnSystem : ISystem
     {
-        public Fix64 zombieMoveSpeed = (Fix64)0.05f;
+        public Fix64 zombieMoveSpeed = (Fix64)0.03f;
         public void Execute(World world, List<FrameData> inputs)
         {
             // 检查是否已经有僵尸存在（避免重复生成）

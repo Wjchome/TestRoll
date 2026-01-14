@@ -156,6 +156,8 @@ namespace Frame.ECS
                         _entityToGameObject[entity.Id] = gameObject;
                         _entityTypeMap[entity.Id] = entityType;
                     }
+
+                    gameObject.transform.position = (Vector2)transform.position;
                 }
 
                 // 更新位置
