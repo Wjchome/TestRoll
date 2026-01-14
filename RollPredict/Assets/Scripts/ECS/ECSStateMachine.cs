@@ -59,6 +59,7 @@ namespace Frame.ECS
             {
                 UnityEngine.Debug.Log($"[ECSStateMachine] Unregistered system: {system.GetType().Name}");
             }
+
             return removed;
         }
 
@@ -92,6 +93,7 @@ namespace Frame.ECS
                 if (system is T typedSystem)
                     return typedSystem;
             }
+
             return null;
         }
 
@@ -121,7 +123,9 @@ namespace Frame.ECS
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new BulletCheckSystem());
             RegisterSystem(new PhysicsSystem());
-            
+            RegisterSystem(new ZombieSpawnSystem());
+            RegisterSystem(new ZombieAISystem());
+
             // 可以继续添加其他System：
             // RegisterSystem(new CollisionDetectionSystem());
             // RegisterSystem(new HealthSystem());
@@ -156,4 +160,3 @@ namespace Frame.ECS
         }
     }
 }
-

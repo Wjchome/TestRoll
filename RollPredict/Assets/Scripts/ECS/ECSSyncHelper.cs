@@ -1,13 +1,21 @@
+using System;
 using System.Collections.Generic;
 using Frame.ECS;
 using Frame.FixMath;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Frame.ECS
 {
     /// <summary>
     /// ECS同步辅助类：在ECS World和Unity对象之间同步状态
     /// 用于视图层显示
+    /// 
+    /// 优化点：
+    /// 1. 提取通用同步逻辑，减少代码重复
+    /// 2. 统一Entity类型管理，避免通过名称判断
+    /// 3. 缓存常用引用，提升性能
+    /// 4. 改进代码结构，提高可维护性
     /// </summary>
     public static class ECSSyncHelper
     {
@@ -30,6 +38,12 @@ namespace Frame.ECS
         /// </summary>
         private static Dictionary<int, int> _entityToPlayerId = new Dictionary<int, int>();
 
+        /// <summary>
+        /// Entity类型标记（用于区分不同类型的Entity）
+        /// Key: Entity ID
+        /// Value: Entity类型（"Player", "Bullet", "Zombie"等）
+        /// </summary>
+        private static Dictionary<int, string> _entityTypeMap = new Dictionary<int, string>();
 
 
 
@@ -43,22 +57,23 @@ namespace Frame.ECS
             Entity entity = world.CreateEntity();
 
             // 添加PlayerComponent
-            var playerComponent = new PlayerComponent(playerId,  initialHp);
+            var playerComponent = new PlayerComponent(playerId, initialHp);
             var transform2DComponent = new Transform2DComponent(initialPosition);
-            var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, false, Fix64.Zero
-                , Fix64.Zero, (Fix64)0.5);
-            var collisionShapeComponent = new CollisionShapeComponent(ShapeType.Box,Fix64.One,FixVector2.One);
+            var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, false, Fix64.Zero,
+                Fix64.Zero, (Fix64)0.5);
+            var collisionShapeComponent = new CollisionShapeComponent(ShapeType.Box, Fix64.One, FixVector2.One);
             var velocityComponent = new VelocityComponent();
             world.AddComponent(entity, playerComponent);
             world.AddComponent(entity, transform2DComponent);
             world.AddComponent(entity, physicsBodyComponent);
             world.AddComponent(entity, collisionShapeComponent);
             world.AddComponent(entity, velocityComponent);
-            
+
             // 建立映射
             _entityToGameObject[entity.Id] = gameObject;
             _playerIdToEntity[playerId] = entity;
             _entityToPlayerId[entity.Id] = playerId;
+            _entityTypeMap[entity.Id] = "Player";
 
             return entity;
         }
@@ -70,86 +85,106 @@ namespace Frame.ECS
         public static void SyncFromWorldToUnity(World world)
         {
             // 同步玩家状态
-            foreach (var entity in world.GetEntitiesWithComponent<PlayerComponent>())
+            SyncEntities<PlayerComponent>(world, "Player", null, (entity, transform) =>
             {
-                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform2DComponent))
-                    continue;
-
-                // 查找对应的Unity对象
-                if (!_entityToGameObject.TryGetValue(entity.Id, out var gameObject))
-                    continue;
-
-                // 更新Unity对象的位置
-                if (ECSFrameSyncExample.Instance.isSmooth)
-                {
-                    gameObject.transform.position = Vector3.Lerp(gameObject.transform.position, new Vector3(
-                        (float)transform2DComponent.position.x,
-                        (float)transform2DComponent.position.y,
-                        0
-                    ), ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime);
-                }
-                else
-                {
-                    gameObject.transform.position = new Vector3(
-                        (float)transform2DComponent.position.x,
-                        (float)transform2DComponent.position.y,
-                        0
-                    );
-                }
-            }
+                // 玩家已经通过RegisterPlayer注册，不需要创建GameObject
+                return _entityToGameObject.TryGetValue(entity.Id, out var go) ? go : null;
+            });
 
             // 同步子弹状态
-            SyncBullets(world);
+            SyncEntities<BulletComponent>(world, "Bullet", ECSFrameSyncExample.Instance.bulletPrefab, null);
+
+            // 同步僵尸状态
+            SyncEntities<ZombieAIComponent>(world, "Zombie", ECSFrameSyncExample.Instance.zombiePrefab, null);
         }
 
         /// <summary>
-        /// 同步子弹：创建、更新、销毁
+        /// 通用Entity同步方法（泛型）
+        /// 
+        /// 处理流程：
+        /// 1. 收集当前帧所有指定类型的Entity
+        /// 2. 销毁ECS中不存在的GameObject
+        /// 3. 创建或更新GameObject
         /// </summary>
-        private static void SyncBullets(World world)
+        /// <typeparam name="TComponent">组件类型</typeparam>
+        /// <param name="world">ECS World</param>
+        /// <param name="entityType">Entity类型标识（用于标记和过滤）</param>
+        /// <param name="prefab">Prefab（如果为null，需要提供createGameObject回调）</param>
+        /// <param name="getGameObject">获取GameObject的回调（用于玩家等已注册的Entity）</param>
+        private static void SyncEntities<TComponent>(
+            World world,
+            string entityType,
+            GameObject prefab,
+            Func<Entity, Transform2DComponent, GameObject> getGameObject) where TComponent : struct, IComponent
         {
-            // 1. 收集当前帧所有子弹Entity ID（按顺序）
-            var currentBulletEntityIds = new List<int>();
-            foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
+            // 1. 收集当前帧所有指定类型的Entity ID
+            var currentEntityIds = new HashSet<int>();
+            var entitiesWithTransform = new List<(Entity entity, Transform2DComponent transform)>();
+
+            foreach (var entity in world.GetEntitiesWithComponent<TComponent>())
             {
-                currentBulletEntityIds.Add(entity.Id);
+                if (world.TryGetComponent<Transform2DComponent>(entity, out var transform))
+                {
+                    currentEntityIds.Add(entity.Id);
+                    entitiesWithTransform.Add((entity, transform));
+                }
             }
 
-            var currentBulletEntityIdSet = new HashSet<int>(currentBulletEntityIds);
+            // 2. 销毁ECS中不存在的GameObject（只处理指定类型的Entity）
+            CleanupDestroyedEntities(world, entityType, currentEntityIds);
 
-            // // 2. 检测"复活"的Entity ID（回滚后重新使用的ID）
-            // // 如果一个Entity ID：
-            // // - 上一帧不存在（不在 _lastFrameEntityIds 中）
-            // // - 但GameObject映射存在（说明之前创建过）
-            // // - 当前帧又出现了
-            // // → 说明发生了回滚，这是重新创建的Entity，需要销毁旧GameObject
-            // var reusedEntityIds = new List<int>();
-            // foreach (var entityId in currentBulletEntityIds)
-            // {
-            //     // 如果当前Entity ID在上一帧不存在，但GameObject映射存在
-            //     if (!_lastFrameEntityIds.Contains(entityId) && _entityToGameObject.ContainsKey(entityId))
-            //     {
-            //         reusedEntityIds.Add(entityId);
-            //         Debug.Log($"[ECSSyncHelper] 检测到Entity ID重用：{entityId}，销毁旧GameObject");
-            //
-            //         // 销毁旧的GameObject
-            //         if (_entityToGameObject.TryGetValue(entityId, out var oldGameObject))
-            //         {
-            //             if (oldGameObject != null)
-            //             {
-            //                 Object.Destroy(oldGameObject);
-            //             }
-            //
-            //             _entityToGameObject.Remove(entityId);
-            //         }
-            //     }
-            // }
-
-            // 3. 销毁ECS中不存在的子弹GameObject
-            var entitiesToRemove = new List<int>();
-            foreach (var (entityId,gameObject) in _entityToGameObject)
+            // 3. 创建或更新GameObject
+            foreach (var (entity, transform) in entitiesWithTransform)
             {
-                // 如果ECS中不存在这个子弹Entity，销毁GameObject
-                if (!_entityToPlayerId.ContainsKey(entityId)&&!currentBulletEntityIdSet.Contains(entityId))
+                GameObject gameObject = null;
+
+                // 尝试获取已存在的GameObject
+                if (getGameObject != null)
+                {
+                    gameObject = getGameObject(entity, transform);
+                }
+                else if (_entityToGameObject.TryGetValue(entity.Id, out gameObject))
+                {
+                    // GameObject已存在
+                }
+                else
+                {
+                    // 创建新的GameObject
+                    gameObject = CreateEntityGameObject(entity, entityType, prefab);
+                    if (gameObject != null)
+                    {
+                        _entityToGameObject[entity.Id] = gameObject;
+                        _entityTypeMap[entity.Id] = entityType;
+                    }
+                }
+
+                // 更新位置
+                if (gameObject != null)
+                {
+                    UpdateGameObjectPosition(gameObject, transform.position);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 清理已销毁的Entity对应的GameObject
+        /// </summary>
+        private static void CleanupDestroyedEntities(World world, string entityType, HashSet<int> currentEntityIds)
+        {
+            var entitiesToRemove = new List<int>();
+
+            foreach (var (entityId, gameObject) in _entityToGameObject)
+            {
+                // 跳过玩家Entity（由RegisterPlayer管理）
+                if (_entityToPlayerId.ContainsKey(entityId))
+                    continue;
+
+                // 只处理指定类型的Entity
+                if (!_entityTypeMap.TryGetValue(entityId, out var type) || type != entityType)
+                    continue;
+
+                // 如果Entity不在当前列表中，说明已被销毁
+                if (!currentEntityIds.Contains(entityId))
                 {
                     if (gameObject != null)
                     {
@@ -164,58 +199,104 @@ namespace Frame.ECS
             foreach (var entityId in entitiesToRemove)
             {
                 _entityToGameObject.Remove(entityId);
+                _entityTypeMap.Remove(entityId);
             }
-
-            // 4. 创建或更新子弹GameObject（按顺序遍历，确保确定性）
-            foreach (var entity in world.GetEntitiesWithComponent<BulletComponent>())
-            {
-                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform2DComponent))
-                    continue;
-
-                // 如果GameObject不存在，创建它
-                if (!_entityToGameObject.TryGetValue(entity.Id, out var bulletGameObject))
-                {
-                    bulletGameObject = Object.Instantiate(ECSFrameSyncExample.Instance.bulletPrefab);
-                    bulletGameObject.name = $"Bullet_{entity.Id}";
-                    _entityToGameObject[entity.Id] = bulletGameObject;
-                    bulletGameObject.transform.position = new Vector3(
-                        (float)transform2DComponent.position.x,
-                        (float)transform2DComponent.position.y,
-                        0
-                    );
-                }
-
-                // 更新子弹位置
-                if (bulletGameObject != null)
-                {
-                    if (ECSFrameSyncExample.Instance.isSmooth)
-                    {
-                        bulletGameObject.transform.position = Vector3.Lerp(bulletGameObject.transform.position,
-                            new Vector3(
-                                (float)transform2DComponent.position.x,
-                                (float)transform2DComponent.position.y,
-                                0
-                            ), ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime);
-                    }
-                    else
-                    {
-                        bulletGameObject.transform.position = new Vector3(
-                            (float)transform2DComponent.position.x,
-                            (float)transform2DComponent.position.y,
-                            0
-                        );
-                    }
-                }
-            }
-
-            // // 5. 更新 _lastFrameEntityIds（保存当前帧的所有Entity ID）
-            // _lastFrameEntityIds.Clear();
-            // foreach (var entity in world.GetAllEntities())
-            // {
-            //     _lastFrameEntityIds.Add(entity.Id);
-            // }
         }
 
+        /// <summary>
+        /// 创建Entity对应的GameObject
+        /// </summary>
+        private static GameObject CreateEntityGameObject(Entity entity, string entityType, GameObject prefab)
+        {
+            GameObject gameObject = null;
+
+            if (prefab != null)
+            {
+                // 使用Prefab实例化
+                gameObject = Object.Instantiate(prefab);
+            }
+            else
+            {
+                // 创建默认GameObject（根据类型）
+                gameObject = CreateDefaultGameObject(entityType);
+            }
+
+            if (gameObject != null)
+            {
+                gameObject.name = $"{entityType}_{entity.Id}";
+            }
+
+            return gameObject;
+        }
+
+        /// <summary>
+        /// 创建默认GameObject（当没有Prefab时）
+        /// </summary>
+        private static GameObject CreateDefaultGameObject(string entityType)
+        {
+            GameObject gameObject = null;
+
+            switch (entityType)
+            {
+                case "Bullet":
+                    // 创建红色小球
+                    gameObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    var bulletRenderer = gameObject.GetComponent<Renderer>();
+                    if (bulletRenderer != null)
+                    {
+                        bulletRenderer.material.color = Color.red;
+                    }
+
+                    break;
+
+                case "Zombie":
+                    // 创建绿色方块
+                    gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    var zombieRenderer = gameObject.GetComponent<Renderer>();
+                    if (zombieRenderer != null)
+                    {
+                        zombieRenderer.material.color = Color.green;
+                    }
+
+                    break;
+            }
+
+            // 移除碰撞器（物理由ECS处理）
+            if (gameObject != null)
+            {
+                var collider = gameObject.GetComponent<Collider>();
+                if (collider != null)
+                {
+                    Object.Destroy(collider);
+                }
+            }
+
+            return gameObject;
+        }
+
+        /// <summary>
+        /// 更新GameObject位置（统一的位置更新逻辑）
+        /// </summary>
+        private static void UpdateGameObjectPosition(GameObject gameObject, FixVector2 position)
+        {
+            if (gameObject == null)
+                return;
+
+            Vector3 targetPosition = new Vector3((float)position.x, (float)position.y, 0);
+
+            if (ECSFrameSyncExample.Instance.isSmooth)
+            {
+                gameObject.transform.position = Vector3.Lerp(
+                    gameObject.transform.position,
+                    targetPosition,
+                    ECSFrameSyncExample.Instance.smoothNum * Time.deltaTime
+                );
+            }
+            else
+            {
+                gameObject.transform.position = targetPosition;
+            }
+        }
 
         /// <summary>
         /// 通过playerId获取Entity
@@ -251,7 +332,7 @@ namespace Frame.ECS
             _entityToGameObject.Clear();
             _playerIdToEntity.Clear();
             _entityToPlayerId.Clear();
-           // _lastFrameEntityIds.Clear();
+            _entityTypeMap.Clear();
         }
     }
 }

@@ -21,6 +21,8 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     [Header("玩家设置")] public GameObject playerPrefab;
 
     [Header("子弹设置")] public GameObject bulletPrefab; // 可选：如果不设置，会自动创建红色小球
+    
+    [Header("僵尸设置")] public GameObject zombiePrefab; // 可选：如果不设置，会自动创建绿色方块
 
     [Header("UI设置")] public Text debugText; // 调试信息显示
 
