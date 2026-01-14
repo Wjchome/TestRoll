@@ -68,7 +68,7 @@ namespace Frame.ECS
             world.AddComponent(entity, physicsBodyComponent);
             world.AddComponent(entity, collisionShapeComponent);
             world.AddComponent(entity, velocityComponent);
-
+            
             // 建立映射
             _entityToGameObject[entity.Id] = gameObject;
             _playerIdToEntity[playerId] = entity;
@@ -96,7 +96,7 @@ namespace Frame.ECS
 
             // 同步僵尸状态
             SyncEntities<ZombieAIComponent>(world, "Zombie", ECSFrameSyncExample.Instance.zombiePrefab, null);
-            
+
             // 同步墙状态
             SyncEntities<WallComponent>(world, "Wall", ECSFrameSyncExample.Instance.wallPrefab, null);
         }
@@ -161,7 +161,7 @@ namespace Frame.ECS
                     }
 
                     gameObject.transform.position = (Vector2)transform.position;
-                }
+            }
 
                 // 更新位置
                 if (gameObject != null)
@@ -212,7 +212,7 @@ namespace Frame.ECS
         /// 创建Entity对应的GameObject
         /// </summary>
         private static GameObject CreateEntityGameObject(Entity entity, string entityType, GameObject prefab)
-        {
+            {
             GameObject gameObject = null;
 
             if (prefab != null)
@@ -242,7 +242,7 @@ namespace Frame.ECS
             GameObject gameObject = null;
 
             switch (entityType)
-            {
+                {
                 case "Bullet":
                     // 创建红色小球
                     gameObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -275,14 +275,14 @@ namespace Frame.ECS
                     }
 
                     break;
-            }
+                }
 
             // 移除碰撞器（物理由ECS处理）
             if (gameObject != null)
-            {
+                {
                 var collider = gameObject.GetComponent<Collider>();
                 if (collider != null)
-                {
+                    {
                     Object.Destroy(collider);
                 }
             }
@@ -301,7 +301,7 @@ namespace Frame.ECS
             Vector3 targetPosition = new Vector3((float)position.x, (float)position.y, 0);
 
             if (ECSFrameSyncExample.Instance.isSmooth)
-            {
+                    {
                 gameObject.transform.position = Vector3.Lerp(
                     gameObject.transform.position,
                     targetPosition,

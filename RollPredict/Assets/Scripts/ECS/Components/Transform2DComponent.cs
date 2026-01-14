@@ -21,7 +21,7 @@ namespace Frame.ECS
 
         public object Clone()
         {
-            return new Transform2DComponent(position);
+            return this;
         }
 
         public override string ToString()

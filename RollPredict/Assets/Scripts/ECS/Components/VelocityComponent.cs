@@ -21,7 +21,7 @@ namespace Frame.ECS
 
         public object Clone()
         {
-            return new VelocityComponent(velocity);
+            return this;
         }
 
         public override string ToString()

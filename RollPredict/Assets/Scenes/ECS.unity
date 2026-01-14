@@ -468,7 +468,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maxSnapshots: 10
   maxInputshots: 100
-  enablePredictionRollback: 0
+  enablePredictionRollback: 1
   keyframeInterval: 10
   confirmedServerFrame: 0
   predictedFrame: 0

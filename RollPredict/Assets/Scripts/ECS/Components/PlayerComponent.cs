@@ -38,13 +38,13 @@ namespace Frame.ECS
         /// 子弹发射冷却时间配置（帧数）
         /// 例如：18 表示 18 帧的冷却（假设 60fps = 0.3 秒）
         /// </summary>
-        public static Fix64 BulletCooldownDuration = (Fix64)3; // 18帧 ≈ 0.3秒 @ 60fps
+        public static Fix64 BulletCooldownDuration = (Fix64)1; // 18帧 ≈ 0.3秒 @ 60fps
         
         /// <summary>
         /// 放置墙冷却时间配置（帧数）
         /// 例如：30 表示 30 帧的冷却（假设 60fps = 0.5 秒）
         /// </summary>
-        public static Fix64 WallCooldownDuration = (Fix64)3; // 30帧 ≈ 0.5秒 @ 60fps
+        public static Fix64 WallCooldownDuration = (Fix64)1; // 30帧 ≈ 0.5秒 @ 60fps
 
         public PlayerComponent(int playerId, int hp,  int sumIndex)
         {

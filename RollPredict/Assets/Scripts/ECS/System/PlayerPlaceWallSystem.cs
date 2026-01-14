@@ -37,7 +37,7 @@ namespace Frame.ECS
                 
                 // 检查是否在放置墙模式（currentIndex == 0 表示放置墙模式）
                 if (playerComponent.currentIndex != 0)
-                {
+                    {
                     continue; // 不是放置墙模式
                 }
                 

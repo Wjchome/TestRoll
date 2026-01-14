@@ -76,16 +76,7 @@ namespace Frame.ECS
 
         public object Clone()
         {
-            return new PhysicsBodyComponent(
-                mass,
-                isStatic,
-                useGravity,
-                isTrigger,
-                restitution,
-                friction,
-                linearDamping,
-                layer
-            );
+            return this;
         }
 
         public override string ToString()

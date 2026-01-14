@@ -94,7 +94,7 @@ namespace Frame.ECS
 
         public object Clone()
         {
-            return new CollisionShapeComponent(shapeType, radius, size);
+            return this;
         }
 
         public override string ToString()

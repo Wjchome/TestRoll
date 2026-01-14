@@ -399,8 +399,6 @@ namespace Frame.ECS
                 cloned._componentStorages[type] = storage.Clone();
             }
             
-            // 拷贝单例组件缓存（浅拷贝即可，因为Entity是值类型）
-            cloned._singletonComponents = new Dictionary<Type, Entity>(this._singletonComponents);
             
             return cloned;
         }

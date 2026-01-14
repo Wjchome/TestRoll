@@ -128,7 +128,7 @@ namespace Frame.ECS
             RegisterSystem(new PhysicsSystem());
             RegisterSystem(new ZombieSpawnSystem());
             RegisterSystem(new ZombieAISystem());
-
+            
             // 可以继续添加其他System：
             // RegisterSystem(new CollisionDetectionSystem());
             // RegisterSystem(new HealthSystem());
