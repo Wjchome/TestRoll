@@ -5,6 +5,7 @@ using Proto;
 
 namespace Frame.ECS
 {
+
     /// <summary>
     /// 僵尸AI系统：处理僵尸的寻路和移动
     /// </summary>
@@ -12,6 +13,7 @@ namespace Frame.ECS
     {
         // 寻路冷却时间（帧数）
         private const int PATHFINDING_COOLDOWN_FRAMES = 10;
+        private Fix64 AttackSqr = (Fix64)0.5f;
 
         public void Execute(World world, List<FrameData> inputs)
         {
@@ -38,7 +40,23 @@ namespace Frame.ECS
                      world.GetEntitiesWithComponents<Transform2DComponent, ZombieAIComponent,VelocityComponent>())
             {
                 var updatedAI = ai;
+                var newVelocity = velocityComponent;
+                
+                // 寻找最近的玩家
+                FixVector2 nearestPlayerPos = FixVector2.Zero;
+                Fix64 minDistance = Fix64.MaxValue;
 
+                foreach (var playerPos in playerPositions)
+                {
+                    FixVector2 diff = playerPos - transform.position;
+                    Fix64 distance = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
+                    if (distance < minDistance)
+                    {
+                        minDistance = distance;
+                        nearestPlayerPos = playerPos;
+                    }
+                }
+                
                 // 更新寻路冷却
                 if (ai.pathfindingCooldown > 0)
                 {
@@ -47,21 +65,6 @@ namespace Frame.ECS
                 }
                 else
                 {
-                    // 寻找最近的玩家
-                    FixVector2 nearestPlayerPos = FixVector2.Zero;
-                    Fix64 minDistance = Fix64.MaxValue;
-
-                    foreach (var playerPos in playerPositions)
-                    {
-                        FixVector2 diff = playerPos - transform.position;
-                        Fix64 distance = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            nearestPlayerPos = playerPos;
-                        }
-                    }
-
                     // 如果没有找到玩家，跳过
                     if (playerPositions.Count == 0)
                         continue;
@@ -90,35 +93,30 @@ namespace Frame.ECS
                     world.AddComponent(entity, updatedAI);
                 }
 
+                
 
-                // 沿着路径移动（需要重新获取AI组件，因为可能被更新了）
-                if (!world.TryGetComponent<ZombieAIComponent>(entity, out var currentAI))
-                    continue;
-
-                if (currentAI.currentPath != null && currentAI.currentPath.Count > 0 &&
-                    currentAI.currentPathIndex < currentAI.currentPath.Count)
+                if (updatedAI.currentPath != null && updatedAI.currentPath.Count > 0 &&
+                    updatedAI.currentPathIndex < updatedAI.currentPath.Count)
                 {
-                    FixVector2 targetPoint = currentAI.currentPath[currentAI.currentPathIndex];
+                    FixVector2 targetPoint = updatedAI.currentPath[updatedAI.currentPathIndex];
                     FixVector2 direction = targetPoint - transform.position;
                     Fix64 distance = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
 
                     // 如果到达当前路径点，移动到下一个点
                     if (distance < map.cellSize / Fix64.Two)
                     {
-                        var _updatedAI = currentAI;
-                        _updatedAI.currentPathIndex++;
-                        world.AddComponent(entity, _updatedAI);
+                        world.AddComponent(entity, updatedAI);
                     }
                     else
                     {
                         // 移动到目标点
                         direction.Normalize();
-                        var newVelocity = velocityComponent;
-                        newVelocity.velocity += direction * currentAI.moveSpeed;
-       
+                        newVelocity.velocity += direction * updatedAI.moveSpeed;
                         world.AddComponent(entity, newVelocity);
                     }
                 }
+
+                
             }
         }
     }

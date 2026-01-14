@@ -19,7 +19,8 @@ namespace Frame.ECS
         /// <summary>
         /// 生命值
         /// </summary>
-        public int hp;
+        public int HP;
+        public int maxHP;
 
         public int currentIndex;
         public int sumIndex;
@@ -49,7 +50,8 @@ namespace Frame.ECS
         public PlayerComponent(int playerId, int hp,  int sumIndex)
         {
             this.playerId = playerId;
-            this.hp = hp;
+            this.maxHP = hp;
+            this.HP = hp;
             currentIndex = 0;
             this.sumIndex = sumIndex;
             this.bulletCooldownTimer = Fix64.Zero;
@@ -63,7 +65,7 @@ namespace Frame.ECS
 
         public override string ToString()
         {
-            return $"{this.GetType().Name}:playerId = {playerId},hp = {hp}";
+            return $"{this.GetType().Name}:playerId = {playerId},hp = {HP}";
         }
     
     }

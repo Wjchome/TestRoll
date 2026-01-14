@@ -75,6 +75,14 @@ namespace Frame.ECS
             _entityToPlayerId[entity.Id] = playerId;
             _entityTypeMap[entity.Id] = "Player";
 
+            // 初始化UI组件（如果存在）
+            var uiComponent = gameObject.GetComponent<PlayerUI>();
+            if (uiComponent != null)
+            {
+                // 初始化时最大血量 = 当前血量（或从配置中获取）
+                uiComponent.UpdateHealth(initialHp, initialHp);
+            }
+
             return entity;
         }
 
@@ -90,6 +98,9 @@ namespace Frame.ECS
                 // 玩家已经通过RegisterPlayer注册，不需要创建GameObject
                 return _entityToGameObject.TryGetValue(entity.Id, out var go) ? go : null;
             });
+
+            // 同步玩家UI（血量等）
+            SyncPlayerUI(world);
 
             // 同步子弹状态
             SyncEntities<BulletComponent>(world, "Bullet", ECSFrameSyncExample.Instance.bulletPrefab, null);
@@ -338,6 +349,29 @@ namespace Frame.ECS
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 同步玩家UI（血量等）
+        /// 
+        /// 设计说明：
+        /// - 这是视图层代码，负责将ECS数据同步到Unity UI
+        /// - 通过PlayerUIComponent组件更新UI显示
+        /// - 支持多种UI显示方式（文本、血条、图片等）
+        /// </summary>
+        private static void SyncPlayerUI(World world)
+        {
+            foreach (var (entity, playerComponent) in world.GetEntitiesWithComponents<PlayerComponent>())
+            {
+                if (_entityToGameObject.TryGetValue(entity.Id, out var playerGO))
+                {
+                    var uiComponent = playerGO.GetComponent<PlayerUI>();
+                    if (uiComponent != null)
+                    {
+                        uiComponent.UpdateHealth(playerComponent.HP, playerComponent.maxHP);
+                    }
+                }
+            }
         }
 
         /// <summary>
