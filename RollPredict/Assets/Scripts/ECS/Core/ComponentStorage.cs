@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 namespace Frame.ECS
 {
-
-
     /// <summary>
     /// Component存储：为每种Component类型提供独立的存储（紧密排列版本）
     /// 
@@ -18,15 +16,15 @@ namespace Frame.ECS
     /// 2. 批量处理高效：可以顺序遍历数组，性能更好
     /// 3. 复杂度不变：所有操作的时间复杂度与之前相同
     /// </summary>
-    public class ComponentStorage<TComponent> : IComponentStorage where TComponent :struct,IComponent
+    public class ComponentStorage<TComponent> : IComponentStorage where TComponent : struct, IComponent
     {
-      //   
+        //   
         // 紧密排列的组件数组
         private List<TComponent> _components = new List<TComponent>();
-        
+
         // Entity -> 数组索引映射（O(1)查找）
         private Dictionary<Entity, int> _entityToIndex = new Dictionary<Entity, int>();
-        
+
         // 数组索引 -> Entity映射（用于遍历和反向查找）
         private List<Entity> _indexToEntity = new List<Entity>();
 
@@ -60,6 +58,7 @@ namespace Frame.ECS
                 component = _components[index];
                 return true;
             }
+
             component = default(TComponent);
             return false;
         }
@@ -69,8 +68,8 @@ namespace Frame.ECS
         /// </summary>
         public TComponent Get(Entity entity)
         {
-            return _entityToIndex.TryGetValue(entity, out int index) 
-                ? _components[index] 
+            return _entityToIndex.TryGetValue(entity, out int index)
+                ? _components[index]
                 : default(TComponent);
         }
 
@@ -83,7 +82,7 @@ namespace Frame.ECS
                 return false;
 
             int lastIndex = _components.Count - 1;
-            
+
             if (index != lastIndex)
             {
                 // 将最后一个元素移到当前位置（保持紧密排列）
@@ -92,12 +91,12 @@ namespace Frame.ECS
                 _entityToIndex[lastEntity] = index;
                 _indexToEntity[index] = lastEntity;
             }
-            
+
             // 删除最后一个元素
             _components.RemoveAt(lastIndex);
             _indexToEntity.RemoveAt(lastIndex);
             _entityToIndex.Remove(entity);
-            
+
             return true;
         }
 
@@ -128,6 +127,7 @@ namespace Frame.ECS
             {
                 result.Add(_indexToEntity[i], _components[i]);
             }
+
             return result;
         }
 
@@ -178,7 +178,7 @@ namespace Frame.ECS
             {
                 Entity entity = _indexToEntity[i];
                 TComponent component = _components[i];
-                
+
                 if (component is ICloneable cloneable)
                 {
                     result.Add(entity, (IComponent)cloneable.Clone());
@@ -189,6 +189,7 @@ namespace Frame.ECS
                     result.Add(entity, component);
                 }
             }
+
             return result;
         }
 
@@ -214,7 +215,7 @@ namespace Frame.ECS
         {
             Clear();
         }
-        
+
         /// <summary>
         /// 深拷贝ComponentStorage（接口实现）
         /// </summary>
@@ -222,27 +223,39 @@ namespace Frame.ECS
         {
             return Clone();
         }
-        
+
         /// <summary>
         /// 深拷贝ComponentStorage（用于快照）
         /// 
+        /// 关键：即使Component是struct（值类型），如果它包含引用类型字段（如List、OrderedHashSet等），
+        /// 直接拷贝struct只会浅拷贝引用字段，导致多个组件共享同一个引用对象。
+        /// 
+        /// 解决方案：调用每个组件的Clone()方法，确保引用类型字段被深拷贝。
+        /// 
         /// 性能优化：
-        /// - 直接克隆内部数据结构，避免类型转换
-        /// - 所有Component都是值类型，直接拷贝即可
+        /// - 对于纯值类型组件（无引用字段），Clone()通常只是返回自身，开销很小
+        /// - 对于包含引用字段的组件（如GridMapComponent、ZombieAIComponent），必须深拷贝
         /// </summary>
         public ComponentStorage<TComponent> Clone()
         {
             var cloned = new ComponentStorage<TComponent>();
-            
-            // 深拷贝所有Component（值类型，直接拷贝）
-            cloned._components = new List<TComponent>(this._components);
-            
+
+            // 深拷贝所有Component
+            // 关键：必须调用每个组件的Clone()方法，确保引用类型字段被深拷贝
+            cloned._components = new List<TComponent>(this._components.Count);
+            for (int i = 0; i < this._components.Count; i++)
+            {
+                var component = this._components[i];
+                // 调用ICloneable.Clone()，确保引用类型字段被深拷贝
+
+                cloned._components.Add((TComponent)component.Clone());
+            }
+
             // 深拷贝映射字典
             cloned._entityToIndex = new Dictionary<Entity, int>(this._entityToIndex);
             cloned._indexToEntity = new List<Entity>(this._indexToEntity);
-            
+
             return cloned;
         }
     }
 }
-

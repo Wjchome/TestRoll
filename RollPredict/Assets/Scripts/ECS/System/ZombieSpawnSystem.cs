@@ -17,39 +17,42 @@ namespace Frame.ECS
             var existingZombies = world.GetEntitiesWithComponent<ZombieAIComponent>();
             if (existingZombies.Count()> 0)
                 return; // 已经有僵尸了，不重复生成
-            
-            
-            Entity zombieEntity = world.CreateEntity();
 
-            // 设置僵尸初始位置（在地图右上角）
-            FixVector2 zombiePosition = new FixVector2((Fix64)10, (Fix64)6);
-            Fix64 nearestDis = Fix64.MaxValue;
-            FixVector2 nearestPosition = FixVector2.Zero;
-            foreach (var (_,_,transform) in world.GetEntitiesWithComponents<PlayerComponent,Transform2DComponent>())
+            for (int i = 0; i < 2; i++)
             {
-                if ((transform.position - zombiePosition).SqrMagnitude() < nearestDis)
+                Entity zombieEntity = world.CreateEntity();
+
+                // 设置僵尸初始位置（在地图右上角）
+                FixVector2 zombiePosition = new FixVector2((Fix64)(10+i), (Fix64)6);
+                Fix64 nearestDis = Fix64.MaxValue;
+                FixVector2 nearestPosition = FixVector2.Zero;
+                foreach (var (_,_,transform) in world.GetEntitiesWithComponents<PlayerComponent,Transform2DComponent>())
                 {
-                    nearestPosition = transform.position;
+                    if ((transform.position - zombiePosition).SqrMagnitude() < nearestDis)
+                    {
+                        nearestPosition = transform.position;
+                    }
                 }
-            }
-            // 生成一个僵尸
+                // 生成一个僵尸
            
 
-            // 添加必要的组件
-            var transformZ = new Transform2DComponent(zombiePosition);
-            var zombieAI = new ZombieAIComponent(nearestPosition, zombieMoveSpeed); // 移动速度0.5
-            var physicsBody = new PhysicsBodyComponent(Fix64.One, false, false, false,Fix64.Zero
-                , Fix64.Zero, (Fix64)0.2);
-            var collisionShape = CollisionShapeComponent.CreateBox((Fix64)0.8, (Fix64)0.8);
-            var velocity = new VelocityComponent();
+                // 添加必要的组件
+                var transformZ = new Transform2DComponent(zombiePosition);
+                var zombieAI = new ZombieAIComponent(nearestPosition, zombieMoveSpeed); // 移动速度0.5
+                var physicsBody = new PhysicsBodyComponent(Fix64.One, false, false, false,Fix64.Zero
+                    , Fix64.Zero, (Fix64)0.2);
+                var collisionShape = CollisionShapeComponent.CreateBox((Fix64)0.8, (Fix64)0.8);
+                var velocity = new VelocityComponent();
 
-            world.AddComponent(zombieEntity, transformZ);
-            world.AddComponent(zombieEntity, zombieAI);
-            world.AddComponent(zombieEntity, physicsBody);
-            world.AddComponent(zombieEntity, collisionShape);
-            world.AddComponent(zombieEntity, velocity);
+                world.AddComponent(zombieEntity, transformZ);
+                world.AddComponent(zombieEntity, zombieAI);
+                world.AddComponent(zombieEntity, physicsBody);
+                world.AddComponent(zombieEntity, collisionShape);
+                world.AddComponent(zombieEntity, velocity);
 
-            UnityEngine.Debug.Log($"[ZombieSpawnSystem] Spawned zombie at {zombiePosition}");
+                UnityEngine.Debug.Log($"[ZombieSpawnSystem] Spawned zombie at {zombiePosition}");
+            }
+       
         }
     }
 }

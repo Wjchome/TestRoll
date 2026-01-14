@@ -332,6 +332,11 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
             }
         }
 
+        
+        // 不存在，创建新的单例组件
+        var newEntity =  ecsPredictionManager.currentWorld.CreateEntity();
+        var component = new GridMapComponent(20,20,Fix64.One);
+        ecsPredictionManager.currentWorld.AddComponent(newEntity, component);
         // 4. 保存初始状态快照
         ecsPredictionManager.SaveSnapshot(0);
 

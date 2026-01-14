@@ -15,12 +15,15 @@ namespace Frame.ECS
 
         public void Execute(World world, List<FrameData> inputs)
         {
-            // 获取地图单例组件（如果不存在会自动创建）
-            var mapEntity = world.GetOrCreateSingleton(() => new GridMapComponent(20, 20, Fix64.One));
-            if (!world.TryGetComponent<GridMapComponent>(mapEntity, out var map))
+
+            var map = new GridMapComponent();
+
+            foreach (var (mapEntity,_map) in world.GetEntitiesWithComponents<GridMapComponent>())
             {
-                return; // 理论上不会发生，但为了安全
+                map =  _map;
             }
+
+            
 
             // 获取所有玩家位置（用于寻找最近玩家）
             var playerPositions = new List<FixVector2>();

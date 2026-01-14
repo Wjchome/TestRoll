@@ -11,13 +11,6 @@ namespace Frame.ECS
     {
         public void Execute(World world, List<FrameData> inputs)
         {
-            // 获取地图组件（用于网格对齐）
-            var mapEntity = world.GetOrCreateSingleton(() => new GridMapComponent(20, 20, Fix64.One));
-            if (!world.TryGetComponent<GridMapComponent>(mapEntity, out var map))
-            {
-                return; // 理论上不会发生，但为了安全
-            }
-
             foreach (var frameData in inputs)
             {
                 // 检查是否发射（在放置墙模式下，IsFire 表示放置墙）
@@ -34,42 +27,54 @@ namespace Frame.ECS
                 // 获取PlayerComponent并检查模式
                 if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
                     continue;
-                
+
                 // 检查是否在放置墙模式（currentIndex == 0 表示放置墙模式）
                 if (playerComponent.currentIndex != 0)
-                    {
+                {
                     continue; // 不是放置墙模式
                 }
-                
+
                 // 检查墙冷却
                 if (playerComponent.wallCooldownTimer > Fix64.Zero)
                 {
                     continue; // 冷却中，不允许放置
                 }
-                
-                PlaceWall(world, mapEntity, map, playerEntity.Value, playerComponent);
-                
+
+                PlaceWall(world, playerEntity.Value, playerComponent);
             }
         }
 
         /// <summary>
         /// 放置墙
         /// </summary>
-        private void PlaceWall(World world, Entity mapEntity, GridMapComponent map, Entity playerEntity, PlayerComponent playerComponent)
+        private void PlaceWall(World world, Entity playerEntity, PlayerComponent playerComponent)
         {
             // 获取玩家位置
             if (!world.TryGetComponent<Transform2DComponent>(playerEntity, out var playerTransform))
                 return;
 
-            // 获取目标位置（从 FireX, FireY）
+            // 获取地图组件（每次调用都重新获取，确保使用最新状态）
+            Entity? mapEntity = null;
+            GridMapComponent? map = null;
+            foreach (var (_mapEntity, _map) in world.GetEntitiesWithComponents<GridMapComponent>())
+            {
+                mapEntity = _mapEntity;
+                map = _map;
+                break;
+            }
+
+            if (!mapEntity.HasValue || !map.HasValue)
+                return; // 地图不存在，无法放置墙
+
             FixVector2 targetPosition = playerTransform.position;
 
             // 将目标位置对齐到网格中心
-            GridNode targetGrid = map.WorldToGrid(targetPosition);
-            FixVector2 alignedPosition = map.GridToWorld(targetGrid);
+            GridNode targetGrid = map.Value.WorldToGrid(targetPosition);
+            FixVector2 alignedPosition = map.Value.GridToWorld(targetGrid);
 
             // 检查该网格是否已经有障碍物（避免重复放置）
-            if (!map.IsWalkable(targetGrid))
+            // 注意：必须使用最新的地图状态，而不是传入的副本
+            if (!map.Value.IsWalkable(targetGrid))
             {
                 // 该位置已经有障碍物，不放置
                 return;
@@ -80,27 +85,27 @@ namespace Frame.ECS
 
             // 添加墙组件
             var wallComponent = new WallComponent();
-            
+
             // 添加位置组件（对齐到网格中心）
             var transform2DComponent = new Transform2DComponent(alignedPosition);
-            
+
             // 添加物理组件（static，不移动，不响应重力）
             var physicsBodyComponent = new PhysicsBodyComponent(
-                Fix64.Zero,      // mass = 0（static）
-                isStatic: true,   // 静态物体
+                Fix64.Zero, // mass = 0（static）
+                isStatic: true, // 静态物体
                 useGravity: false,
                 isTrigger: false,
                 restitution: Fix64.Zero,
                 friction: Fix64.Zero,
                 linearDamping: Fix64.Zero
             );
-            
+
             // 添加碰撞形状（方块，大小与网格相同）
             var collisionShapeComponent = CollisionShapeComponent.CreateBox(
-                map.cellSize,  // 宽度 = 网格大小
-                map.cellSize   // 高度 = 网格大小
+                map.Value.cellSize, // 宽度 = 网格大小
+                map.Value.cellSize // 高度 = 网格大小
             );
-            
+
             // 添加速度组件（虽然static不需要，但为了兼容性）
             var velocityComponent = new VelocityComponent();
 
@@ -112,10 +117,12 @@ namespace Frame.ECS
             world.AddComponent(wallEntity, velocityComponent);
 
             // 将墙的位置添加到地图的障碍物列表
-            // 注意：需要更新地图组件（因为它是单例组件）
-            map.obstacles.Add(targetGrid);
-            world.AddComponent(mapEntity, map);
-            
+            // 关键：必须重新获取地图组件，确保使用最新状态（包括之前放置的墙）
+            // 然后更新地图组件，确保后续的墙放置能正确检查障碍物
+            var updatedMap = map.Value;
+            updatedMap.obstacles.Add(targetGrid);
+            world.AddComponent(mapEntity.Value, updatedMap);
+
             // 应用墙冷却
             var updatedPlayer = playerComponent;
             updatedPlayer.wallCooldownTimer = PlayerComponent.WallCooldownDuration;
