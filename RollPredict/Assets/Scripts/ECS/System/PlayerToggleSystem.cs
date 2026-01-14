@@ -24,6 +24,7 @@ namespace Frame.ECS
                 if (world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var p))
                 {
                     p.currentIndex = (p.currentIndex +  1 ) % p.sumIndex;
+                    Debug.LogError($"Player {playerId} is toggled {p.currentIndex}");
                 }
                 world.AddComponent(playerEntity.Value,p);
             }

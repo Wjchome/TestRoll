@@ -31,16 +31,23 @@ namespace Frame.ECS
                 if (!playerEntity.HasValue)
                     continue;
 
-                // 检查玩家是否在放置墙模式（currentIndex == 0 表示放置墙模式）
-                if (world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var p))
+                // 获取PlayerComponent并检查模式
+                if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
+                    continue;
+                
+                // 检查是否在放置墙模式（currentIndex == 0 表示放置墙模式）
+                if (playerComponent.currentIndex != 0)
                 {
-                    if (p.currentIndex == 0)
-                    {
-                        continue;
-                        // 放置墙模式
-                    }
-                } 
-                PlaceWall(world,  mapEntity,map,  playerEntity.Value);
+                    continue; // 不是放置墙模式
+                }
+                
+                // 检查墙冷却
+                if (playerComponent.wallCooldownTimer > Fix64.Zero)
+                {
+                    continue; // 冷却中，不允许放置
+                }
+                
+                PlaceWall(world, mapEntity, map, playerEntity.Value, playerComponent);
                 
             }
         }
@@ -48,7 +55,7 @@ namespace Frame.ECS
         /// <summary>
         /// 放置墙
         /// </summary>
-        private void PlaceWall(World world, Entity mapEntity,GridMapComponent map,  Entity playerEntity)
+        private void PlaceWall(World world, Entity mapEntity, GridMapComponent map, Entity playerEntity, PlayerComponent playerComponent)
         {
             // 获取玩家位置
             if (!world.TryGetComponent<Transform2DComponent>(playerEntity, out var playerTransform))
@@ -108,6 +115,11 @@ namespace Frame.ECS
             // 注意：需要更新地图组件（因为它是单例组件）
             map.obstacles.Add(targetGrid);
             world.AddComponent(mapEntity, map);
+            
+            // 应用墙冷却
+            var updatedPlayer = playerComponent;
+            updatedPlayer.wallCooldownTimer = PlayerComponent.WallCooldownDuration;
+            world.AddComponent(playerEntity, updatedPlayer);
         }
 
         private static Entity? FindPlayerEntity(World world, int playerId)

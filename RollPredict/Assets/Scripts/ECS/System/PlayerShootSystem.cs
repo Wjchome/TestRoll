@@ -25,15 +25,23 @@ namespace Frame.ECS
                 Entity? playerEntity = FindPlayerEntity(world, playerId);
                 if (!playerEntity.HasValue)
                     continue;
-                if (world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var p))
+                // 获取PlayerComponent并检查冷却
+                if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
+                    continue;
+                
+                // 检查是否在发射子弹模式
+                if (playerComponent.currentIndex != 1)
                 {
-                    if (p.currentIndex == 1)
-                    {
-                        continue;
-                    }
+                    continue; // 不是发射子弹模式
+                }
+                
+                // 检查子弹冷却
+                if (playerComponent.bulletCooldownTimer > Fix64.Zero)
+                {
+                    continue; // 冷却中，不允许发射
                 }
 
-                // 获取PlayerComponent
+                // 获取Transform组件
                 if (!world.TryGetComponent<Transform2DComponent>(playerEntity.Value, out var playerTransform2DComponent))
                     continue;
 
@@ -65,6 +73,11 @@ namespace Frame.ECS
                     world.AddComponent(bulletEntity, physicsBodyComponent);
                     world.AddComponent(bulletEntity, collisionShapeComponent);
                     world.AddComponent(bulletEntity, velocityComponent);
+                    
+                    // 应用子弹冷却
+                    var updatedPlayer = playerComponent;
+                    updatedPlayer.bulletCooldownTimer = PlayerComponent.BulletCooldownDuration;
+                    world.AddComponent(playerEntity.Value, updatedPlayer);
                 }
             }
         }

@@ -95,16 +95,18 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
         // 1. 检测输入（分离输入检测和预测执行）
         InputDirection newDirection = DetectMovementInput();
-        bool fire,isToggle ;
+        bool fire, isToggle;
         long fireX, fireY;
         DetectFireInput(out isToggle, out fire, out fireX, out fireY);
+        
         // 2. 发送输入到服务器（有输入时才发送）
-        if ((newDirection != InputDirection.DirectionNone || fire||isToggle) && timer > sendInterval)
+        // 注意：冷却检查在 System 中处理，这里直接发送输入
+        if ((newDirection != InputDirection.DirectionNone || fire || isToggle) && timer > sendInterval)
         {
             timer = 0;
             if (isKCP)
             {
-                networkManagerKCP.SendFrameData(newDirection, fire, fireX, fireY,isToggle);
+                networkManagerKCP.SendFrameData(newDirection, fire, fireX, fireY, isToggle);
             }
             else
             {
@@ -184,6 +186,23 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         long confirmedFrame = ecsPredictionManager.confirmedServerFrame;
         long pendingFrames = predictedFrame - confirmedFrame;
 
+        // 获取玩家冷却信息（用于显示）
+        float bulletCooldownDisplay = 0f;
+        float wallCooldownDisplay = 0f;
+        if (ecsPredictionManager.currentWorld != null)
+        {
+            int myPlayerId = isKCP ? networkManagerKCP.myPlayerID : networkManager.myPlayerID;
+            var playerEntity = ECSSyncHelper.GetEntityByPlayerId(myPlayerId);
+            if (playerEntity.HasValue)
+            {
+                if (ecsPredictionManager.currentWorld.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComp))
+                {
+                    bulletCooldownDisplay = (float)playerComp.bulletCooldownTimer;
+                    wallCooldownDisplay = (float)playerComp.wallCooldownTimer;
+                }
+            }
+        }
+        
         debugText.text = $"<b>帧同步调试信息</b>\n" +
                          $"发送帧率: {1 / sendInterval} fps\n" +
                          $"预测帧率: {1 / predictInterval} fps\n" +
@@ -191,6 +210,8 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
                          $"确认帧: {confirmedFrame}\n" +
                          $"<color=yellow>待确认帧数: {pendingFrames}</color>\n" +
                          $"<color=cyan>网络延迟: {networkLatency:F0} ms</color>\n" +
+                         $"<color=orange>子弹冷却: {bulletCooldownDisplay:F2}s</color>\n" +
+                         $"<color=orange>墙冷却: {wallCooldownDisplay:F2}s</color>\n" +
                          $"FPS: {(1.0f / Time.deltaTime):F0}";
     }
 

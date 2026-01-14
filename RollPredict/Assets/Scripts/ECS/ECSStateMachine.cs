@@ -120,6 +120,7 @@ namespace Frame.ECS
 
 
             RegisterSystem(new PlayerToggleSystem());
+            RegisterSystem(new PlayerCooldownSystem());
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new PlayerPlaceWallSystem());
