@@ -43,7 +43,7 @@ namespace Frame.ECS
                         continue; // 跳过AI逻辑
                     }
                 }
-                
+
                 var updatedAI = ai;
                 var newVelocity = velocityComponent;
 
@@ -61,14 +61,16 @@ namespace Frame.ECS
                         nearestPlayerPos = playerPos;
                     }
                 }
+
                 if (playerPositions.Count == 0)
                 {
                     continue;
                 }
+
                 switch (ai.state)
                 {
                     case ZombieState.Chase:
-                        
+
                         // 攻击范围检测（每两帧检测一次）
                         if (updatedAI.attackDetectionCooldown > 0)
                         {
@@ -77,61 +79,60 @@ namespace Frame.ECS
                         else
                         {
                             // 重置冷却（每两帧检测一次）
-                            updatedAI.attackDetectionCooldown =  ATTACK_COOLDOWN_FRAMES;
+                            updatedAI.attackDetectionCooldown = ATTACK_COOLDOWN_FRAMES;
 
                             // 使用QuadTree查询攻击范围内的玩家
                             var physicsSystem = ECSStateMachine.GetSystem<PhysicsSystem>();
-                            if (physicsSystem != null)
+
+                            var playersInRange = physicsSystem.QueryCircleRegion(
+                                world,
+                                transform.position,
+                                updatedAI.attackCheckRange,
+                                (int)PhysicsLayer.Player // 只查询玩家层
+                            );
+
+                            if (playersInRange.Count > 0)
                             {
-                                var playersInRange = physicsSystem.QueryCircleRegion(
-                                    world,
-                                    transform.position,
-                                    updatedAI.attackCheckRange,
-                                    (int)PhysicsLayer.Player // 只查询玩家层
-                                );
+                                // 找到最近的玩家，进入攻击状态
+                                FixVector2 nearestPlayerTransform = FixVector2.Zero;
+                                Fix64 minDist = Fix64.MaxValue;
 
-                                if (playersInRange.Count > 0)
+                                foreach (var playerEntity in playersInRange)
                                 {
-                                    // 找到最近的玩家，进入攻击状态
-                                    FixVector2 nearestPlayerTransform = FixVector2.Zero;
-                                    Fix64 minDist = Fix64.MaxValue;
-
-                                    foreach (var playerEntity in playersInRange)
+                                    if (world.TryGetComponent<Transform2DComponent>(playerEntity,
+                                            out var playerTransform))
                                     {
-                                        if (world.TryGetComponent<Transform2DComponent>(playerEntity,
-                                                out var playerTransform))
+                                        FixVector2 diff = playerTransform.position - transform.position;
+                                        Fix64 dist = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
+                                        if (dist < minDist)
                                         {
-                                            FixVector2 diff = playerTransform.position - transform.position;
-                                            Fix64 dist = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
-                                            if (dist < minDist)
-                                            {
-                                                minDist = dist;
-                                                nearestPlayerTransform = playerTransform.position;
-                                            }
+                                            minDist = dist;
+                                            nearestPlayerTransform = playerTransform.position;
                                         }
                                     }
+                                }
 
 
-                                    // 计算攻击方向
-                                    FixVector2 toPlayer = nearestPlayerTransform - transform.position;
-                                    if (toPlayer.SqrMagnitude() > Fix64.Zero)
-                                    {
-                                        toPlayer.Normalize();
+                                // 计算攻击方向
+                                FixVector2 toPlayer = nearestPlayerTransform - transform.position;
+                                if (toPlayer.SqrMagnitude() > Fix64.Zero)
+                                {
+                                    toPlayer.Normalize();
 
-                                        // 进入攻击前摇状态
-                                        updatedAI.state = ZombieState.AttackWindup;
-                                        updatedAI.attackDirection = toPlayer;
-                                        updatedAI.attackWindupTimer = updatedAI.attackWindupFrames;
+                                    // 进入攻击前摇状态
+                                    updatedAI.state = ZombieState.AttackWindup;
+                                    updatedAI.attackDirection = toPlayer;
+                                    updatedAI.attackWindupTimer = updatedAI.attackWindupFrames;
 
-                                        // 停止移动
-                                        newVelocity.velocity = FixVector2.Zero;
-                                        world.AddComponent(entity, newVelocity);
-                                        world.AddComponent(entity, updatedAI);
-                                        continue;
-                                    }
+                                    // 停止移动
+                                    newVelocity.velocity = FixVector2.Zero;
+                                    world.AddComponent(entity, newVelocity);
+                                    world.AddComponent(entity, updatedAI);
+                                    continue;
                                 }
                             }
                         }
+
 
                         // 正常寻路和移动逻辑
                         if (ai.pathfindingCooldown > 0)
@@ -141,8 +142,6 @@ namespace Frame.ECS
                         }
                         else
                         {
-                            
-
                             updatedAI.targetPosition = nearestPlayerPos;
                             updatedAI.currentPath = null;
                             updatedAI.currentPathIndex = 0;
@@ -176,16 +175,14 @@ namespace Frame.ECS
                             {
                                 // 移动到目标点
                                 direction.Normalize();
-                                AddForceHelper.ApplyForce(world,entity, direction * updatedAI.moveSpeed);
-
+                                AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
                             }
                         }
                         else
                         {
                             FixVector2 direction = nearestPlayerPos - transform.position;
                             direction.Normalize();
-                            AddForceHelper.ApplyForce(world,entity, direction * updatedAI.moveSpeed);
-                            
+                            AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
                         }
 
                         break;
@@ -210,7 +207,7 @@ namespace Frame.ECS
                         // 立即进入后摇状态
                         updatedAI.state = ZombieState.AttackCooldown;
                         updatedAI.attackCooldownTimer = updatedAI.attackCooldownFrames;
-      
+
                         world.AddComponent(entity, updatedAI);
                         break;
 
@@ -223,7 +220,7 @@ namespace Frame.ECS
                             updatedAI.state = ZombieState.Chase;
                         }
 
-    
+
                         world.AddComponent(entity, updatedAI);
                         break;
                 }
@@ -238,17 +235,17 @@ namespace Frame.ECS
             // 1. 将攻击方向转换为旋转角度（弧度）
             // Atan2(y, x) 返回从x轴正方向到向量的角度
             Fix64 rotation = Fix64.Atan2(ai.attackDirection.y, ai.attackDirection.x);
-            
+
             // 2. 计算矩形尺寸
             // 长度 = 攻击距离
             Fix64 rectLength = ai.attackDamageLength;
-            
-            
+
+
             FixVector2 rectSize = new FixVector2(rectLength, ai.attackDamageWidth);
-            
+
             // 3. 计算矩形中心位置（在僵尸前方，距离为长度的一半）
             FixVector2 rectCenter = zombiePosition + ai.attackDirection * (rectLength / Fix64.Two);
-            
+
             // 4. 使用PhysicsSystem查询旋转矩形区域内的玩家
             var physicsSystem = ECSStateMachine.GetSystem<PhysicsSystem>();
             if (physicsSystem != null)
@@ -258,19 +255,17 @@ namespace Frame.ECS
                     rectCenter,
                     rectSize,
                     rotation,
-                    (int)PhysicsLayer.Player  // 只查询玩家层
+                    (int)PhysicsLayer.Player // 只查询玩家层
                 );
-                
+
                 // 5. 对查询结果中的玩家造成伤害
                 foreach (var playerEntity in playersInRect)
                 {
                     HPDamageHelper.ApplyDamage(world, playerEntity, ai.attackDamage);
 
-                    AddForceHelper.ApplyForce(world,playerEntity, ai.attackDirection/(Fix64)3);
-                    
+                    AddForceHelper.ApplyForce(world, playerEntity, ai.attackDirection / (Fix64)3);
                 }
             }
         }
-
     }
 }

@@ -118,6 +118,9 @@ namespace Frame.ECS
 
             // 添加速度组件（虽然static不需要，但为了兼容性）
             var velocityComponent = new VelocityComponent();
+            
+            // 添加血量组件（墙可以被破坏）
+            var hpComponent = new HPComponent(50); // 墙初始血量50
 
             // 添加所有组件到实体
             world.AddComponent(wallEntity, wallComponent);
@@ -125,6 +128,7 @@ namespace Frame.ECS
             world.AddComponent(wallEntity, physicsBodyComponent);
             world.AddComponent(wallEntity, collisionShapeComponent);
             world.AddComponent(wallEntity, velocityComponent);
+            world.AddComponent(wallEntity, hpComponent);
 
             // 将墙的位置添加到地图的障碍物列表
             // 关键：必须重新获取地图组件，确保使用最新状态（包括之前放置的墙）

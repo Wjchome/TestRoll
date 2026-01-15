@@ -32,23 +32,21 @@ namespace Frame.ECS
                 updatedHP.HP = System.Math.Max(0, updatedHP.HP - damage);
                 world.AddComponent(entity, updatedHP);
                 
-                // 2. 如果受到伤害且未死亡，触发僵直状态
-                if (damage > 0 && updatedHP.HP > 0)
+                // 2. 如果血量 <= 0，添加死亡标记（由DeathSystem统一处理）
+                if (updatedHP.HP <= 0)
+                {
+                    world.AddComponent(entity, new DeathComponent());
+                }
+                // 3. 如果受到伤害且未死亡，触发僵直状态
+                else if (damage > 0)
                 {
                     if (world.TryGetComponent<StiffComponent>(entity, out var stiff))
                     {
                         var updatedStiff = stiff;
-                        Debug.LogError("qw");
                         updatedStiff.stiffTimer = updatedStiff.stiffDuration; // 触发僵直
                         world.AddComponent(entity, updatedStiff);
                     }
                 }
-                
-                // 3. 如果血量 <= 0，触发死亡事件（后续实现）
-                // if (updatedHP.HP <= 0)
-                // {
-                //     HandleEntityDeath(world, entity);
-                // }
             }
         }
     }

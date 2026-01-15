@@ -51,14 +51,18 @@ namespace Frame.ECS
                     }
                     else if (world.TryGetComponent<WallComponent>(new Entity(entityId), out var wallComponent))
                     {
-                       
-
-                        // 碰到敌人，销毁
+                        Entity wallEntity = new Entity(entityId);
+                        
+                        // 子弹击中墙，造成伤害（DeathSystem会处理死亡逻辑）
+                        HPDamageHelper.ApplyDamage(world, wallEntity, bulletComponent.damage);
+                        
+                        // 子弹击中墙后销毁
                         removedEntities.Add(entity);
                     }
                 }
             }
 
+            // 销毁子弹等实体
             foreach (var entity in removedEntities)
             {
                 world.DestroyEntity(entity);

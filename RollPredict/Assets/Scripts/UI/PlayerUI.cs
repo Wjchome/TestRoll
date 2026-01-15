@@ -57,7 +57,14 @@ namespace Frame.ECS
 
                 // 根据血量百分比改变颜色
                 float healthPercent = (float)currentHp / maxHp;
-                healthBarFill.color = Color.Lerp(Color.red,Color.green,  healthPercent);
+                if (healthPercent > 0.5f)
+                {
+                    healthBarFill.color = Color.Lerp(Color.yellow, Color.green, 2 * healthPercent - 1);
+                }
+                else
+                {
+                    healthBarFill.color = Color.Lerp(Color.red, Color.yellow, 2 * healthPercent);
+                }
             }
         }
 
