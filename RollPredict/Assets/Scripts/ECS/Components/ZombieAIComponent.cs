@@ -72,9 +72,9 @@ namespace Frame.ECS
         public int attackDetectionCooldown;
         
         /// <summary>
-        /// 攻击范围（圆形半径）
+        /// 攻击检测范围（圆形半径）
         /// </summary>
-        public Fix64 attackRange;
+        public Fix64 attackCheckRange;
         
         
         /// <summary>
@@ -93,14 +93,14 @@ namespace Frame.ECS
         public int attackCooldownFrames;
         
         /// <summary>
-        /// 攻击伤害判定距离（前方扇形/矩形的距离）
+        /// 攻击伤害判定距离（矩形的长度）
         /// </summary>
-        public Fix64 attackDamageRange;
+        public Fix64 attackDamageLength;
         
         /// <summary>
-        /// 攻击伤害判定角度（扇形角度，弧度制）
+        /// 攻击伤害判定角度（矩形的宽度）
         /// </summary>
-        public Fix64 attackDamageAngle;
+        public Fix64 attackDamageWidth;
         
         public ZombieAIComponent(FixVector2 targetPosition, Fix64 moveSpeed)
         {
@@ -114,12 +114,12 @@ namespace Frame.ECS
             this.attackWindupTimer = 0;
             this.attackCooldownTimer = 0;
             this.attackDetectionCooldown = 0;
-            this.attackRange = (Fix64)2.0f;
+            this.attackCheckRange = (Fix64)1.5f;
             this.attackDamage = 10;
             this.attackWindupFrames = 10;
-            this.attackCooldownFrames = 20;
-            this.attackDamageRange = (Fix64)1.5f;
-            this.attackDamageAngle = (Fix64)(60.0 * System.Math.PI / 180.0); // 60度
+            this.attackCooldownFrames = 10;
+            this.attackDamageLength = (Fix64)1.5f;
+            this.attackDamageWidth = (Fix64)1; 
         }
         
         public object Clone()
@@ -136,12 +136,12 @@ namespace Frame.ECS
                 attackWindupTimer = this.attackWindupTimer,
                 attackCooldownTimer = this.attackCooldownTimer,
                 attackDetectionCooldown = this.attackDetectionCooldown,
-                attackRange = this.attackRange,
+                attackCheckRange = this.attackCheckRange,
                 attackDamage = this.attackDamage,
                 attackWindupFrames = this.attackWindupFrames,
                 attackCooldownFrames = this.attackCooldownFrames,
-                attackDamageRange = this.attackDamageRange,
-                attackDamageAngle = this.attackDamageAngle
+                attackDamageLength = this.attackDamageLength,
+                attackDamageWidth = this.attackDamageWidth
             };
         }
         

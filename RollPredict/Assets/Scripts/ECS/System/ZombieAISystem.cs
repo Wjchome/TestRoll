@@ -77,7 +77,7 @@ namespace Frame.ECS
                                 var playersInRange = physicsSystem.QueryCircleRegion(
                                     world,
                                     transform.position,
-                                    updatedAI.attackRange,
+                                    updatedAI.attackCheckRange,
                                     (int)PhysicsLayer.Player // 只查询玩家层
                                 );
 
@@ -222,59 +222,50 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 检查攻击伤害：检测前方扇形区域内的玩家
+        /// 检查攻击伤害：使用旋转矩形查询检测前方区域内的玩家
         /// </summary>
         private void CheckAttackDamage(World world, FixVector2 zombiePosition, ZombieAIComponent ai)
         {
-            FixVector2 attackDir = ai.attackDirection;
-            Fix64 halfAngle = ai.attackDamageAngle / Fix64.Two;
-
-            foreach (var (playerEntity, playerTransform, playerComponent) in
-                     world.GetEntitiesWithComponents<Transform2DComponent, PlayerComponent>())
+            // 1. 将攻击方向转换为旋转角度（弧度）
+            // Atan2(y, x) 返回从x轴正方向到向量的角度
+            Fix64 rotation = Fix64.Atan2(ai.attackDirection.y, ai.attackDirection.x);
+            
+            // 2. 计算矩形尺寸
+            // 长度 = 攻击距离
+            Fix64 rectLength = ai.attackDamageLength;
+            
+            
+            FixVector2 rectSize = new FixVector2(rectLength, ai.attackDamageWidth);
+            
+            // 3. 计算矩形中心位置（在僵尸前方，距离为长度的一半）
+            FixVector2 rectCenter = zombiePosition + ai.attackDirection * (rectLength / Fix64.Two);
+            
+            // 4. 使用PhysicsSystem查询旋转矩形区域内的玩家
+            var physicsSystem = ECSStateMachine.GetSystem<PhysicsSystem>();
+            if (physicsSystem != null)
             {
-                FixVector2 toPlayer = playerTransform.position - zombiePosition;
-                Fix64 distance = Fix64.Sqrt(toPlayer.x * toPlayer.x + toPlayer.y * toPlayer.y);
-
-                // 检查距离
-                if (distance > ai.attackDamageRange)
-                    continue;
-
-                // 检查角度（扇形判定）
-                if (distance > Fix64.Zero)
+                var playersInRect = physicsSystem.QueryRotatedRectRegion(
+                    world,
+                    rectCenter,
+                    rectSize,
+                    rotation,
+                    (int)PhysicsLayer.Player  // 只查询玩家层
+                );
+                
+                // 5. 对查询结果中的玩家造成伤害
+                foreach (var playerEntity in playersInRect)
                 {
-                    toPlayer.Normalize();
-                    Fix64 dot = FixVector2.Dot(attackDir, toPlayer);
-
-                    // 使用点积计算角度（避免使用Acos，提高性能）
-                    // cos(angle) = dot，如果 angle <= halfAngle，则 cos(angle) >= cos(halfAngle)
-                    Fix64 cosHalfAngle = Fix64.Cos(halfAngle);
-
-                    if (dot >= cosHalfAngle)
-                    {
-                        // 玩家在攻击范围内，造成伤害
-                        ApplyDamage(world, playerEntity, ai.attackDamage);
-                    }
+                    ApplyDamage(world, playerEntity, ai.attackDamage);
                 }
             }
         }
 
         /// <summary>
-        /// 对玩家造成伤害
+        /// 对玩家造成伤害（使用统一的伤害处理系统）
         /// </summary>
         private void ApplyDamage(World world, Entity playerEntity, int damage)
         {
-            if (world.TryGetComponent<PlayerComponent>(playerEntity, out var player))
-            {
-                var updatedPlayer = player;
-                updatedPlayer.HP = System.Math.Max(0, updatedPlayer.HP - damage);
-                world.AddComponent(playerEntity, updatedPlayer);
-
-                // 如果血量 <= 0，可以在这里触发死亡事件（后续实现）
-                // if (updatedPlayer.HP <= 0)
-                // {
-                //     HandlePlayerDeath(world, playerEntity);
-                // }
-            }
+            PlayerDamageHelper.ApplyDamage(world, playerEntity, damage);
         }
     }
 }

@@ -502,5 +502,83 @@ namespace Frame.ECS
 
             return result;
         }
+
+        /// <summary>
+        /// 查询指定旋转矩形区域内的Entity（通过QuadTree）
+        /// 
+        /// 使用场景：
+        /// - 僵尸攻击伤害判定（旋转矩形）
+        /// - 技能范围检测（矩形区域）
+        /// - 区域查询
+        /// 
+        /// 性能优化：
+        /// - 使用QuadTree宽相位检测，只对候选Entity进行精确旋转矩形检测
+        /// - 支持Layer筛选，减少不必要的检测
+        /// </summary>
+        /// <param name="world">World实例（用于获取Entity组件）</param>
+        /// <param name="center">矩形中心位置</param>
+        /// <param name="size">矩形尺寸（宽度、高度）</param>
+        /// <param name="rotation">旋转角度（弧度，0表示轴对齐）</param>
+        /// <param name="layerMask">层掩码（只返回匹配的层，-1表示所有层）</param>
+        /// <returns>匹配的Entity列表</returns>
+        public List<Entity> QueryRotatedRectRegion(World world, FixVector2 center, FixVector2 size, Fix64 rotation, int layerMask = -1)
+        {
+            // 1. 创建旋转矩形形状（用于精确碰撞检测）
+            var queryBox = new BoxShape2D(size.x, size.y, rotation);
+            
+            // 2. 计算旋转矩形的AABB（用于QuadTree查询，宽相位）
+            FixRect queryAABB = queryBox.GetBounds(center);
+            
+            // 3. 使用QuadTree查询AABB范围内的所有Entity（宽相位）
+            var candidates = quadTree.Query(queryAABB);
+            
+            // 4. 精确旋转矩形检测 + Layer过滤（窄相位）
+            var result = new List<Entity>();
+            
+            foreach (var entity in candidates)
+            {
+                // 1. Layer筛选（如果指定了layerMask）
+                if (layerMask >= 0)
+                {
+                    if (!world.TryGetComponent<PhysicsBodyComponent>(entity, out var body))
+                        continue;
+                    if (body.layer != layerMask)
+                        continue;
+                }
+                
+                // 2. 获取Entity的Transform和CollisionShape
+                if (!world.TryGetComponent<Transform2DComponent>(entity, out var transform))
+                    continue;
+                if (!world.TryGetComponent<CollisionShapeComponent>(entity, out var shape))
+                    continue;
+                
+                // 3. 将ECS的CollisionShapeComponent转换为Physics2D的CollisionShape2D
+                CollisionShape2D entityShape;
+                if (shape.shapeType == ShapeType.Circle)
+                {
+                    entityShape = new CircleShape2D(shape.radius);
+                }
+                else if (shape.shapeType == ShapeType.Box)
+                {
+                    // ECS的Box不支持旋转，所以rotation为0
+                    entityShape = new BoxShape2D(shape.size.x, shape.size.y, Fix64.Zero);
+                }
+                else
+                {
+                    continue; // 未知形状类型
+                }
+                
+                // 4. 精确碰撞检测：查询矩形 vs Entity形状
+                if (CollisionShape2D.CheckCollision(
+                        queryBox, center,
+                        entityShape, transform.position,
+                        out Contact2D contact))
+                {
+                    result.Add(entity);
+                }
+            }
+            
+            return result;
+        }
     }
 }

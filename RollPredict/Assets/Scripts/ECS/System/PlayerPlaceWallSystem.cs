@@ -28,6 +28,12 @@ namespace Frame.ECS
                 if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
                     continue;
 
+                // 检查玩家状态（僵直状态下无法操作）
+                if (playerComponent.state == PlayerState.HitStun)
+                {
+                    continue; // 僵直状态，无法放置墙
+                }
+
                 // 检查是否在放置墙模式（currentIndex == 0 表示放置墙模式）
                 if (playerComponent.currentIndex != 0)
                 {

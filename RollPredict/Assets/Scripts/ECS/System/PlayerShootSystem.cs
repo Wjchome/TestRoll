@@ -29,6 +29,12 @@ namespace Frame.ECS
                 if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
                     continue;
                 
+                // 检查玩家状态（僵直状态下无法操作）
+                if (playerComponent.state == PlayerState.HitStun)
+                {
+                    continue; // 僵直状态，无法发射子弹
+                }
+                
                 // 检查是否在发射子弹模式
                 if (playerComponent.currentIndex != 1)
                 {
@@ -61,7 +67,7 @@ namespace Frame.ECS
 
 
                     Entity bulletEntity = world.CreateEntity();
-                    var bulletComponent = new BulletComponent( playerEntity.Value.Id );
+                    var bulletComponent = new BulletComponent(playerEntity.Value.Id);
                     var transform2DComponent = new Transform2DComponent(playerTransform2DComponent.position);
                     var physicsBodyComponent = new PhysicsBodyComponent(Fix64.One, false, false, true, Fix64.Zero
                         , Fix64.Zero, Fix64.Zero,(int)PhysicsLayer.Bullet);

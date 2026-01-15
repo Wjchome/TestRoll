@@ -23,10 +23,19 @@ namespace Frame.ECS
                 if (!playerEntity.HasValue)
                     continue;
 
-                // 获取V
+                // 检查玩家状态（僵直状态下无法移动）
+                if (world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
+                {
+                    if (playerComponent.state == PlayerState.HitStun)
+                    {
+                        // 僵直状态下，忽略移动输入
+                        continue;
+                    }
+                }
+                
+                // 获取VelocityComponent
                 if (!world.TryGetComponent<VelocityComponent>(playerEntity.Value, out var velocityComponent))
                     continue;
-                
                 
                 // 将输入方向转换为移动向量
                 FixVector2 movementDirection = Util.GetMovementDirection(inputDirection);

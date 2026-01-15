@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Frame.ECS;
@@ -17,7 +18,7 @@ namespace Frame.ECS
     /// </summary>
     public static class ECSStateMachine
     {
-        private static OrderedHashSet<ISystem> _systems = new OrderedHashSet<ISystem>();
+        private static OrderedDictionary<Type, ISystem> _systems = new OrderedDictionary<Type, ISystem>();
         private static bool _initialized = false;
 
         /// <summary>
@@ -33,35 +34,36 @@ namespace Frame.ECS
                 return false;
             }
 
-            if (_systems.Contains(system))
+            var type = system.GetType();
+            if (_systems.ContainsKey(type))
             {
                 UnityEngine.Debug.LogWarning($"[ECSStateMachine] System {system.GetType().Name} already registered");
                 return false;
             }
 
-            _systems.Add(system);
+            _systems[type] = system;
             UnityEngine.Debug.Log($"[ECSStateMachine] Registered system: {system.GetType().Name}");
             return true;
         }
 
-        /// <summary>
-        /// 取消注册一个System
-        /// </summary>
-        /// <param name="system">要取消注册的System</param>
-        /// <returns>是否成功取消注册</returns>
-        public static bool UnregisterSystem(ISystem system)
-        {
-            if (system == null)
-                return false;
-
-            bool removed = _systems.Remove(system);
-            if (removed)
-            {
-                UnityEngine.Debug.Log($"[ECSStateMachine] Unregistered system: {system.GetType().Name}");
-            }
-
-            return removed;
-        }
+        // /// <summary>
+        // /// 取消注册一个System
+        // /// </summary>
+        // /// <param name="system">要取消注册的System</param>
+        // /// <returns>是否成功取消注册</returns>
+        // public static bool UnregisterSystem(ISystem system)
+        // {
+        //     if (system == null)
+        //         return false;
+        //
+        //     bool removed = _systems.Remove(system);
+        //     if (removed)
+        //     {
+        //         UnityEngine.Debug.Log($"[ECSStateMachine] Unregistered system: {system.GetType().Name}");
+        //     }
+        //
+        //     return removed;
+        // }
 
         /// <summary>
         /// 清空所有已注册的System
@@ -74,27 +76,13 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 获取所有已注册的System（只读）
-        /// </summary>
-        public static OrderedHashSet<ISystem> GetRegisteredSystems()
-        {
-            return _systems;
-        }
-
-        /// <summary>
         /// 获取指定类型的System
         /// </summary>
         /// <typeparam name="T">System类型</typeparam>
         /// <returns>System实例，如果不存在则返回null</returns>
         public static T GetSystem<T>() where T : class, ISystem
         {
-            foreach (var system in _systems)
-            {
-                if (system is T typedSystem)
-                    return typedSystem;
-            }
-
-            return null;
+            return _systems[typeof(T)] as T;
         }
 
         /// <summary>
@@ -121,14 +109,15 @@ namespace Frame.ECS
 
             RegisterSystem(new PlayerToggleSystem());
             RegisterSystem(new PlayerCooldownSystem());
+            RegisterSystem(new PlayerStateSystem()); // 玩家状态机系统（处理受伤僵直）
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new PlayerPlaceWallSystem());
             RegisterSystem(new BulletCheckSystem());
             RegisterSystem(new PhysicsSystem());
             RegisterSystem(new ZombieSpawnSystem());
-            RegisterSystem(new ZombieAISystem());     // AI系统根据状态决定是否移动
-            
+            RegisterSystem(new ZombieAISystem()); // AI系统根据状态决定是否移动
+
             // 可以继续添加其他System：
             // RegisterSystem(new CollisionDetectionSystem());
             // RegisterSystem(new HealthSystem());
@@ -154,7 +143,7 @@ namespace Frame.ECS
             }
 
             // 按顺序执行所有System
-            foreach (var system in _systems)
+            foreach (var (_,system) in _systems)
             {
                 system.Execute(world, inputs);
             }

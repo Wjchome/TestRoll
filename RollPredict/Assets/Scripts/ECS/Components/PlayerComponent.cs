@@ -5,6 +5,15 @@ using Frame.FixMath;
 namespace Frame.ECS
 {
     /// <summary>
+    /// 玩家状态枚举
+    /// </summary>
+    public enum PlayerState : byte
+    {
+        Normal = 0,        // 正常状态
+        HitStun = 1        // 受伤僵直状态
+    }
+
+    /// <summary>
     /// 玩家Component：存储玩家状态
     /// </summary>
     [Serializable]
@@ -46,6 +55,21 @@ namespace Frame.ECS
         /// 例如：30 表示 30 帧的冷却（假设 60fps = 0.5 秒）
         /// </summary>
         public static Fix64 WallCooldownDuration = (Fix64)1; // 30帧 ≈ 0.5秒 @ 60fps
+        
+        /// <summary>
+        /// 玩家当前状态
+        /// </summary>
+        public PlayerState state;
+        
+        /// <summary>
+        /// 受伤僵直计时器（帧数）
+        /// </summary>
+        public int hitStunTimer;
+        
+        /// <summary>
+        /// 受伤僵直持续时间配置（帧数）
+        /// </summary>
+        public static int HitStunDuration = 10; // 10帧僵直
 
         public PlayerComponent(int playerId, int hp,  int sumIndex)
         {
@@ -56,6 +80,8 @@ namespace Frame.ECS
             this.sumIndex = sumIndex;
             this.bulletCooldownTimer = Fix64.Zero;
             this.wallCooldownTimer = Fix64.Zero;
+            this.state = PlayerState.Normal;
+            this.hitStunTimer = 0;
         }
 
         public object Clone()
