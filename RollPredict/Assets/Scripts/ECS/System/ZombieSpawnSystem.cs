@@ -57,7 +57,7 @@ namespace Frame.ECS
                     (Fix64)0.2,
                     (int)PhysicsLayer.Zombie
                 );
-                var collisionShape = CollisionShapeComponent.CreateBox((Fix64)0.8, (Fix64)0.8);
+                var collisionShape = CollisionShapeComponent.CreateCircle((Fix64)0.5);
                 var velocity = new VelocityComponent();
 
                 world.AddComponent(zombieEntity, transformZ);

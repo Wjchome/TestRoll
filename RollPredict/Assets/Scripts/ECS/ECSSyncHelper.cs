@@ -71,7 +71,7 @@ namespace Frame.ECS
                 (Fix64)0.5,
                (int)PhysicsLayer.Player 
             );
-            var collisionShapeComponent = new CollisionShapeComponent(ShapeType.Box, Fix64.One, FixVector2.One);
+            var collisionShapeComponent =  CollisionShapeComponent.CreateCircle((Fix64)0.5);
             var velocityComponent = new VelocityComponent();
             world.AddComponent(entity, playerComponent);
             world.AddComponent(entity, transform2DComponent);
