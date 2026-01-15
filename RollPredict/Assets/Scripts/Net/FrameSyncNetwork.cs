@@ -311,11 +311,11 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     /// <summary>
     /// 发送帧数据（上下左右）
     /// </summary>
-    public void SendFrameData(InputDirection direction, bool isFire = false, long fireX = 0, long fireY = 0)
+    public void SendFrameData(InputDirection direction, bool isFire = false, long fireX = 0, long fireY = 0, bool isToggle = false)
     {
-        if (!isConnected || !isGameStarted)
+        if (!isConnected)
         {
-            // 游戏未开始，不发送帧数据
+            Debug.LogWarning("Not connected to server");
             return;
         }
 
@@ -324,7 +324,8 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
             PlayerId = myPlayerID,
             Direction = direction,
             FrameNumber = ECSPredictionRollbackManager.Instance.confirmedServerFrame,
-            IsFire = isFire
+            IsFire = isFire,
+            IsToggle = isToggle
         };
         
         // 如果发射，设置目标位置

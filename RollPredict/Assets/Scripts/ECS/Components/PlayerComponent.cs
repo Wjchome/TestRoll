@@ -18,7 +18,7 @@ namespace Frame.ECS
         /// 玩家ID（游戏逻辑层的ID，如100, 200, 300...）
         /// </summary>
         public int playerId;
-        
+
         /// <summary>
         /// 当前模式索引（0=放置墙, 1=发射子弹）
         /// </summary>
@@ -28,7 +28,7 @@ namespace Frame.ECS
         /// 总模式数量
         /// </summary>
         public int sumIndex;
-        
+
         /// <summary>
         /// 子弹发射冷却时间（Fix64，确保确定性）
         /// </summary>

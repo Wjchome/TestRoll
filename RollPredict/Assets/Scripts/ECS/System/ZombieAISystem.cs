@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Frame.FixMath;
 using Proto;
+using Unity.Collections;
 
 namespace Frame.ECS
 {
@@ -153,7 +154,6 @@ namespace Frame.ECS
                                     break;
                                 }
                             }
-                            
                             // 如果找到路径，使用路径
                             if (foundPath != null)
                             {

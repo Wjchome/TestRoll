@@ -159,7 +159,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
                 }
                 else
                 {
-                    networkManager.SendFrameData(bufferedDirection, bufferedFire, bufferedFireX, bufferedFireY);
+                    networkManager.SendFrameData(bufferedDirection, bufferedFire, bufferedFireX, bufferedFireY, bufferedToggle);
                 }
 
                 // 发送后，清除已发送的输入状态（准备下一轮缓冲）
@@ -387,7 +387,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
             }
             else
             {
-                ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY);
+                ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY, isToggle);
             }
         }
     }
