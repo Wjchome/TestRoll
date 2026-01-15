@@ -8,12 +8,18 @@ namespace Frame.ECS
 {
     /// <summary>
     /// 僵尸AI系统：处理僵尸的寻路和移动
+    /// 使用流场（Flow Field）算法优化性能
     /// </summary>
     public class ZombieAISystem : ISystem
     {
         // 寻路冷却时间（帧数）
         private const int PATHFINDING_COOLDOWN_FRAMES = 10;
         private const int ATTACK_COOLDOWN_FRAMES = 2;
+        
+        // 流场缓存：避免每帧都重新计算
+        private FlowFieldPathfinding.FlowFieldData? cachedFlowField;
+        private int flowFieldUpdateCooldown = 0;
+        private const int FLOW_FIELD_UPDATE_INTERVAL = 5; // 每5帧更新一次流场
 
         public void Execute(World world, List<FrameData> inputs)
         {
@@ -24,12 +30,41 @@ namespace Frame.ECS
                 map = _map;
             }
 
-            // 获取所有玩家位置（用于寻找最近玩家）
+            // 获取所有玩家位置（用于寻找最近玩家和计算流场）
             var playerPositions = new List<FixVector2>();
             foreach (var (playerEntity, playerTransform, _) in world
                          .GetEntitiesWithComponents<Transform2DComponent, PlayerComponent>())
             {
                 playerPositions.Add(playerTransform.position);
+            }
+
+            if (playerPositions.Count == 0)
+            {
+                return; // 没有玩家，直接返回
+            }
+
+            // 更新流场（每N帧更新一次，或玩家位置改变时）
+            bool needUpdateFlowField = false;
+            
+            if (flowFieldUpdateCooldown <= 0)
+            {
+                needUpdateFlowField = true;
+                flowFieldUpdateCooldown = FLOW_FIELD_UPDATE_INTERVAL;
+            }
+            else
+            {
+                flowFieldUpdateCooldown--;
+            }
+            
+            // 计算或更新流场（只计算一次，所有僵尸共享）
+            // 使用所有玩家位置作为目标点，僵尸会自动流向最近的玩家
+            if (needUpdateFlowField)
+            {
+                var flowField = FlowFieldPathfinding.ComputeFlowField(map, playerPositions);
+                if (flowField.HasValue)
+                {
+                    cachedFlowField = flowField.Value;
+                }
             }
 
             // 获取所有僵尸
@@ -131,84 +166,54 @@ namespace Frame.ECS
                         }
 
 
-                        // 正常寻路和移动逻辑
-                        if (ai.pathfindingCooldown > 0)
+                        // 使用流场寻路（优化性能）
+                        // 流场已经在循环外计算完成，所有僵尸共享同一个流场
+                        FixVector2 nearestPlayerPos = sortedPlayers[0].position;
+                        
+                        if (cachedFlowField.HasValue)
                         {
-                            updatedAI.pathfindingCooldown--;
-                            world.AddComponent(entity, updatedAI);
-                        }
-                        else
-                        {
-                            // 按顺序尝试寻路：最近、第二近、第三近...
-                            List<FixVector2> foundPath = null;
-                            FixVector2 targetPos = FixVector2.Zero;
+                            // 查询流场方向
+                            FixVector2 flowDirection = FlowFieldPathfinding.GetDirection(
+                                cachedFlowField.Value, 
+                                map, 
+                                transform.position
+                            );
                             
-                            foreach (var (playerPos, _) in sortedPlayers)
+                            // 检查流场方向是否有效
+                            if (flowDirection.SqrMagnitude() > Fix64.Zero)
                             {
-                                var path = DeterministicPathfinding.FindPath(map, transform.position, playerPos);
-                                if (path != null && path.Count > 0)
+                                // 使用流场方向移动
+                                updatedAI.targetPosition = nearestPlayerPos;
+                                AddForceHelper.ApplyForce(world, entity, flowDirection * updatedAI.moveSpeed);
+                            }
+                            else
+                            {
+                                // 流场方向为零（可能是目标点或不可达），使用直线移动（fallback）
+                                FixVector2 direction = nearestPlayerPos - transform.position;
+                                Fix64 dirMagnitude = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
+                                
+                                if (dirMagnitude > Fix64.Zero)
                                 {
-                                    // 找到可通行路径，使用这个路径
-                                    foundPath = path;
-                                    targetPos = playerPos;
-                                    break;
+                                    direction = direction / dirMagnitude;
+                                    AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
                                 }
                             }
-                            // 如果找到路径，使用路径
-                            if (foundPath != null)
-                            {
-                                updatedAI.targetPosition = targetPos;
-                                updatedAI.currentPath = foundPath;
-                                updatedAI.currentPathIndex = 0;
-                                updatedAI.pathfindingCooldown = PATHFINDING_COOLDOWN_FRAMES;
-                            }
-                            else
-                            {
-                                // 所有玩家都找不到可通行路径，使用直线移动最近的玩家
-                                updatedAI.targetPosition = sortedPlayers[0].position;
-                                updatedAI.currentPath = null;
-                                updatedAI.currentPathIndex = 0;
-                                updatedAI.pathfindingCooldown = PATHFINDING_COOLDOWN_FRAMES;
-                            }
-                            
-                            world.AddComponent(entity, updatedAI);
-                        }
-
-                        // 移动逻辑
-                        if (updatedAI.currentPath != null && updatedAI.currentPath.Count > 0 &&
-                            updatedAI.currentPathIndex < updatedAI.currentPath.Count)
-                        {
-                            // 按路径移动
-                            FixVector2 targetPoint = updatedAI.currentPath[updatedAI.currentPathIndex];
-                            FixVector2 direction = targetPoint - transform.position;
-                            Fix64 distance = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
-
-                            // 如果到达当前路径点，移动到下一个点
-                            if (distance < map.cellSize / Fix64.Two)
-                            {
-                                updatedAI.currentPathIndex++;
-                                world.AddComponent(entity, updatedAI);
-                            }
-                            else
-                            {
-                                // 移动到目标点
-                                direction.Normalize();
-                                AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
-                            }
                         }
                         else
                         {
-                            // 没有路径或路径已走完，直线移动最近的玩家
-                            FixVector2 direction = sortedPlayers[0].position - transform.position;
+                            // 流场计算失败，使用直线移动（fallback）
+                            FixVector2 direction = nearestPlayerPos - transform.position;
                             Fix64 dirMagnitude = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
                             
-                            // 避免除零
                             if (dirMagnitude > Fix64.Zero)
                             {
-                                direction = direction / dirMagnitude; // 归一化
+                                direction = direction / dirMagnitude;
                                 AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
                             }
                         }
+                        
+                        updatedAI.targetPosition = nearestPlayerPos;
+                        world.AddComponent(entity, updatedAI);
 
                         break;
 
