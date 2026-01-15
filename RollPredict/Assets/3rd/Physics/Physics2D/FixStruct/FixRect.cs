@@ -99,11 +99,27 @@ namespace Frame.Physics2D
         
         public void Union(FixRect other)
         {
-            this.X = Fix64.Min(other.X, this.X);
-            this.Y = Fix64.Min(other.Y, this.Y);
-            this.Width = Fix64.Max(other.Right, this.Right) - X;
-            this.Height = Fix64.Max(other.Top, this.Top) - Y;
+            // 关键修复：先保存原始边界值（修改X/Y前的Right/Top）
+            Fix64 originalRight = this.Right;
+            Fix64 originalTop = this.Top;
 
+            // 步骤1：确定并集的左、下边界（取最小值）
+            Fix64 newX = Fix64.Min(other.X, this.X);
+            Fix64 newY = Fix64.Min(other.Y, this.Y);
+
+            // 步骤2：确定并集的右、上边界（取最大值，基于原始边界）
+            Fix64 newRight = Fix64.Max(other.Right, originalRight);
+            Fix64 newTop = Fix64.Max(other.Top, originalTop);
+
+            // 步骤3：计算新的宽度和高度，确保非负（鲁棒性）
+            Fix64 newWidth = newRight - newX;
+            Fix64 newHeight = newTop - newY;
+
+            // 步骤4：赋值回当前实例（保证Width/Height非负）
+            this.X = newX;
+            this.Y = newY;
+            this.Width = Fix64.Max(newWidth, new Fix64(0)); // 避免负数宽度
+            this.Height = Fix64.Max(newHeight, new Fix64(0)); // 避免负数高度
         }
     }
 }
