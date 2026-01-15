@@ -685,6 +685,23 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
 
                 break;
 
+            case MessageType.MessageDisconnect:
+                // 处理断开连接消息（可能来自服务器或本地检测到的连接关闭）
+                Debug.Log("Received disconnect message or connection closed");
+                lock (threadLock)
+                {
+                    if (isConnected) // 只在已连接状态下处理，避免重复触发
+                    {
+                        isConnected = false;
+                        isGameStarted = false;
+                        // 触发断开连接回调
+                        OnDisconnected?.Invoke();
+                    }
+                }
+                // 注意：不在这里调用 Disconnect()，因为可能已经在清理过程中
+                // 如果需要完全清理，应该由外部调用 Disconnect()
+                break;
+
             default:
                 Debug.LogWarning($"Unhandled message type: {messageType}");
                 break;
@@ -723,7 +740,33 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
                         {
                             break; // 正常关闭
                         }
-                        Debug.LogWarning($"UDP receive socket error: {e.Message}");
+                        
+                        // 检查Socket错误代码，区分不同类型的错误
+                        SocketError errorCode = e.SocketErrorCode;
+                        
+                        // 连接被远程主机关闭的错误（不可恢复）
+                        if (errorCode == SocketError.ConnectionReset || 
+                            errorCode == SocketError.ConnectionAborted ||
+                            errorCode == SocketError.Shutdown ||
+                            errorCode == SocketError.NetworkReset)
+                        {
+                            Debug.LogWarning($"Connection closed by remote host: {e.Message} (ErrorCode: {errorCode})");
+                            // 触发断开连接回调（在主线程中执行）
+                            lock (threadLock)
+                            {
+                                isConnected = false;
+                            }
+                            // 使用队列通知主线程触发断开回调
+                            lock (queueLock)
+                            {
+                                // 标记需要触发断开连接
+                                serverDataQueue.Enqueue((MessageType.MessageDisconnect, null));
+                            }
+                            break; // 退出接收循环
+                        }
+                        
+                        // 其他可恢复的错误（如网络暂时不可用）
+                        Debug.LogWarning($"UDP receive socket error: {e.Message} (ErrorCode: {errorCode}), retrying...");
                         Thread.Sleep(100); // 短暂等待后重试
                         continue;
                     }
