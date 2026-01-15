@@ -22,7 +22,7 @@ namespace Frame.ECS
         public int damage;
 
 
-        public BulletComponent(int ownerEntityId, int damage = 5)
+        public BulletComponent(int ownerEntityId, int damage = 50)
         {
             this.ownerEntityId = ownerEntityId;
             this.damage = damage;

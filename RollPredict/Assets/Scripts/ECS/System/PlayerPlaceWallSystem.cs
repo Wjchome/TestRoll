@@ -99,11 +99,12 @@ namespace Frame.ECS
             var transform2DComponent = new Transform2DComponent(alignedPosition);
 
             // 添加物理组件（static，不移动，不响应重力）
+            // 初始状态：isTrigger = true（不阻挡，等待放置者离开）
             var physicsBodyComponent = new PhysicsBodyComponent(
                 Fix64.Zero, // mass = 0（static）
                 isStatic: true, // 静态物体
                 useGravity: false,
-                isTrigger: false,
+                isTrigger: true, // 初始为trigger，不阻挡放置者
                 restitution: Fix64.Zero,
                 friction: Fix64.Zero,
                 linearDamping: Fix64.Zero,
@@ -122,6 +123,9 @@ namespace Frame.ECS
             // 添加血量组件（墙可以被破坏）
             var hpComponent = new HPComponent(50); // 墙初始血量50
 
+            // 添加墙放置组件（标记正在放置中，等待放置者离开）
+            var wallPlacementComponent = new WallPlacementComponent(playerEntity.Id);
+
             // 添加所有组件到实体
             world.AddComponent(wallEntity, wallComponent);
             world.AddComponent(wallEntity, transform2DComponent);
@@ -129,6 +133,7 @@ namespace Frame.ECS
             world.AddComponent(wallEntity, collisionShapeComponent);
             world.AddComponent(wallEntity, velocityComponent);
             world.AddComponent(wallEntity, hpComponent);
+            world.AddComponent(wallEntity, wallPlacementComponent); // 标记正在放置中
 
             // 将墙的位置添加到地图的障碍物列表
             // 关键：必须重新获取地图组件，确保使用最新状态（包括之前放置的墙）

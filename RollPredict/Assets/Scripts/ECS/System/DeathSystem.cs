@@ -25,7 +25,7 @@ namespace Frame.ECS
         public void Execute(World world, List<FrameData> inputs)
         {
             List<Entity> entitiesToDestroy = new List<Entity>();
-            
+
             // 处理所有有 DeathComponent 的实体
             foreach (var (entity, death) in world.GetEntitiesWithComponents<DeathComponent>())
             {
@@ -37,22 +37,23 @@ namespace Frame.ECS
                 else if (world.TryGetComponent<ZombieAIComponent>(entity, out var zombie))
                 {
                     HandleZombieDeath(world, entity);
+                    entitiesToDestroy.Add(entity);
+                    
                 }
                 else if (world.TryGetComponent<WallComponent>(entity, out var wall))
                 {
                     HandleWallDeath(world, entity);
+                    entitiesToDestroy.Add(entity);
                 }
-                
-                entitiesToDestroy.Add(entity);
             }
-            
+
             // 统一销毁死亡实体
             foreach (var entity in entitiesToDestroy)
             {
                 world.DestroyEntity(entity);
             }
         }
-        
+
         /// <summary>
         /// 处理玩家死亡
         /// </summary>
@@ -62,11 +63,11 @@ namespace Frame.ECS
             // - 触发游戏结束？
             // - 播放死亡动画？
             // - 移除玩家相关数据？
-            
+
             // 暂时只记录日志
             UnityEngine.Debug.Log($"[DeathSystem] Player {entity.Id} died");
         }
-        
+
         /// <summary>
         /// 处理僵尸死亡
         /// </summary>
@@ -76,11 +77,11 @@ namespace Frame.ECS
             // - 掉落物品？
             // - 增加分数？
             // - 播放死亡动画？
-            
+
             // 暂时只记录日志
             UnityEngine.Debug.Log($"[DeathSystem] Zombie {entity.Id} died");
         }
-        
+
         /// <summary>
         /// 处理墙被摧毁
         /// </summary>
@@ -88,10 +89,10 @@ namespace Frame.ECS
         {
             // 从地图障碍物中移除墙的位置
             RemoveWallFromMap(world, entity);
-            
+
             UnityEngine.Debug.Log($"[DeathSystem] Wall {entity.Id} destroyed");
         }
-        
+
         /// <summary>
         /// 从地图障碍物中移除墙（当墙被摧毁时调用）
         /// </summary>
@@ -100,22 +101,20 @@ namespace Frame.ECS
             // 获取墙的位置
             if (!world.TryGetComponent<Transform2DComponent>(wallEntity, out var wallTransform))
                 return;
-            
+
             // 获取地图组件
             foreach (var (mapEntity, map) in world.GetEntitiesWithComponents<GridMapComponent>())
             {
                 // 将墙的世界坐标转换为网格坐标
                 GridNode wallGrid = map.WorldToGrid(wallTransform.position);
-                
+
                 // 从障碍物列表中移除
                 var updatedMap = map;
                 updatedMap.obstacles.Remove(wallGrid);
                 world.AddComponent(mapEntity, updatedMap);
-                
+
                 break; // 只处理第一个地图
             }
         }
     }
 }
-
-
