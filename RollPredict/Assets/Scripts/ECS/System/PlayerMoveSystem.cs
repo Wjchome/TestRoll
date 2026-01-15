@@ -23,10 +23,10 @@ namespace Frame.ECS
                 if (!playerEntity.HasValue)
                     continue;
 
-                // 检查玩家状态（僵直状态下无法移动）
-                if (world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
+                // 检查僵直状态（僵直状态下无法移动）
+                if (world.TryGetComponent<StiffComponent>(playerEntity.Value, out var stiff))
                 {
-                    if (playerComponent.state == PlayerState.HitStun)
+                    if (stiff.IsStiff)
                     {
                         // 僵直状态下，忽略移动输入
                         continue;

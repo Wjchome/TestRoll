@@ -5,16 +5,11 @@ using Frame.FixMath;
 namespace Frame.ECS
 {
     /// <summary>
-    /// 玩家状态枚举
-    /// </summary>
-    public enum PlayerState : byte
-    {
-        Normal = 0,        // 正常状态
-        HitStun = 1        // 受伤僵直状态
-    }
-
-    /// <summary>
-    /// 玩家Component：存储玩家状态
+    /// 玩家Component：存储玩家特有的状态
+    /// 
+    /// 注意：
+    /// - HP 和僵直状态已分离到通用组件（HPComponent, StiffComponent）
+    /// - 此组件只包含玩家特有的数据
     /// </summary>
     [Serializable]
     public struct PlayerComponent : IComponent
@@ -24,14 +19,14 @@ namespace Frame.ECS
         /// </summary>
         public int playerId;
         
-
         /// <summary>
-        /// 生命值
+        /// 当前模式索引（0=放置墙, 1=发射子弹）
         /// </summary>
-        public int HP;
-        public int maxHP;
-
         public int currentIndex;
+        
+        /// <summary>
+        /// 总模式数量
+        /// </summary>
         public int sumIndex;
         
         /// <summary>
@@ -55,33 +50,14 @@ namespace Frame.ECS
         /// 例如：30 表示 30 帧的冷却（假设 60fps = 0.5 秒）
         /// </summary>
         public static Fix64 WallCooldownDuration = (Fix64)1; // 30帧 ≈ 0.5秒 @ 60fps
-        
-        /// <summary>
-        /// 玩家当前状态
-        /// </summary>
-        public PlayerState state;
-        
-        /// <summary>
-        /// 受伤僵直计时器（帧数）
-        /// </summary>
-        public int hitStunTimer;
-        
-        /// <summary>
-        /// 受伤僵直持续时间配置（帧数）
-        /// </summary>
-        public static int HitStunDuration = 10; // 10帧僵直
 
-        public PlayerComponent(int playerId, int hp,  int sumIndex)
+        public PlayerComponent(int playerId, int sumIndex)
         {
             this.playerId = playerId;
-            this.maxHP = hp;
-            this.HP = hp;
             currentIndex = 0;
             this.sumIndex = sumIndex;
             this.bulletCooldownTimer = Fix64.Zero;
             this.wallCooldownTimer = Fix64.Zero;
-            this.state = PlayerState.Normal;
-            this.hitStunTimer = 0;
         }
 
         public object Clone()
@@ -91,7 +67,7 @@ namespace Frame.ECS
 
         public override string ToString()
         {
-            return $"{this.GetType().Name}:playerId = {playerId},hp = {HP}";
+            return $"{this.GetType().Name}: playerId={playerId}, currentIndex={currentIndex}";
         }
     
     }

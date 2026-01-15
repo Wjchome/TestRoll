@@ -58,8 +58,13 @@ namespace Frame.ECS
             // 创建Entity
             Entity entity = world.CreateEntity();
 
-            // 添加PlayerComponent
-            var playerComponent = new PlayerComponent(playerId, initialHp,2);
+            // 添加PlayerComponent（玩家特有数据）
+            var playerComponent = new PlayerComponent(playerId, 2);
+            
+            // 添加通用组件：HPComponent 和 StiffComponent
+            var hpComponent = new HPComponent(initialHp);
+            var stiffComponent = new StiffComponent(10);
+            
             var transform2DComponent = new Transform2DComponent(initialPosition);
             var physicsBodyComponent = new PhysicsBodyComponent(
                 Fix64.One, 
@@ -73,7 +78,10 @@ namespace Frame.ECS
             );
             var collisionShapeComponent =  CollisionShapeComponent.CreateCircle((Fix64)0.5);
             var velocityComponent = new VelocityComponent();
+            
             world.AddComponent(entity, playerComponent);
+            world.AddComponent(entity, hpComponent);
+            world.AddComponent(entity, stiffComponent);
             world.AddComponent(entity, transform2DComponent);
             world.AddComponent(entity, physicsBodyComponent);
             world.AddComponent(entity, collisionShapeComponent);
@@ -378,7 +386,11 @@ namespace Frame.ECS
                     var uiComponent = playerGO.GetComponent<PlayerUI>();
                     if (uiComponent != null)
                     {
-                        uiComponent.UpdateHealth(playerComponent.HP, playerComponent.maxHP);
+                        // 更新血量显示（从HPComponent获取）
+                        if (world.TryGetComponent<HPComponent>(entity, out var hpComponent))
+                        {
+                            uiComponent.UpdateHealth(hpComponent.HP, hpComponent.maxHP);
+                        }
                     }
                 }
             }

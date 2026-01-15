@@ -39,7 +39,10 @@ namespace Frame.ECS
                 // 添加必要的组件
                 var transformZ = new Transform2DComponent(zombiePosition);
                 var zombieAI = new ZombieAIComponent(nearestPosition, zombieMoveSpeed);
-          
+                
+                // 添加通用组件：HPComponent 和 StiffComponent
+                var hpComponent = new HPComponent(100); // 僵尸初始血量100
+                var stiffComponent = new StiffComponent(10);
                 
                 var physicsBody = new PhysicsBodyComponent(
                     Fix64.One, 
@@ -56,6 +59,8 @@ namespace Frame.ECS
 
                 world.AddComponent(zombieEntity, transformZ);
                 world.AddComponent(zombieEntity, zombieAI);
+                world.AddComponent(zombieEntity, hpComponent);
+                world.AddComponent(zombieEntity, stiffComponent);
                 world.AddComponent(zombieEntity, physicsBody);
                 world.AddComponent(zombieEntity, collisionShape);
                 world.AddComponent(zombieEntity, velocity);

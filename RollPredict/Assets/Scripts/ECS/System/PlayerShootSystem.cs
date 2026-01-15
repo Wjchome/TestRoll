@@ -29,10 +29,13 @@ namespace Frame.ECS
                 if (!world.TryGetComponent<PlayerComponent>(playerEntity.Value, out var playerComponent))
                     continue;
                 
-                // 检查玩家状态（僵直状态下无法操作）
-                if (playerComponent.state == PlayerState.HitStun)
+                // 检查僵直状态（僵直状态下无法操作）
+                if (world.TryGetComponent<StiffComponent>(playerEntity.Value, out var stiff))
                 {
-                    continue; // 僵直状态，无法发射子弹
+                    if (stiff.IsStiff)
+                    {
+                        continue; // 僵直状态，无法发射子弹
+                    }
                 }
                 
                 // 检查是否在发射子弹模式

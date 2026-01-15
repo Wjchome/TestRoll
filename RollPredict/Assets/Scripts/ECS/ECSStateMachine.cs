@@ -109,7 +109,7 @@ namespace Frame.ECS
 
             RegisterSystem(new PlayerToggleSystem());
             RegisterSystem(new PlayerCooldownSystem());
-            RegisterSystem(new PlayerStateSystem()); // 玩家状态机系统（处理受伤僵直）
+            RegisterSystem(new StiffSystem()); // 通用僵直系统（处理所有实体的僵直状态）
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new PlayerPlaceWallSystem());

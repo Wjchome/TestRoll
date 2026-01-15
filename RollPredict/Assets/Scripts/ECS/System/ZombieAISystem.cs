@@ -35,6 +35,15 @@ namespace Frame.ECS
             foreach (var (entity, transform, ai, velocityComponent) in
                      world.GetEntitiesWithComponents<Transform2DComponent, ZombieAIComponent, VelocityComponent>())
             {
+                // 检查僵直状态（僵直状态下无法移动和攻击）
+                if (world.TryGetComponent<StiffComponent>(entity, out var stiff))
+                {
+                    if (stiff.IsStiff)
+                    {
+                        continue; // 跳过AI逻辑
+                    }
+                }
+                
                 var updatedAI = ai;
                 var newVelocity = velocityComponent;
 
@@ -255,7 +264,7 @@ namespace Frame.ECS
                 // 5. 对查询结果中的玩家造成伤害
                 foreach (var playerEntity in playersInRect)
                 {
-                    PlayerDamageHelper.ApplyDamage(world, playerEntity, ai.attackDamage);
+                    HPDamageHelper.ApplyDamage(world, playerEntity, ai.attackDamage);
 
                     AddForceHelper.ApplyForce(world,playerEntity, ai.attackDirection/(Fix64)3);
                     
