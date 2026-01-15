@@ -28,8 +28,8 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     public int serverPort = 8088; // KCP端口
     public string playerName = "Player";
 
-    [Header("KCP配置")] [Tooltip("发送窗口大小")] public uint sendWindowSize = 32;
-    [Tooltip("接收窗口大小")] public uint receiveWindowSize = 32;
+    [Header("KCP配置")] [Tooltip("发送窗口大小（必须与服务器一致）")] public uint sendWindowSize = 128;
+    [Tooltip("接收窗口大小（必须与服务器一致）")] public uint receiveWindowSize = 128;
     [Tooltip("最大传输单元")] public uint mtu = 1400;
     [Tooltip("快速重传阈值")] public uint fastResend = 2;
     [Tooltip("无延迟模式")] public bool noDelay = true;
