@@ -47,25 +47,21 @@ namespace Frame.ECS
                 var updatedAI = ai;
                 var newVelocity = velocityComponent;
 
-                // 寻找最近的玩家
-                FixVector2 nearestPlayerPos = FixVector2.Zero;
-                Fix64 minDistance = Fix64.MaxValue;
-
-                foreach (var playerPos in playerPositions)
-                {
-                    FixVector2 diff = playerPos - transform.position;
-                    Fix64 distance = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        nearestPlayerPos = playerPos;
-                    }
-                }
-
                 if (playerPositions.Count == 0)
                 {
                     continue;
                 }
+
+                // 排序所有玩家位置（按距离从近到远）
+                var sortedPlayers = new List<(FixVector2 position, Fix64 distance)>();
+                foreach (var playerPos in playerPositions)
+                {
+                    FixVector2 diff = playerPos - transform.position;
+                    Fix64 distance = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
+                    sortedPlayers.Add((playerPos, distance));
+                }
+                // 按距离排序（最近的在前面）
+                sortedPlayers.Sort((a, b) => a.distance.CompareTo(b.distance));
 
                 switch (ai.state)
                 {
@@ -142,25 +138,47 @@ namespace Frame.ECS
                         }
                         else
                         {
-                            updatedAI.targetPosition = nearestPlayerPos;
-                            updatedAI.currentPath = null;
-                            updatedAI.currentPathIndex = 0;
-                            var path = DeterministicPathfinding.FindPath(map, transform.position,
-                                updatedAI.targetPosition);
-                            if (path != null && path.Count > 0)
+                            // 按顺序尝试寻路：最近、第二近、第三近...
+                            List<FixVector2> foundPath = null;
+                            FixVector2 targetPos = FixVector2.Zero;
+                            
+                            foreach (var (playerPos, _) in sortedPlayers)
                             {
+                                var path = DeterministicPathfinding.FindPath(map, transform.position, playerPos);
+                                if (path != null && path.Count > 0)
+                                {
+                                    // 找到可通行路径，使用这个路径
+                                    foundPath = path;
+                                    targetPos = playerPos;
+                                    break;
+                                }
+                            }
+                            
+                            // 如果找到路径，使用路径
+                            if (foundPath != null)
+                            {
+                                updatedAI.targetPosition = targetPos;
+                                updatedAI.currentPath = foundPath;
+                                updatedAI.currentPathIndex = 0;
                                 updatedAI.pathfindingCooldown = PATHFINDING_COOLDOWN_FRAMES;
                             }
-
-                            updatedAI.currentPath = path;
-                            updatedAI.currentPathIndex = 0;
-
+                            else
+                            {
+                                // 所有玩家都找不到可通行路径，使用直线移动最近的玩家
+                                updatedAI.targetPosition = sortedPlayers[0].position;
+                                updatedAI.currentPath = null;
+                                updatedAI.currentPathIndex = 0;
+                                updatedAI.pathfindingCooldown = PATHFINDING_COOLDOWN_FRAMES;
+                            }
+                            
                             world.AddComponent(entity, updatedAI);
                         }
 
+                        // 移动逻辑
                         if (updatedAI.currentPath != null && updatedAI.currentPath.Count > 0 &&
                             updatedAI.currentPathIndex < updatedAI.currentPath.Count)
                         {
+                            // 按路径移动
                             FixVector2 targetPoint = updatedAI.currentPath[updatedAI.currentPathIndex];
                             FixVector2 direction = targetPoint - transform.position;
                             Fix64 distance = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
@@ -180,9 +198,16 @@ namespace Frame.ECS
                         }
                         else
                         {
-                            FixVector2 direction = nearestPlayerPos - transform.position;
-                            direction.Normalize();
-                            AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
+                            // 没有路径或路径已走完，直线移动最近的玩家
+                            FixVector2 direction = sortedPlayers[0].position - transform.position;
+                            Fix64 dirMagnitude = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
+                            
+                            // 避免除零
+                            if (dirMagnitude > Fix64.Zero)
+                            {
+                                direction = direction / dirMagnitude; // 归一化
+                                AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
+                            }
                         }
 
                         break;
