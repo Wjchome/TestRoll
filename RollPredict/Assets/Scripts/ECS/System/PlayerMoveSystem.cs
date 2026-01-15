@@ -40,10 +40,12 @@ namespace Frame.ECS
                 // 将输入方向转换为移动向量
                 FixVector2 movementDirection = Util.GetMovementDirection(inputDirection);
 
-                // 更新玩家位置
-                velocityComponent.velocity += movementDirection * PlayerSpeed;
+                AddForceHelper.ApplyForce(world,playerEntity.Value,movementDirection * PlayerSpeed);
                 
-                world.AddComponent(playerEntity.Value, velocityComponent);
+                // // 更新玩家位置
+                // velocityComponent.velocity += movementDirection * PlayerSpeed;
+                //
+                // world.AddComponent(playerEntity.Value, velocityComponent);
             }
         }
         private static Entity? FindPlayerEntity(World world, int playerId)

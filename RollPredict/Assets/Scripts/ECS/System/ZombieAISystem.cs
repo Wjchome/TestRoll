@@ -167,16 +167,16 @@ namespace Frame.ECS
                             {
                                 // 移动到目标点
                                 direction.Normalize();
-                                newVelocity.velocity += direction * updatedAI.moveSpeed;
-                                world.AddComponent(entity, newVelocity);
+                                AddForceHelper.ApplyForce(world,entity, direction * updatedAI.moveSpeed);
+
                             }
                         }
                         else
                         {
                             FixVector2 direction = nearestPlayerPos - transform.position;
                             direction.Normalize();
-                            newVelocity.velocity += direction * updatedAI.moveSpeed;
-                            world.AddComponent(entity, newVelocity);
+                            AddForceHelper.ApplyForce(world,entity, direction * updatedAI.moveSpeed);
+                            
                         }
 
                         break;
@@ -255,17 +255,13 @@ namespace Frame.ECS
                 // 5. 对查询结果中的玩家造成伤害
                 foreach (var playerEntity in playersInRect)
                 {
-                    ApplyDamage(world, playerEntity, ai.attackDamage);
+                    PlayerDamageHelper.ApplyDamage(world, playerEntity, ai.attackDamage);
+
+                    AddForceHelper.ApplyForce(world,playerEntity, ai.attackDirection/(Fix64)3);
+                    
                 }
             }
         }
 
-        /// <summary>
-        /// 对玩家造成伤害（使用统一的伤害处理系统）
-        /// </summary>
-        private void ApplyDamage(World world, Entity playerEntity, int damage)
-        {
-            PlayerDamageHelper.ApplyDamage(world, playerEntity, damage);
-        }
     }
 }

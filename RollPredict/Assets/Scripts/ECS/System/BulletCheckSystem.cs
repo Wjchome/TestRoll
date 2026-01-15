@@ -34,35 +34,41 @@ namespace Frame.ECS
                         Entity playerEntity = new Entity(entityId);
                         PlayerDamageHelper.ApplyDamage(world, playerEntity, bulletComponent.damage);
                         
+                       
                         // 添加击退效果（可选）
-                        if (world.TryGetComponent<VelocityComponent>(playerEntity, out var playerVelocityComponent))
-                        {
-                            // 计算击退方向（从子弹位置指向玩家位置）
-                            if (world.TryGetComponent<Transform2DComponent>(playerEntity, out var playerTransform))
-                            {
-                                FixVector2 knockbackDir = playerTransform.position - transform2DComponent.position;
-                                if (knockbackDir.SqrMagnitude() > Fix64.Zero)
-                                {
-                                    knockbackDir.Normalize();
-                                    // 击退力度（可以根据需要调整）
-                                    Fix64 knockbackForce = (Fix64)0.1f;
-                                    playerVelocityComponent.velocity += knockbackDir * knockbackForce;
-                                    world.AddComponent(playerEntity, playerVelocityComponent);
-                                }
-                            }
-                        }
+                        AddForceHelper. ApplyForce(world,playerEntity,velocityComponent.velocity);
+                        // if (world.TryGetComponent<VelocityComponent>(playerEntity, out var playerVelocityComponent))
+                        // {
+                        //     // 计算击退方向（从子弹位置指向玩家位置）
+                        //     if (world.TryGetComponent<Transform2DComponent>(playerEntity, out var playerTransform))
+                        //     {
+                        //         FixVector2 knockbackDir = playerTransform.position - transform2DComponent.position;
+                        //         if (knockbackDir.SqrMagnitude() > Fix64.Zero)
+                        //         {
+                        //             knockbackDir.Normalize();
+                        //             // 击退力度（可以根据需要调整）
+                        //             Fix64 knockbackForce = (Fix64)0.1f;
+                        //             playerVelocityComponent.velocity += knockbackDir * knockbackForce;
+                        //             world.AddComponent(playerEntity, playerVelocityComponent);
+                        //         }
+                        //     }
+                        // }
 
                         // 子弹击中玩家后销毁
                         removedEntities.Add(entity);
                     }
                     else if (world.TryGetComponent<ZombieAIComponent>(new Entity(entityId), out var zombieAIComponent))
                     {
-                        if (world.TryGetComponent<VelocityComponent>(new Entity(entityId),
-                                out var zombieVelocityComponent))
-                        {
-                            zombieVelocityComponent.velocity += velocityComponent.velocity;
-                            world.AddComponent(new Entity(entityId), zombieVelocityComponent);
-                        }
+                        Entity zombieEntity = new Entity(entityId);
+                        
+                        AddForceHelper. ApplyForce(world,zombieEntity,velocityComponent.velocity);
+                        
+                        // if (world.TryGetComponent<VelocityComponent>(new Entity(entityId),
+                        //         out var zombieVelocityComponent))
+                        // {
+                        //     zombieVelocityComponent.velocity += velocityComponent.velocity;
+                        //     world.AddComponent(new Entity(entityId), zombieVelocityComponent);
+                        // }
 
                         // 碰到敌人，销毁
                         removedEntities.Add(entity);
