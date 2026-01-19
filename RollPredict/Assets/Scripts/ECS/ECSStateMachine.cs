@@ -106,6 +106,7 @@ namespace Frame.ECS
 
             ClearSystems();
 
+            RegisterSystem(new FlowFieldSystem());
 
             RegisterSystem(new PlayerToggleSystem());
             RegisterSystem(new PlayerCooldownSystem());

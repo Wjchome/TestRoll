@@ -337,6 +337,12 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         var newEntity =  ecsPredictionManager.currentWorld.CreateEntity();
         var component = new GridMapComponent(20,20,Fix64.One);
         ecsPredictionManager.currentWorld.AddComponent(newEntity, component);
+        
+        var newEntity2 = ecsPredictionManager.currentWorld.CreateEntity();
+        var component2 = new FlowFieldComponent(0, null);
+        ecsPredictionManager.currentWorld.AddComponent(newEntity2, component2);
+        
+        
         // 4. 保存初始状态快照
         ecsPredictionManager.SaveSnapshot(0);
 

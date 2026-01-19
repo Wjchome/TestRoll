@@ -3,23 +3,22 @@ using System.Linq;
 using Frame.FixMath;
 using Proto;
 using Unity.Collections;
+using UnityEngine;
 
 namespace Frame.ECS
 {
     /// <summary>
     /// 僵尸AI系统：处理僵尸的寻路和移动
     /// 使用流场（Flow Field）算法优化性能
+    /// 
+    /// 注意：System不保存任何状态，所有状态都存储在Component中
+    /// 这样确保预测回滚系统可以正确恢复状态
     /// </summary>
     public class ZombieAISystem : ISystem
     {
         // 寻路冷却时间（帧数）
         private const int PATHFINDING_COOLDOWN_FRAMES = 10;
         private const int ATTACK_COOLDOWN_FRAMES = 2;
-        
-        // 流场缓存：避免每帧都重新计算
-        private FlowFieldPathfinding.FlowFieldData? cachedFlowField;
-        private int flowFieldUpdateCooldown = 0;
-        private const int FLOW_FIELD_UPDATE_INTERVAL = 5; // 每5帧更新一次流场
 
         public void Execute(World world, List<FrameData> inputs)
         {
@@ -43,29 +42,6 @@ namespace Frame.ECS
                 return; // 没有玩家，直接返回
             }
 
-            // 更新流场（每N帧更新一次，或玩家位置改变时）
-            bool needUpdateFlowField = false;
-            
-            if (flowFieldUpdateCooldown <= 0)
-            {
-                needUpdateFlowField = true;
-                flowFieldUpdateCooldown = FLOW_FIELD_UPDATE_INTERVAL;
-            }
-            else
-            {
-                flowFieldUpdateCooldown--;
-            }
-            
-            // 计算或更新流场（只计算一次，所有僵尸共享）
-            // 使用所有玩家位置作为目标点，僵尸会自动流向最近的玩家
-            if (needUpdateFlowField)
-            {
-                var flowField = FlowFieldPathfinding.ComputeFlowField(map, playerPositions);
-                if (flowField.HasValue)
-                {
-                    cachedFlowField = flowField.Value;
-                }
-            }
 
             // 获取所有僵尸
             foreach (var (entity, transform, ai, velocityComponent) in
@@ -96,6 +72,7 @@ namespace Frame.ECS
                     Fix64 distance = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
                     sortedPlayers.Add((playerPos, distance));
                 }
+
                 // 按距离排序（最近的在前面）
                 sortedPlayers.Sort((a, b) => a.distance.CompareTo(b.distance));
 
@@ -169,29 +146,48 @@ namespace Frame.ECS
                         // 使用流场寻路（优化性能）
                         // 流场已经在循环外计算完成，所有僵尸共享同一个流场
                         FixVector2 nearestPlayerPos = sortedPlayers[0].position;
-                        
-                        if (cachedFlowField.HasValue)
+
+                        foreach (var (_, flowFieldComponent) in
+                                 world.GetEntitiesWithComponents<FlowFieldComponent>())
                         {
-                            // 查询流场方向
-                            FixVector2 flowDirection = FlowFieldPathfinding.GetDirection(
-                                cachedFlowField.Value, 
-                                map, 
-                                transform.position
-                            );
-                            
-                            // 检查流场方向是否有效
-                            if (flowDirection.SqrMagnitude() > Fix64.Zero)
+                            if (flowFieldComponent.gradientField != null)
                             {
-                                // 使用流场方向移动
-                                updatedAI.targetPosition = nearestPlayerPos;
-                                AddForceHelper.ApplyForce(world, entity, flowDirection * updatedAI.moveSpeed);
+                                // 查询流场方向
+                                FixVector2 flowDirection = FlowFieldPathfinding.GetDirection(
+                                    flowFieldComponent.gradientField,
+                                    map,
+                                    transform.position
+                                );
+
+                                // 检查流场方向是否有效
+                                if (flowDirection.SqrMagnitude() > Fix64.Zero)
+                                {
+                                    // 使用流场方向移动
+                                    updatedAI.targetPosition = nearestPlayerPos;
+                                    AddForceHelper.ApplyForce(world, entity, flowDirection * updatedAI.moveSpeed);
+                                }
+                                else
+                                {
+                                    // 流场方向为零（可能是目标点或不可达），使用直线移动（fallback）
+                                    FixVector2 direction = nearestPlayerPos - transform.position;
+                                    Fix64 dirMagnitude =
+                                        Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
+
+                                    if (dirMagnitude > Fix64.Zero)
+                                    {
+                                        direction = direction / dirMagnitude;
+                                        AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
+                                    }
+                                }
                             }
                             else
                             {
-                                // 流场方向为零（可能是目标点或不可达），使用直线移动（fallback）
+                                Debug.LogError("qw");
+                                // 流场未计算（冷却时间未到或计算失败），使用直线移动（fallback）
                                 FixVector2 direction = nearestPlayerPos - transform.position;
-                                Fix64 dirMagnitude = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
-                                
+                                Fix64 dirMagnitude =
+                                    Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
+
                                 if (dirMagnitude > Fix64.Zero)
                                 {
                                     direction = direction / dirMagnitude;
@@ -199,20 +195,8 @@ namespace Frame.ECS
                                 }
                             }
                         }
-                        else
-                        {
-                            // 流场计算失败，使用直线移动（fallback）
-                            FixVector2 direction = nearestPlayerPos - transform.position;
-                            Fix64 dirMagnitude = Fix64.Sqrt(direction.x * direction.x + direction.y * direction.y);
-                            
-                            if (dirMagnitude > Fix64.Zero)
-                            {
-                                direction = direction / dirMagnitude;
-                                AddForceHelper.ApplyForce(world, entity, direction * updatedAI.moveSpeed);
-                            }
-                        }
-                        
-                        updatedAI.targetPosition = nearestPlayerPos;
+
+
                         world.AddComponent(entity, updatedAI);
 
                         break;
