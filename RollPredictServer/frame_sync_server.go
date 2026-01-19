@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	FRAME_INTERVAL = 50 * time.Millisecond // 20帧每秒
-	TCP_PORT       = ":8887"               // TCP服务器端口
-	UDP_PORT       = ":8888"               // UDP服务器端口（与TCP共用）
-	KCP_PORT       = ":8889"               // KCP服务器端口
-	MAX_PLAYERS    = 2                     // 每个房间最大玩家数
+	FRAME_INTERVAL = 200 * time.Millisecond // 20帧每秒
+	TCP_PORT       = ":8887"                // TCP服务器端口
+	UDP_PORT       = ":8888"                // UDP服务器端口（与TCP共用）
+	KCP_PORT       = ":8889"                // KCP服务器端口
+	MAX_PLAYERS    = 2                      // 每个房间最大玩家数
 )
 
 // 全局客户端计数器
@@ -625,8 +625,9 @@ func (s *Server) sendMessageToClient(client *Client, messageType myproto.Message
 			// 5% 的概率阈值：0.05
 			probability := 0.9 // 5%
 			if randomValue < probability {
-				s.sendUDPMessage(udpConn, udpAddr, messageType, msg)
+				//s.sendUDPMessage(udpConn, udpAddr, messageType, msg)
 			}
+			s.sendUDPMessage(udpConn, udpAddr, messageType, msg)
 
 		}
 	}

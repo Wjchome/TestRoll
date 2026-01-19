@@ -317,11 +317,8 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         var newEntity2 = ecsPredictionManager.currentWorld.CreateEntity();
         var component2 = new FlowFieldComponent(0, null);
         ecsPredictionManager.currentWorld.AddComponent(newEntity2, component2);
-
-
-        // 4. 保存初始状态快照
-        ecsPredictionManager.SaveSnapshot(0);
-
+        
+        ecsPredictionManager.confirmedWorld = ecsPredictionManager.currentWorld.Clone();
         // 初始化随机种子
         Random.InitState((int)gameStart.RandomSeed);
     }
