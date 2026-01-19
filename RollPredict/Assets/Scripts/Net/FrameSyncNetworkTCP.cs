@@ -16,11 +16,11 @@ using Proto;
 /// 帧同步网络管理器
 /// 处理格式：len(4 bytes) + messageType(1 byte) + byte[]
 /// </summary>
-public class FrameSyncNetworkTCP :SingletonMono<FrameSyncNetworkTCP>,INetwork
+public class FrameSyncNetworkTCP :MonoBehaviour, INetwork
 {
     [Header("服务器设置")]
     public string serverIP = "127.0.0.1";
-    public int serverPort = 8089;
+    public int serverPort = 8887;
     public string playerName = "Player";
 
     [Header("状态")]
@@ -71,12 +71,7 @@ public class FrameSyncNetworkTCP :SingletonMono<FrameSyncNetworkTCP>,INetwork
     /// </summary>
     public void Connect()
     {
-        // 确保这是唯一的实例
-        if (Instance != this)
-        {
-            Debug.LogWarning($"Connect() called on non-singleton instance of {GetType().Name}. Ignoring.");
-            return;
-        }
+       
 
         if (isConnected)
         {

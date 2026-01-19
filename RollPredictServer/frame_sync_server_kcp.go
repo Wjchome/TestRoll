@@ -13,10 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-const (
-	KCP_PORT = ":8088" // KCP服务器端口
-	TCP_PORT = ":8089" // TCP服务器端口（可选，用于兼容）
-)
+// 端口常量在 frame_sync_server.go 中定义
 
 // KCP配置
 func configureKCP(conn *kcp.UDPSession) {
@@ -202,6 +199,11 @@ func (s *Server) sendKCPMessage(conn *kcp.UDPSession, messageType myproto.Messag
 
 // 同时支持TCP和KCP的服务器启动函数
 func (s *Server) StartBoth() {
+	s.StartAll()
+}
+
+// 同时支持TCP、UDP和KCP的服务器启动函数
+func (s *Server) StartAll() {
 	// 启动定期清理任务
 	go s.cleanupEmptyRooms()
 	// 启动心跳超时检测（只需要启动一次）
@@ -226,6 +228,9 @@ func (s *Server) StartBoth() {
 			go s.handleClient(conn)
 		}
 	}()
+
+	// 启动UDP服务器
+	go s.StartUDP()
 
 	// 启动KCP服务器
 	s.StartKCP()

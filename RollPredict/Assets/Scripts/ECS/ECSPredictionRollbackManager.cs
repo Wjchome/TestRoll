@@ -186,14 +186,14 @@ namespace Frame.ECS
         /// 客户端预测：立即执行输入
         /// </summary>
         public void PredictInput(int playerId, InputDirection direction, bool fire = false, long fireX = 0,
-            long fireY = 0,bool isToggle = false)
+            long fireY = 0, bool isToggle = false)
         {
             if (!enablePredictionRollback)
                 return;
             long frameNumber = confirmedServerFrame + predictedFrameIndex++;
 
             // 保存输入（只保存当前玩家的输入，其他玩家的输入会在收到服务器帧时补全）
-            bool isSave = direction != InputDirection.DirectionNone || fire||isToggle;
+            bool isSave = direction != InputDirection.DirectionNone || fire || isToggle;
 
             if (isSave)
             {
@@ -355,7 +355,7 @@ namespace Frame.ECS
                     break;
                 case NetState.NoPredictionAndLose:
                 case NetState.PredictAndLose:
-                    FrameSyncNetworkTCP.Instance.SendLossFrame(confirmedServerFrame);
+                    ECSFrameSyncExample.Instance.network.SendLossFrame(confirmedServerFrame);
                     break;
                 case NetState.NoPredictionAndSuccess:
 
@@ -378,7 +378,6 @@ namespace Frame.ECS
                     if (predictedFrame != confirmedServerFrame + 1)
                     {
                         currentWorld.RestoreFrom(LoadSnapshot(serverFrameNumber));
-                        
                     }
                     else
                     {
@@ -429,6 +428,27 @@ namespace Frame.ECS
 
             sb.AppendLine(
                 $"[Frame {serverFrameNumber}] {currentNetState} | ConfirmedFrame: {confirmedServerFrame} | PredictedFrame: {predictedFrame}");
+        }
+
+
+        public void ProcessServerFrameNoPredict(ServerFrame serverFrame)
+        {
+            if (serverFrame.FrameNumber == confirmedServerFrame)
+            {
+                //重复包 无视
+            }
+            else if (serverFrame.FrameNumber == confirmedServerFrame + 1)
+            {
+                //对的
+                currentWorld = ECSStateMachine.Execute(
+                    currentWorld, serverFrame.FrameDatas.ToList());
+                confirmedServerFrame = serverFrame.FrameNumber;
+            }
+            else
+            {
+                //包丢
+                ECSFrameSyncExample.Instance.network.SendLossFrame(confirmedServerFrame);
+            }
         }
 
         private void OnDisable()

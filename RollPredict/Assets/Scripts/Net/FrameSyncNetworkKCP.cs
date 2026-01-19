@@ -22,10 +22,10 @@ using System.Net.Sockets.Kcp;
 /// 依赖：System.Net.Sockets.Kcp（已安装）
 /// 使用SimpleSegManager.Kcp实现KCP协议
 /// </summary>
-public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>,INetwork
+public class FrameSyncNetworkKCP :MonoBehaviour, INetwork
 {
     [Header("服务器设置")] public string serverIP = "127.0.0.1";
-    public int serverPort = 8088; // KCP端口
+    public int serverPort = 8889; // KCP端口
     public string playerName = "Player";
 
     [Header("KCP配置")] [Tooltip("发送窗口大小（必须与服务器一致）")] public uint sendWindowSize = 128;
@@ -97,11 +97,7 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>,INetwork
     /// </summary>
     public void Connect()
     {
-        if (Instance != this)
-        {
-            Debug.LogWarning($"Connect() called on non-singleton instance of {GetType().Name}. Ignoring.");
-            return;
-        }
+     
 
         if (isConnected)
         {
@@ -661,9 +657,9 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>,INetwork
                     {
                         isConnected = true; // 收到服务器响应后，才真正标记为已连接
                     }
-
+                    isConnected = true;
                     OnConnected?.Invoke(connectMsg.PlayerId);
-                    Debug.Log($"Connected to KCP server, PlayerID: {myPlayerID}");
+                    
 
                     // 启动心跳线程（定期发送心跳）
                     StartHeartbeatThread();
@@ -684,7 +680,6 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>,INetwork
                 {
                     isGameStarted = true;
                     OnGameStarted?.Invoke(gameStart);
-                    Debug.Log("Game started!");
                 }
 
                 break;

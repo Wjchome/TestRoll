@@ -17,10 +17,10 @@ using Proto;
 /// 帧同步网络管理器
 /// 处理格式：len(4 bytes) + messageType(1 byte) + byte[]
 /// </summary>
-public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
+public class FrameSyncNetworkUDP : MonoBehaviour, INetwork
 {
     [Header("服务器设置")] public string serverIP = "127.0.0.1";
-    public int serverPort = 8089;
+    public int serverPort = 8888;
     public string playerName = "Player";
 
     [Header("状态")] public bool isConnected = false;
@@ -66,12 +66,7 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
     /// </summary>
     public void Connect()
     {
-        // 确保这是唯一的实例
-        if (Instance != this)
-        {
-            Debug.LogWarning($"Connect() called on non-singleton instance of {GetType().Name}. Ignoring.");
-            return;
-        }
+      
 
         if (isConnected)
         {
@@ -156,6 +151,22 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
                     receiveThread = new Thread(ReceiveMessages);
                     receiveThread.IsBackground = true;
                     receiveThread.Start();
+                }
+
+                // 发送初始心跳消息来触发服务器端的客户端创建
+                try
+                {
+                    var connectMsg = new ConnectMessage
+                    {
+                        PlayerId = 0, // 服务器会分配真正的ID
+                        PlayerName = playerName
+                    };
+                    SendMessage(MessageType.MessageConnect, connectMsg);
+                    Debug.Log($"Sent initial connect message to trigger server client creation (name: {playerName})");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Failed to send initial connect message: {ex.Message}");
                 }
 
                 // 标记业务层连接成功
@@ -297,7 +308,7 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
         {
             LastFrameNumber = confirmedFrame,
         };
-        Debug.Log($"Lossing frame {confirmedFrame}");
+        Debug.LogWarning($"Lossing frame {confirmedFrame}");
         SendMessage(MessageType.MessageFrameLoss, data);
     }
 
@@ -306,8 +317,7 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
     /// </summary>
     private void SendMessage(MessageType messageType, IMessage msg)
     {
-        if (!isConnected)
-            return;
+        
 
         try
         {
@@ -333,7 +343,7 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
             sendBuffer[4] = typeByte;
             Buffer.BlockCopy(data, 0, sendBuffer, 5, data.Length);
 
-            // TCP → UDP 修改：发送UDP数据报
+            
             int sentBytes = udpClient.Send(sendBuffer, sendBuffer.Length);
             if (sentBytes != sendBuffer.Length)
             {
@@ -356,12 +366,11 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
         byte[] lengthBuffer = new byte[4];
         byte[] typeBuffer = new byte[1];
 
-        while (isRunning && isConnected)
+        while (isRunning)
         {
             try
             {
                 byte[] receiveBuffer = udpClient.Receive(ref remoteEndPoint);
-
 
                 // 解析消息格式：len(4) + type(1) + data(n)
                 int offset = 0;
@@ -384,8 +393,8 @@ public class FrameSyncNetworkUDP : SingletonMono<FrameSyncNetworkUDP>, INetwork
 
                 uint totalLength = BitConverter.ToUInt32(lengthBuffer, 0);
 
-                // 2. 验证总长度
-                if (totalLength + 4 > receiveBuffer.Length) // 4是长度字段本身
+                // 2. 验证总长度（UDP数据报应该正好包含一个完整消息）
+                if (totalLength + 4 != receiveBuffer.Length)
                 {
                     Debug.LogWarning(
                         $"UDP datagram length mismatch: expected {totalLength + 4}, got {receiveBuffer.Length}");

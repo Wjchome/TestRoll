@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"strconv"
 	"sync"
@@ -16,8 +17,10 @@ import (
 
 const (
 	FRAME_INTERVAL = 50 * time.Millisecond // 20帧每秒
-	PORT           = ":8088"
-	MAX_PLAYERS    = 1 // 每个房间最大玩家数
+	TCP_PORT       = ":8887"               // TCP服务器端口
+	UDP_PORT       = ":8888"               // UDP服务器端口（与TCP共用）
+	KCP_PORT       = ":8889"               // KCP服务器端口
+	MAX_PLAYERS    = 2                     // 每个房间最大玩家数
 )
 
 // 全局客户端计数器
@@ -26,7 +29,8 @@ var clientCounter int64 = 0
 // 客户端结构
 type Client struct {
 	ID       int32
-	Conn     net.Conn
+	Conn     net.Conn // TCP/KCP连接（UDP时为nil）
+	Addr     net.Addr // UDP客户端地址
 	RoomID   string
 	Name     string
 	IsHost   bool
@@ -60,20 +64,20 @@ func NewServer() *Server {
 	}
 }
 
-// 启动服务器
+// 启动TCP服务器（兼容旧版单独启动）
 func (s *Server) Start() {
 	// 启动定期清理任务
 	go s.cleanupEmptyRooms()
 	// 启动心跳超时检测
 	go s.checkHeartbeatTimeout()
 
-	ln, err := net.Listen("tcp", PORT)
+	ln, err := net.Listen("tcp", TCP_PORT)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer ln.Close()
 
-	fmt.Printf("Frame Sync Server started on %s\n", PORT)
+	fmt.Printf("TCP Frame Sync Server started on %s\n", TCP_PORT)
 
 	for {
 		conn, err := ln.Accept()
@@ -331,7 +335,7 @@ func (s *Server) handleFrameLoss(client *Client, data []byte) {
 		}
 
 		// 发送给请求的客户端
-		s.sendMessage(client.Conn, myproto.MessageType_MESSAGE_FRAME_NEED, sendAllFrame)
+		s.sendMessageToClient(client, myproto.MessageType_MESSAGE_FRAME_NEED, sendAllFrame)
 		fmt.Printf("Client %d: Sent %d frames (from %d to %d)\n", client.ID, len(framesToSend), confirmedFrame+1, currentFrame)
 	} else {
 		fmt.Printf("Client %d: No frames to send (confirmed: %d, current: %d)\n", client.ID, confirmedFrame, currentFrame)
@@ -556,7 +560,7 @@ func (s *Server) startGame(roomID string) {
 
 	// 发送游戏开始消息给所有客户端
 	for _, client := range room.Clients {
-		s.sendMessage(client.Conn, myproto.MessageType_MESSAGE_GAME_START, gameStart)
+		s.sendMessageToClient(client, myproto.MessageType_MESSAGE_GAME_START, gameStart)
 	}
 
 	fmt.Printf("Game started in room %s with %d players (seed: %d)\n", roomID, len(playerIDs), randomSeed)
@@ -594,6 +598,37 @@ func (s *Server) sendMessage(conn net.Conn, messageType myproto.MessageType, msg
 	if err != nil {
 		log.Printf("TCP Write error: %v\n", err)
 		return
+	}
+}
+
+// UDP连接管理器（全局变量，用于UDP消息发送）
+var udpConn *net.UDPConn
+
+// 设置UDP连接（在StartUDP中调用）
+func setUDPConn(conn *net.UDPConn) {
+	udpConn = conn
+}
+
+// 发送消息给客户端（自动判断TCP还是UDP）
+func (s *Server) sendMessageToClient(client *Client, messageType myproto.MessageType, msg proto.Message) {
+	if client.Conn != nil {
+		// TCP/KCP客户端
+		s.sendMessage(client.Conn, messageType, msg)
+	} else if client.Addr != nil && udpConn != nil {
+		// UDP客户端
+		if udpAddr, ok := client.Addr.(*net.UDPAddr); ok {
+			rand.Seed(time.Now().UnixNano())
+
+			// 生成 0.0 ~ 1.0 之间的随机浮点数（包含0，不包含1）
+			randomValue := rand.Float64()
+
+			// 5% 的概率阈值：0.05
+			probability := 0.9 // 5%
+			if randomValue < probability {
+				s.sendUDPMessage(udpConn, udpAddr, messageType, msg)
+			}
+
+		}
 	}
 }
 
@@ -636,7 +671,7 @@ func (room *Room) frameLoop(server *Server) {
 
 		// 发送给所有客户端
 		for _, client := range clients {
-			server.sendMessage(client.Conn, myproto.MessageType_MESSAGE_SERVER_FRAME, serverFrame)
+			server.sendMessageToClient(client, myproto.MessageType_MESSAGE_SERVER_FRAME, serverFrame)
 		}
 	}
 }
@@ -694,8 +729,159 @@ func (s *Server) checkHeartbeatTimeout() {
 	}
 }
 
+// 启动UDP服务器
+func (s *Server) StartUDP() {
+	// 启动定期清理任务
+	go s.cleanupEmptyRooms()
+	// 启动心跳超时检测
+	go s.checkHeartbeatTimeout()
+
+	addr, err := net.ResolveUDPAddr("udp", UDP_PORT)
+	if err != nil {
+		log.Fatal("ResolveUDPAddr error:", err)
+	}
+
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		log.Fatal("ListenUDP error:", err)
+	}
+	defer conn.Close()
+
+	// 设置全局UDP连接，用于发送消息
+	setUDPConn(conn)
+
+	fmt.Printf("UDP Frame Sync Server started on %s\n", UDP_PORT)
+
+	// UDP客户端管理（地址 -> 客户端ID映射）
+	udpClients := make(map[string]*Client)
+
+	buffer := make([]byte, 2048) // UDP数据报缓冲区
+
+	for {
+		n, remoteAddr, err := conn.ReadFromUDP(buffer)
+		if err != nil {
+			log.Println("UDP ReadFromUDP error:", err)
+			continue
+		}
+
+		// 获取或创建UDP客户端
+		addrStr := remoteAddr.String()
+		client, exists := udpClients[addrStr]
+		if !exists {
+			// 新UDP客户端
+			clientID := int32(clientCounter)
+			clientCounter++
+			client = &Client{
+				ID:       clientID,
+				Conn:     nil, // UDP无连接
+				Addr:     remoteAddr,
+				LastSeen: time.Now(),
+			}
+			udpClients[addrStr] = client
+
+			fmt.Printf("UDP Client %d connected from %s\n", client.ID, addrStr)
+
+			// 发送连接成功消息
+			connectMsg := &myproto.ConnectMessage{
+				PlayerId:   clientID,
+				PlayerName: "",
+			}
+			s.sendUDPMessage(conn, remoteAddr, myproto.MessageType_MESSAGE_CONNECT, connectMsg)
+
+			s.autoAssignRoom(client)
+		} else {
+			client.LastSeen = time.Now()
+		}
+
+		// 处理UDP消息
+		if n > 0 {
+			s.handleUDPMessage(conn, remoteAddr, client, buffer[:n])
+		}
+	}
+}
+
+// 处理UDP消息
+func (s *Server) handleUDPMessage(conn *net.UDPConn, remoteAddr *net.UDPAddr, client *Client, data []byte) {
+	if len(data) < 5 { // 至少需要4字节长度 + 1字节类型
+		log.Printf("UDP Client %d: Message too short: %d bytes\n", client.ID, len(data))
+		return
+	}
+
+	// 解析消息格式：len(4 bytes) + messageType(1 byte) + data
+	offset := 0
+
+	// 读取长度 (4 bytes)
+	length := binary.BigEndian.Uint32(data[offset : offset+4])
+	offset += 4
+
+	// 验证消息长度
+	totalExpected := uint32(4) + length // 4字节长度字段 + 消息内容
+	if uint32(len(data)) != totalExpected {
+		log.Printf("UDP Client %d: Message length mismatch: expected %d, got %d\n", client.ID, totalExpected, len(data))
+		return
+	}
+
+	// 读取消息类型 (1 byte)
+	messageType := myproto.MessageType(data[offset])
+	offset += 1
+
+	// 读取数据部分
+	dataLength := int(length) - 1
+	if dataLength < 0 {
+		log.Printf("UDP Client %d: Invalid message length: %d\n", client.ID, length)
+		return
+	}
+
+	messageData := data[offset : offset+dataLength]
+
+	// 根据消息类型处理
+	switch messageType {
+	case myproto.MessageType_MESSAGE_FRAME_DATA:
+		s.handleFrameData(client, messageData)
+	case myproto.MessageType_MESSAGE_DISCONNECT:
+		s.handleDisconnect(client, messageData)
+		// UDP客户端断开时清理
+		conn.WriteToUDP([]byte{}, remoteAddr) // 简单的断开确认
+	case myproto.MessageType_MESSAGE_FRAME_LOSS:
+		s.handleFrameLoss(client, messageData)
+	case myproto.MessageType_MESSAGE_HEARTBEAT:
+		// 心跳消息，LastSeen 已经在上面更新
+	default:
+		log.Printf("UDP Client %d: Unknown message type: %d\n", client.ID, messageType)
+	}
+}
+
+// 发送UDP消息
+func (s *Server) sendUDPMessage(conn *net.UDPConn, remoteAddr *net.UDPAddr, messageType myproto.MessageType, msg proto.Message) {
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		log.Printf("UDP Marshal error: %v\n", err)
+		return
+	}
+
+	// 计算总长度：1 byte (messageType) + data length
+	totalLength := uint32(1 + len(data))
+
+	// 写入长度 (4 bytes, big endian)
+	lengthBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(lengthBytes, totalLength)
+
+	// 组合完整消息
+	message := make([]byte, 4+1+len(data))
+	copy(message[0:4], lengthBytes)
+	message[4] = byte(messageType)
+	copy(message[5:], data)
+
+	// 发送UDP数据报
+	_, err = conn.WriteToUDP(message, remoteAddr)
+	if err != nil {
+		log.Printf("UDP WriteToUDP error: %v\n", err)
+		return
+	}
+}
+
 func main() {
 	server := NewServer()
-	// 同时启动TCP和KCP服务器（兼容旧客户端和新客户端）
-	server.StartBoth()
+	// 同时启动TCP、UDP和KCP服务器
+	server.StartAll()
 }

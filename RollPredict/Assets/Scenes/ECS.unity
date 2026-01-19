@@ -122,6 +122,102 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &30977531
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 30977532}
+  - component: {fileID: 30977535}
+  - component: {fileID: 30977534}
+  - component: {fileID: 30977533}
+  m_Layer: 0
+  m_Name: Net
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &30977532
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 30977531}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -20.370811, y: 7.2604313, z: -0.35842863}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &30977533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 30977531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bf7868250ee49eaa2d9af938e07f14f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverIP: 127.0.0.1
+  serverPort: 8888
+  playerName: Player
+  isConnected: 0
+  isGameStarted: 0
+  myPlayerID: 0
+--- !u!114 &30977534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 30977531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c31b79ded69a41aaa385d7df7930cc6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverIP: 127.0.0.1
+  serverPort: 8887
+  playerName: Player
+  isConnected: 0
+  isGameStarted: 0
+  myPlayerID: 0
+--- !u!114 &30977535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 30977531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba120dfd0f8234c6fbad5edfc0336018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serverIP: 127.0.0.1
+  serverPort: 8092
+  playerName: Player
+  sendWindowSize: 128
+  receiveWindowSize: 128
+  mtu: 1400
+  fastResend: 2
+  noDelay: 1
+  interval: 10
+  resend: 2
+  minRto: 30
+  isConnected: 0
+  isGameStarted: 0
+  myPlayerID: 0
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -385,10 +481,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 996293669}
-  - component: {fileID: 996293668}
   - component: {fileID: 996293667}
   - component: {fileID: 996293670}
-  - component: {fileID: 996293671}
   m_Layer: 0
   m_Name: NetManager (1)
   m_TagString: Untagged
@@ -408,7 +502,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9858f977262a4f9a92b1e4db06f4094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isKCP: 0
+  connectState: 1
+  FrameSyncNetworkTcp: {fileID: 30977534}
+  FrameSyncNetworkUdp: {fileID: 30977533}
+  FrameSyncNetworkKcp: {fileID: 30977535}
   playerPrefab: {fileID: 3616316222496744120, guid: 05ece5f144b4b4c0e8c7fe3246cf3634, type: 3}
   bulletPrefab: {fileID: 2836734389060522652, guid: 4f7b66dc7177245919c31b66c3818aae, type: 3}
   zombiePrefab: {fileID: 4246938903271925522, guid: 44d018256b2d8460d953e687abdd8f5a, type: 3}
@@ -421,24 +518,6 @@ MonoBehaviour:
   timer1: 0
   sendInterval: 0.05
   predictInterval: 0.05
---- !u!114 &996293668
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996293665}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c31b79ded69a41aaa385d7df7930cc6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serverIP: 127.0.0.1
-  serverPort: 8089
-  playerName: Player
-  isConnected: 0
-  isGameStarted: 0
-  myPlayerID: 20
 --- !u!4 &996293669
 Transform:
   m_ObjectHideFlags: 0
@@ -474,32 +553,6 @@ MonoBehaviour:
   predictedFrame: 0
   enableLog: 0
   predictedFrameIndex: 1
---- !u!114 &996293671
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 996293665}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ba120dfd0f8234c6fbad5edfc0336018, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serverIP: 127.0.0.1
-  serverPort: 8088
-  playerName: Player
-  sendWindowSize: 32
-  receiveWindowSize: 32
-  mtu: 1400
-  fastResend: 2
-  noDelay: 1
-  interval: 10
-  resend: 2
-  minRto: 30
-  isConnected: 0
-  isGameStarted: 0
-  myPlayerID: 0
 --- !u!1 &1476675297
 GameObject:
   m_ObjectHideFlags: 0
@@ -690,3 +743,4 @@ SceneRoots:
   - {fileID: 996293669}
   - {fileID: 1944137876}
   - {fileID: 928360505}
+  - {fileID: 30977532}

@@ -35,7 +35,10 @@ namespace Frame.ECS
             return new FlowFieldComponent
             {
                 updateCooldown = this.updateCooldown,
-                gradientField = new Dictionary<GridNode, FixVector2>(this.gradientField),
+                gradientField = this.gradientField == null 
+                    ? null
+                    : new Dictionary<GridNode, FixVector2>(this.gradientField) // 原字典非null → 拷贝元素到新字典
+
             };
         }
         

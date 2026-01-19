@@ -17,9 +17,12 @@ public enum ConnectState
 public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 {
     public ConnectState connectState = ConnectState.TCP;
-    private INetwork network;
+    public INetwork network;
     private ECSPredictionRollbackManager ecsPredictionManager => ECSPredictionRollbackManager.Instance;
 
+    public FrameSyncNetworkTCP FrameSyncNetworkTcp;
+    public FrameSyncNetworkUDP FrameSyncNetworkUdp;
+    public FrameSyncNetworkKCP FrameSyncNetworkKcp;
 
     [Header("玩家设置")] public GameObject playerPrefab;
 
@@ -44,13 +47,13 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         switch (connectState)
         {
             case ConnectState.TCP:
-                network = FrameSyncNetworkTCP.Instance;
+                network = FrameSyncNetworkTcp;
                 break;
             case ConnectState.UDP:
-                network = FrameSyncNetworkUDP.Instance;
+                network = FrameSyncNetworkUdp;
                 break;
             case ConnectState.KCP:
-                network = FrameSyncNetworkKCP.Instance;
+                network = FrameSyncNetworkKcp;
                 break;
         }
 
@@ -344,9 +347,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         }
         else
         {
-            // 使用统一的状态机执行
-            ecsPredictionManager.currentWorld = ECSStateMachine.Execute(
-                ecsPredictionManager.currentWorld, serverFrame.FrameDatas.ToList());
+            ecsPredictionManager. ProcessServerFrameNoPredict(serverFrame);
         }
     }
 
