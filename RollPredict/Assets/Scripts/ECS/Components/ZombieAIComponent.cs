@@ -25,26 +25,13 @@ namespace Frame.ECS
         /// 目标位置（世界坐标）
         /// </summary>
         public FixVector2 targetPosition;
-        
-        /// <summary>
-        /// 当前路径（世界坐标列表）
-        /// </summary>
-        public List<FixVector2> currentPath;
-        
-        /// <summary>
-        /// 当前路径索引
-        /// </summary>
-        public int currentPathIndex;
+  
         
         /// <summary>
         /// 移动速度
         /// </summary>
         public Fix64 moveSpeed;
-        
-        /// <summary>
-        /// 寻路冷却时间（避免每帧都寻路）
-        /// </summary>
-        public int pathfindingCooldown;
+
         
         /// <summary>
         /// 当前状态
@@ -106,9 +93,6 @@ namespace Frame.ECS
         {
             this.targetPosition = targetPosition;
             this.moveSpeed = moveSpeed;
-            this.currentPath = new List<FixVector2>();
-            this.currentPathIndex = 0;
-            this.pathfindingCooldown = 0;
             this.state = ZombieState.Chase;
             this.attackDirection = FixVector2.Zero;
             this.attackWindupTimer = 0;
@@ -128,9 +112,6 @@ namespace Frame.ECS
             {
                 targetPosition = this.targetPosition,
                 moveSpeed = this.moveSpeed,
-                currentPath = this.currentPath != null ? new List<FixVector2>(this.currentPath) : new List<FixVector2>(),
-                currentPathIndex = this.currentPathIndex,
-                pathfindingCooldown = this.pathfindingCooldown,
                 state = this.state,
                 attackDirection = this.attackDirection,
                 attackWindupTimer = this.attackWindupTimer,
@@ -147,7 +128,7 @@ namespace Frame.ECS
         
         public override string ToString()
         {
-            return $"{GetType().Name}: state={state}, target={targetPosition}, pathIndex={currentPathIndex}/{currentPath?.Count ?? 0}";
+            return $"{GetType().Name}: state={state}, target={targetPosition}";
         }
     }
 }

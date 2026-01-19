@@ -206,7 +206,7 @@ namespace Frame.ECS
         private static readonly HashSet<Type> _componentsNeedingDeepClone = new HashSet<Type>
         {
             typeof(GridMapComponent),      // 包含 OrderedHashSet<GridNode>
-            typeof(ZombieAIComponent)      // 包含 List<FixVector2>
+            typeof(FlowFieldComponent)      // 包含 List<FixVector2>
         };
 
         /// <summary>
