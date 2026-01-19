@@ -7,16 +7,19 @@ using Proto;
 using UnityEngine;
 using UnityEngine.UI; // 添加UI命名空间
 
-/// <summary>
-/// ECS版本的帧同步示例
-/// 使用ECS架构实现预测回滚
-/// </summary>
+public enum ConnectState
+{
+    TCP,
+    UDP,
+    KCP
+}
+
 public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 {
-    public bool isKCP;
-    private FrameSyncNetwork networkManager => FrameSyncNetwork.Instance;
-    private FrameSyncNetworkKCP networkManagerKCP => FrameSyncNetworkKCP.Instance;
+    public ConnectState connectState = ConnectState.TCP;
+    private INetwork network;
     private ECSPredictionRollbackManager ecsPredictionManager => ECSPredictionRollbackManager.Instance;
+
 
     [Header("玩家设置")] public GameObject playerPrefab;
 
@@ -38,36 +41,27 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
     void Start()
     {
-        if (isKCP)
+        switch (connectState)
         {
-            // 设置服务器信息
-            networkManagerKCP.playerName = "Player_" + Random.Range(1000, 9999);
-
-
-            // 注册事件回调
-            networkManagerKCP.OnConnected += OnConnected;
-            networkManagerKCP.OnDisconnected += OnDisconnected;
-            networkManagerKCP.OnGameStarted += OnGameStarted;
-            networkManagerKCP.OnServerFrameReceived += OnServerFrameReceived;
-
-            // 连接服务器
-            networkManagerKCP.Connect();
+            case ConnectState.TCP:
+                network = FrameSyncNetworkTCP.Instance;
+                break;
+            case ConnectState.UDP:
+                network = FrameSyncNetworkUDP.Instance;
+                break;
+            case ConnectState.KCP:
+                network = FrameSyncNetworkKCP.Instance;
+                break;
         }
-        else
-        {
-            // 设置服务器信息
-            networkManager.playerName = "Player_" + Random.Range(1000, 9999);
 
+        // 注册事件回调
+        network.OnConnected += OnConnected;
+        network.OnDisconnected += OnDisconnected;
+        network.OnGameStarted += OnGameStarted;
+        network.OnServerFrameReceived += OnServerFrameReceived;
+        network.Connect();
 
-            // 注册事件回调
-            networkManager.OnConnected += OnConnected;
-            networkManager.OnDisconnected += OnDisconnected;
-            networkManager.OnGameStarted += OnGameStarted;
-            networkManager.OnServerFrameReceived += OnServerFrameReceived;
-
-            // 连接服务器
-            networkManager.Connect();
-        }
+        // 连接服务器
     }
 
     public float timer = 0;
@@ -85,15 +79,9 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
     void Update()
     {
-        if (isKCP)
+        if (!network.IsGameStarted)
         {
-            if (!networkManagerKCP.isGameStarted)
-                return;
-        }
-        else
-        {
-            if (!networkManager.isGameStarted)
-                return;
+            return;
         }
 
 
@@ -131,6 +119,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         {
             bufferedToggle = true;
         }
+
 // 3. 客户端预测（无论是否有输入，都要持续预测）
         // 原因：游戏世界在持续运行（如子弹在移动），即使本地玩家无输入
         // 使用缓冲区中的输入进行预测，确保预测和发送的输入一致
@@ -139,6 +128,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
             timer1 = 0;
             UpdateInputStatePredict(bufferedDirection, bufferedFire, bufferedFireX, bufferedFireY, bufferedToggle);
         }
+
         // 2. 发送输入到服务器（定时发送，即使当前帧没有新输入也发送缓冲区中的状态）
         // 这样确保所有输入都能被发送，不会因为某帧没有新输入而丢失
         if (timer > sendInterval)
@@ -152,21 +142,14 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
 
             if (hasInput)
             {
-                if (isKCP)
-                {
-                    networkManagerKCP.SendFrameData(bufferedDirection, bufferedFire, bufferedFireX, bufferedFireY,
-                        bufferedToggle);
-                }
-                else
-                {
-                    networkManager.SendFrameData(bufferedDirection, bufferedFire, bufferedFireX, bufferedFireY, bufferedToggle);
-                }
+                network.SendFrameData(bufferedDirection, bufferedFire, bufferedFireX, bufferedFireY, bufferedToggle);
+
 
                 // 发送后，清除已发送的输入状态（准备下一轮缓冲）
                 // 移动方向：如果发送的是 DirectionNone，保持；否则清除（因为已经发送）
 
                 bufferedDirection = InputDirection.DirectionNone;
-                
+
                 // 发射：清除（因为已经发送）
                 bufferedFire = false;
                 bufferedFireX = 0;
@@ -177,10 +160,9 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
             }
         }
 
-        
 
         // 4. 同步ECS World状态到Unity对象（视图层）
-        ECSSyncHelper.SyncFromWorldToUnity(ecsPredictionManager.currentWorld);
+        ECSSyncHelper.SyncFromWorldToUnity(ECSPredictionRollbackManager.Instance.currentWorld);
 
         // 5. 更新UI调试信息
         UpdateDebugUI();
@@ -248,7 +230,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
         float wallCooldownDisplay = 0f;
         if (ecsPredictionManager.currentWorld != null)
         {
-            int myPlayerId = isKCP ? networkManagerKCP.myPlayerID : networkManager.myPlayerID;
+            int myPlayerId = network.MyID;
             var playerEntity = ECSSyncHelper.GetEntityByPlayerId(myPlayerId);
             if (playerEntity.HasValue)
             {
@@ -316,33 +298,24 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
                 startPos,
                 100
             );
-            if (isKCP)
+
+            if (playerId == network.MyID)
             {
-                if (playerId == networkManagerKCP.myPlayerID)
-                {
-                    myPlayer = player;
-                }
-            }
-            else
-            {
-                if (playerId == networkManager.myPlayerID)
-                {
-                    myPlayer = player;
-                }
+                myPlayer = player;
             }
         }
 
-        
+
         // 不存在，创建新的单例组件
-        var newEntity =  ecsPredictionManager.currentWorld.CreateEntity();
-        var component = new GridMapComponent(20,20,Fix64.One);
+        var newEntity = ecsPredictionManager.currentWorld.CreateEntity();
+        var component = new GridMapComponent(20, 20, Fix64.One);
         ecsPredictionManager.currentWorld.AddComponent(newEntity, component);
-        
+
         var newEntity2 = ecsPredictionManager.currentWorld.CreateEntity();
         var component2 = new FlowFieldComponent(0, null);
         ecsPredictionManager.currentWorld.AddComponent(newEntity2, component2);
-        
-        
+
+
         // 4. 保存初始状态快照
         ecsPredictionManager.SaveSnapshot(0);
 
@@ -385,16 +358,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     {
         if (ecsPredictionManager.enablePredictionRollback)
         {
-            // 先预测，让玩家立即看到效果
-            if (isKCP)
-            {
-                ecsPredictionManager.PredictInput(networkManagerKCP.myPlayerID, currentDirection, fire, fireX, fireY,
-                    isToggle);
-            }
-            else
-            {
-                ecsPredictionManager.PredictInput(networkManager.myPlayerID, currentDirection, fire, fireX, fireY, isToggle);
-            }
+            ecsPredictionManager.PredictInput(network.MyID, currentDirection, fire, fireX, fireY, isToggle);
         }
     }
 }

@@ -16,7 +16,7 @@ using Proto;
 /// 帧同步网络管理器
 /// 处理格式：len(4 bytes) + messageType(1 byte) + byte[]
 /// </summary>
-public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
+public class FrameSyncNetworkTCP :SingletonMono<FrameSyncNetworkTCP>,INetwork
 {
     [Header("服务器设置")]
     public string serverIP = "127.0.0.1";
@@ -39,12 +39,15 @@ public class FrameSyncNetwork :SingletonMono<FrameSyncNetwork>
     private Queue<(MessageType, IMessage)> serverDataQueue = new Queue<(MessageType, IMessage)>();
     private object queueLock = new object();
     
-
+    bool INetwork.IsConnected => isConnected;
+    bool INetwork.IsGameStarted => isGameStarted;
+    int INetwork.MyID => myPlayerID;
+    
     // 事件回调
-    public System.Action<ServerFrame> OnServerFrameReceived;
-    public System.Action<long> OnConnected;
-    public System.Action<GameStart> OnGameStarted;
-    public System.Action OnDisconnected;
+    public event System.Action<ServerFrame> OnServerFrameReceived;
+    public event System.Action<long> OnConnected;
+    public event System.Action<GameStart> OnGameStarted;
+    public event System.Action OnDisconnected;
     
     
 

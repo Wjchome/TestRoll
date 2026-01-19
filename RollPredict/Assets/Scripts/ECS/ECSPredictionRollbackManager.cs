@@ -355,7 +355,7 @@ namespace Frame.ECS
                     break;
                 case NetState.NoPredictionAndLose:
                 case NetState.PredictAndLose:
-                    FrameSyncNetwork.Instance.SendLossFrame(confirmedServerFrame);
+                    FrameSyncNetworkTCP.Instance.SendLossFrame(confirmedServerFrame);
                     break;
                 case NetState.NoPredictionAndSuccess:
 

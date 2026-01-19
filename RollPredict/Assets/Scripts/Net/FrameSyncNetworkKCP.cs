@@ -22,7 +22,7 @@ using System.Net.Sockets.Kcp;
 /// 依赖：System.Net.Sockets.Kcp（已安装）
 /// 使用SimpleSegManager.Kcp实现KCP协议
 /// </summary>
-public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
+public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>,INetwork
 {
     [Header("服务器设置")] public string serverIP = "127.0.0.1";
     public int serverPort = 8088; // KCP端口
@@ -60,11 +60,15 @@ public class FrameSyncNetworkKCP : SingletonMono<FrameSyncNetworkKCP>
     private Queue<(MessageType, IMessage)> serverDataQueue = new Queue<(MessageType, IMessage)>();
     private object queueLock = new object();
 
+    bool INetwork.IsConnected => isConnected;
+    bool INetwork.IsGameStarted => isGameStarted;
+    int INetwork.MyID => myPlayerID;
+    
     // 事件回调
-    public System.Action<ServerFrame> OnServerFrameReceived;
-    public System.Action<long> OnConnected;
-    public System.Action<GameStart> OnGameStarted;
-    public System.Action OnDisconnected;
+    public event System.Action<ServerFrame> OnServerFrameReceived;
+    public event System.Action<long> OnConnected;
+    public event System.Action<GameStart> OnGameStarted;
+    public event System.Action OnDisconnected;
 
     void Start()
     {
