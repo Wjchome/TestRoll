@@ -12,6 +12,7 @@ namespace Frame.ECS
         Bullet = 2,
         Zombie = 3,
         Wall = 4,
+        Barrel = 5,
     }
 
     /// <summary>

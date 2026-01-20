@@ -7,8 +7,6 @@ using Object = UnityEngine.Object;
 
 namespace Frame.ECS
 {
-    
-    
     /// <summary>
     /// ECS同步辅助类：在ECS World和Unity对象之间同步状态
     /// 用于视图层显示
@@ -48,7 +46,6 @@ namespace Frame.ECS
         private static Dictionary<int, string> _entityTypeMap = new Dictionary<int, string>();
 
 
-
         /// <summary>
         /// 注册玩家到ECS系统
         /// </summary>
@@ -59,26 +56,26 @@ namespace Frame.ECS
             Entity entity = world.CreateEntity();
 
             // 添加PlayerComponent（玩家特有数据）
-            var playerComponent = new PlayerComponent(playerId, 2);
-            
+            var playerComponent = new PlayerComponent(playerId, 3);
+
             // 添加通用组件：HPComponent 和 StiffComponent
             var hpComponent = new HPComponent(initialHp);
             var stiffComponent = new StiffComponent(10);
-            
+
             var transform2DComponent = new Transform2DComponent(initialPosition);
             var physicsBodyComponent = new PhysicsBodyComponent(
-                Fix64.One, 
-                false, 
-                false, 
-                false, 
+                Fix64.One,
+                false,
+                false,
+                false,
                 Fix64.Zero,
-                Fix64.Zero, 
+                Fix64.Zero,
                 (Fix64)0.5,
-               (int)PhysicsLayer.Player 
+                (int)PhysicsLayer.Player
             );
-            var collisionShapeComponent =  CollisionShapeComponent.CreateCircle((Fix64)0.5);
+            var collisionShapeComponent = CollisionShapeComponent.CreateCircle((Fix64)0.5);
             var velocityComponent = new VelocityComponent();
-            
+
             world.AddComponent(entity, playerComponent);
             world.AddComponent(entity, hpComponent);
             world.AddComponent(entity, stiffComponent);
@@ -86,7 +83,7 @@ namespace Frame.ECS
             world.AddComponent(entity, physicsBodyComponent);
             world.AddComponent(entity, collisionShapeComponent);
             world.AddComponent(entity, velocityComponent);
-            
+
             // 建立映射
             _entityToGameObject[entity.Id] = gameObject;
             _playerIdToEntity[playerId] = entity;
@@ -128,6 +125,7 @@ namespace Frame.ECS
 
             // 同步墙状态
             SyncEntities<WallComponent>(world, "Wall", ECSFrameSyncExample.Instance.wallPrefab, null);
+            SyncEntities<BarrelComponent>(world, "Barrel", ECSFrameSyncExample.Instance.barrelPrefab, null);
         }
 
         /// <summary>
@@ -190,7 +188,7 @@ namespace Frame.ECS
                     }
 
                     gameObject.transform.position = (Vector2)transform.position;
-            }
+                }
 
                 // 更新位置
                 if (gameObject != null)
@@ -241,7 +239,7 @@ namespace Frame.ECS
         /// 创建Entity对应的GameObject
         /// </summary>
         private static GameObject CreateEntityGameObject(Entity entity, string entityType, GameObject prefab)
-            {
+        {
             GameObject gameObject = null;
 
             if (prefab != null)
@@ -271,7 +269,7 @@ namespace Frame.ECS
             GameObject gameObject = null;
 
             switch (entityType)
-                {
+            {
                 case "Bullet":
                     // 创建红色小球
                     gameObject = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -304,14 +302,14 @@ namespace Frame.ECS
                     }
 
                     break;
-                }
+            }
 
             // 移除碰撞器（物理由ECS处理）
             if (gameObject != null)
-                {
+            {
                 var collider = gameObject.GetComponent<Collider>();
                 if (collider != null)
-                    {
+                {
                     Object.Destroy(collider);
                 }
             }
@@ -330,7 +328,7 @@ namespace Frame.ECS
             Vector3 targetPosition = new Vector3((float)position.x, (float)position.y, 0);
 
             if (ECSFrameSyncExample.Instance.isSmooth)
-                    {
+            {
                 gameObject.transform.position = Vector3.Lerp(
                     gameObject.transform.position,
                     targetPosition,

@@ -54,7 +54,7 @@ namespace Frame.ECS
         }
 
         /// <summary>
-        /// 放置墙
+        /// 放置墙  WallComponent() Transform2DComponent() PhysicsBodyComponent() CollisionShapeComponent() VelocityComponent  HPComponent WallPlacementComponent
         /// </summary>
         private void PlaceWall(World world, Entity playerEntity, PlayerComponent playerComponent)
         {

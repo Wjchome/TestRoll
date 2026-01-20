@@ -113,10 +113,14 @@ namespace Frame.ECS
             RegisterSystem(new StiffSystem()); // 通用僵直系统（处理所有实体的僵直状态）
             RegisterSystem(new DeathSystem()); // 死亡系统（统一处理所有实体的死亡逻辑）
             RegisterSystem(new WallPlacementSystem()); // 墙放置系统（处理墙的trigger状态转换）
+            
             RegisterSystem(new PlayerMoveSystem());
             RegisterSystem(new PlayerShootSystem());
             RegisterSystem(new PlayerPlaceWallSystem());
+            RegisterSystem(new PlayerPlaceBarrelSystem()); // 油桶放置系统
+            
             RegisterSystem(new BulletCheckSystem());
+            RegisterSystem(new ExplosionSystem()); // 爆炸系统（处理爆炸伤害）
             RegisterSystem(new PhysicsSystem());
             RegisterSystem(new ZombieSpawnSystem());
             RegisterSystem(new ZombieAISystem()); // AI系统根据状态决定是否移动

@@ -31,6 +31,7 @@ public class ECSFrameSyncExample : SingletonMono<ECSFrameSyncExample>
     [Header("僵尸设置")] public GameObject zombiePrefab; // 可选：如果不设置，会自动创建绿色方块
 
     [Header("墙设置")] public GameObject wallPrefab; // 可选：如果不设置，会自动创建灰色方块
+    [Header("油桶设置")] public GameObject barrelPrefab; // 可选：如果不设置，会自动创建灰色方块
 
     [Header("UI设置")] public Text debugText; // 调试信息显示
 

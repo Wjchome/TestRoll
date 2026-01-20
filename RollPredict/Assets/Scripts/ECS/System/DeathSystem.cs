@@ -25,6 +25,7 @@ namespace Frame.ECS
         public void Execute(World world, List<FrameData> inputs)
         {
             List<Entity> entitiesToDestroy = new List<Entity>();
+            List<Entity> entitiesToDestro = new List<Entity>();
 
             // 处理所有有 DeathComponent 的实体
             foreach (var (entity, death) in world.GetEntitiesWithComponents<DeathComponent>())
@@ -45,12 +46,22 @@ namespace Frame.ECS
                     HandleWallDeath(world, entity);
                     entitiesToDestroy.Add(entity);
                 }
+                else if (world.TryGetComponent<BarrelComponent>(entity, out var barrel))
+                {
+                    HandleBarrelDeath(world, entity);
+                    entitiesToDestro.Add(entity);
+                }
             }
 
             // 统一销毁死亡实体
             foreach (var entity in entitiesToDestroy)
             {
                 world.DestroyEntity(entity);
+            }
+            foreach (var entity in entitiesToDestro)
+            {
+                world.RemoveComponent<DeathComponent>(entity);
+                
             }
         }
 
@@ -89,8 +100,19 @@ namespace Frame.ECS
         {
             // 从地图障碍物中移除墙的位置
             RemoveWallFromMap(world, entity);
-
             UnityEngine.Debug.Log($"[DeathSystem] Wall {entity.Id} destroyed");
+        }
+        
+        
+        private void HandleBarrelDeath(World world, Entity entity)
+        {
+            // 从地图障碍物中移除墙的位置
+            RemoveWallFromMap(world, entity);
+            if (world.TryGetComponent<Transform2DComponent>(entity, out var transform))
+            {
+                world.AddComponent(entity, new  ExplosionComponent (transform.position,(Fix64)2,10));
+            }
+            
         }
 
         /// <summary>

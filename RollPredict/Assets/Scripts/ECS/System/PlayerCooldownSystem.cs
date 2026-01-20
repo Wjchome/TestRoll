@@ -42,6 +42,16 @@ namespace Frame.ECS
                     }
                 }
                 
+                // 减少油桶冷却时间
+                if (updatedPlayer.barrelCooldownTimer > Fix64.Zero)
+                {
+                    updatedPlayer.barrelCooldownTimer -= deltaTime;
+                    if (updatedPlayer.barrelCooldownTimer < Fix64.Zero)
+                    {
+                        updatedPlayer.barrelCooldownTimer = Fix64.Zero;
+                    }
+                }
+                
                 world.AddComponent(entity, updatedPlayer);
             }
         }

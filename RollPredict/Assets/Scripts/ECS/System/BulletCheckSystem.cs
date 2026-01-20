@@ -59,6 +59,15 @@ namespace Frame.ECS
                         // 子弹击中墙后销毁
                         removedEntities.Add(entity);
                     }
+                    else if (world.TryGetComponent<BarrelComponent>(new Entity(entityId), out var barrelComponent))
+                    {
+                        Entity barrelEntity = new Entity(entityId);
+                        
+                        HPDamageHelper.ApplyDamage(world, barrelEntity, bulletComponent.damage);
+                        
+                        // 子弹击中油桶后销毁
+                        removedEntities.Add(entity);
+                    }
                 }
             }
 
