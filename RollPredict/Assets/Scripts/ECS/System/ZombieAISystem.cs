@@ -102,23 +102,42 @@ namespace Frame.ECS
 
                             if (playersInRange.Count > 0)
                             {
-                                // 找到最近的玩家，进入攻击状态
+                                // 找到最近的、且视线畅通的玩家，进入攻击状态
                                 FixVector2 nearestPlayerTransform = FixVector2.Zero;
                                 Fix64 minDist = Fix64.MaxValue;
-
+                                bool foundValidTarget = false;
+                                
                                 foreach (var playerEntity in playersInRange)
                                 {
                                     if (world.TryGetComponent<Transform2DComponent>(playerEntity,
                                             out var playerTransform))
                                     {
+                                        // 🔍 关键：使用物理系统的Linecast检查视线是否畅通
+                                        // 只检测墙体Layer，避免被其他物体阻挡
+                                        if (ECSStateMachine.GetSystem<PhysicsSystem>().Linecast(world,
+                                            transform.position, 
+                                            playerTransform.position, 
+                                            (int)PhysicsLayer.Wall,out _))
+                                        {
+                                            continue; // 视线被墙阻挡，跳过这个玩家
+                                        }
+
                                         FixVector2 diff = playerTransform.position - transform.position;
                                         Fix64 dist = Fix64.Sqrt(diff.x * diff.x + diff.y * diff.y);
                                         if (dist < minDist)
                                         {
                                             minDist = dist;
                                             nearestPlayerTransform = playerTransform.position;
+                                            foundValidTarget = true;
                                         }
                                     }
+                                }
+
+                                // 如果没有找到有效目标（都被墙阻挡），跳过攻击
+                                if (!foundValidTarget)
+                                {
+                                    world.AddComponent(entity, updatedAI);
+                                    continue;
                                 }
 
 

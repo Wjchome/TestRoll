@@ -27,6 +27,23 @@ namespace Frame.ECS
             this.obstacles = new OrderedHashSet<GridNode>();
         }
         
+        
+        /// <summary>
+        /// 检查世界坐标位置是否可通行
+        /// 
+        /// 先将世界坐标转换为网格坐标，然后检查是否可通行
+        /// </summary>
+        /// <param name="worldPos">世界坐标位置</param>
+        /// <returns>true=可通行，false=不可通行（超出边界或有障碍物）</returns>
+        public bool IsWalkable(FixVector2 worldPos)
+        {
+            // 1. 世界坐标转网格坐标
+            GridNode gridNode = WorldToGrid(worldPos);
+            
+            // 2. 检查网格节点是否可通行
+            return IsWalkable(gridNode);
+        }
+        
         /// <summary>
         /// 检查节点是否可通行
         /// 
